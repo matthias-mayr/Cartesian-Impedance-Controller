@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="left_arm_name" default="bh"/>
+  <arg name="right_arm_name" default="hh"/>
+  <arg name="model" default="$(find bh_description)/robots/dual_arm.urdf.xacro"/>
+  <arg name="sim" default="true"/>
+  <arg name="left_arm" default="$(find bh_description)/robots/iiwa_piston_gripper.urdf.xacro"/>
+  <arg name="right_arm" default="$(find bh_description)/robots/iiwa_wsg_gripper.urdf.xacro"/>
+  <arg name="js_config" default="$(find bh_description)/config/jsp_config_dual_arm.yaml"/>
+  <arg name="hardware_interface" default="PositionJointInterface"/>
+  <arg name="sim_camera_joint_type" default="fixed"/>
+  <arg name="sim_camera_xyz" default="-0.1 0.0 0.0"/>
+  <arg name="sim_camera_rpy" default="0.0 -1.571 0.0"/>
+  <!-- From calibration -->
+  <!-- <arg name="sim_camera_xyz" default="-0.0762 0.0055 0.0020"/> -->
+  <!-- <arg name="sim_camera_rpy" default="0.0 0.0 1.574"/> -->
+  <arg name="camera_joint_type" default="floating"/>
+  <arg name="camera_xyz" default="0 0 0"/>
+  <arg name="camera_rpy" default="0 0 0"/>
+  <arg name="realsense_static_tf_publisher" default="false" doc="Enables a static tf publisher for the realsense_link to the robots wrist."/>
+
+  <!-- NOTE: when disabling this, make sure to publish the transformation somewhere else, or the camera optical frame will be disconnected from the rest -->
+  <node if="$(arg sim)" name="optical_frame_transform_$(arg right_arm_name)" type="static_transform_publisher" pkg="tf" args="-0.0 0.0 0.0 -1.57 0.0 -1.57 realsense_$(arg right_arm_name)_link realsense_$(arg right_arm_name)_rgb_optical_frame 100" />
+  <node if="$(arg realsense_static_tf_publisher)" name="realsense_base_link_tf_$(arg right_arm_name)" type="static_transform_publisher" pkg="tf" args="$(arg sim_camera_xyz) $(arg sim_camera_rpy) $(arg right_arm_name)_link_ee realsense_$(arg right_arm_name)_link 100" />
+
+  <!-- Robot description. In simulation I have to load each kuka URDF in its namespace for gazebo ros control to work -->
+  <group if="$(arg sim)">
+      <param name="/$(arg left_arm_name)/robot_description" command="$(find xacro)/xacro --inorder $(arg left_arm) robot_name:=$(arg left_arm_name) hardware_interface:=$(arg hardware_interface) publish_robot:=true" />
+      <param name="/$(arg right_arm_name)/robot_description" command="$(find xacro)/xacro --inorder $(arg right_arm) robot_name:=$(arg right_arm_name) hardware_interface:=$(arg hardware_interface) publish_robot:=true" />
+      <param name="/sim/robot_description" command="$(find xacro)/xacro --inorder $(arg model) camera_xyz:='$(arg sim_camera_xyz)' camera_rpy:='$(arg sim_camera_rpy)' camera_joint_type:=$(arg sim_camera_joint_type) left:=$(arg left_arm_name) right:=$(arg right_arm_name) hardware_interface:=$(arg hardware_interface)" />
+  </group>
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg model) camera_xyz:='$(arg camera_xyz)' camera_rpy:='$(arg camera_rpy)' camera_joint_type:=$(arg camera_joint_type) left:='$(arg left_arm_name)' right:='$(arg right_arm_name)' hardware_interface:=$(arg hardware_interface)" />
+
+  <include file="$(find bh_description)/launch/joint_state_publisher.launch">
+    <arg name="config" value="$(arg js_config)"/>
+  </include>
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+  </node>
+</launch>

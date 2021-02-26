@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="gripper" default="piston"/>
+  <arg name="robot_name" default="bh"/>
+  <arg name="sim" default="true"/>
+  <arg name="model" default="$(find bh_description)/robots/iiwa_$(arg gripper)_gripper.urdf.xacro"/>
+  <arg name="js_config" default="$(find bh_description)/config/jsp_config_$(arg gripper)_gripper.yaml"/>
+  <arg name="hardware_interface" default="PositionJointInterface"/>
+
+  <!-- Robot description and state pub  -->
+  <group if="$(arg sim)">
+      <param name="/$(arg robot_name)/robot_description" command="$(find xacro)/xacro --inorder $(arg model) robot_name:=$(arg robot_name) hardware_interface:=$(arg hardware_interface) publish_robot:=true"/>
+      <param name="/sim/robot_description" command="$(find xacro)/xacro --inorder $(arg model)  hardware_interface:=$(arg hardware_interface) publish_robot:=true" />
+  </group>
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg model) robot_name:=$(arg robot_name) hardware_interface:=$(arg hardware_interface) publish_robot:=true" />
+
+  <include file="$(find bh_description)/launch/joint_state_publisher.launch">
+    <arg name="config" value="$(arg js_config)"/>
+  </include>
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
+  </node>
+</launch>

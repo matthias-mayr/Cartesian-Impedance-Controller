@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<root xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+      xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+      xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
+      xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find bh_description)/urdf/primesense/primesense_camera.gazebo.xacro" />
+
+  <xacro:macro name="primesense_camera" params="name parent joint_type *origin">
+    <joint name="${name}_frame_joint" type="${joint_type}">
+      <xacro:insert_block name="origin" />
+      <parent link="${parent}"/>
+      <child link="${name}_link"/>
+    </joint>
+    <link name="${name}_link">
+      <inertial>
+        <mass value="0.1" />
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.01"  ixy="0.0"  ixz="0.0"
+                 iyy="0.01"  iyz="0.0"
+                 izz="0.01" />
+      </inertial>
+
+      <visual>
+        <origin xyz="0.0 0.007 -0.025" rpy="${3.1415/2} 0 ${-3.1415/2}"/>
+        <geometry>
+          <mesh filename="package://bh_description/meshes/primesense/primesense_visual.stl" scale="0.001 0.001 0.001" />
+        </geometry>
+        <material name="DarkGrayBlack">
+          <color rgba="0.1 0.1 0.1 1.0"/>
+        </material>
+      </visual>
+
+      <collision>
+        <origin xyz="-0.02 0.0 0.0" rpy="${3.1415/2} 0 ${-3.1415/2}"/>
+        <geometry>
+          <!-- <mesh filename="package://bh_description/meshes/primesense/primesense_collision.stl" scale="0.001 0.001 0.001" /> -->
+          <box size="0.17 0.035 0.045"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <!-- extensions -->
+  <xacro:primesense_camera_gazebo name="${name}"/>
+  </xacro:macro>
+</root>
+

@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="hardware_interface" default="PositionJointInterface" />
+    <arg name="robot_name" default="hh" />
+    <arg name="model" default="iiwa7" />
+    <arg name="sim" default="true"/>
+    <arg name="camera" default="true"/>
+    <arg name="run_driver" default="false"/>
+
+    <!-- Working with the simulated robot.  -->
+    <arg if="$(arg sim)" name="controllers"
+         value="joint_state_controller $(arg hardware_interface)_trajectory_controller"/>
+
+    <!-- Working with the real robot.  -->
+    <arg unless="$(arg sim)" name="controllers" value="joint_state_controller $(arg hardware_interface)_trajectory_controller" />
+    <group ns="$(arg robot_name)" if="$(arg sim)">
+      <!-- fake gripper driver (NOT working at the moment. Should change the URDF.)
+      <node name="wsg_50" pkg="wsg_50_simulation" type="wsg_50_sim_driver">
+        	<param name = "vel_pub_l_Topic" type="string" value="/wsg_50_gl/command"/>
+        	<param name = "vel_pub_r_Topic" type="string" value="/wsg_50_gr/command"/>
+      </node>  -->
+    </group>
+
+    <group ns="$(arg robot_name)" if="$(eval not arg('sim') and arg('run_driver'))">
+        <!-- Robot interface -->
+        <include file="$(find bh_control)/launch/hw.launch" >
+            <arg name="hardware_interface" value="$(arg hardware_interface)" />
+            <arg name="robot_name" value="$(arg robot_name)" />
+        </include>
+        <arg name="tool" default="wsg"/>
+        <param name="/$(arg robot_name)/toolName" type="string" value="$(arg tool)" />
+    </group>
+
+    <group unless="$(arg sim)">
+      <include if="$(arg camera)" file="$(find vision)/launcher/launch/realsense_d435.launch">
+        <arg name="camera" value="realsense_$(arg robot_name)" />
+      </include>
+
+      <node name="Robotiq3FGripperTcpNode"  pkg="robotiq_3f_gripper_control" type="Robotiq3FGripperTcpNode.py"
+	    args="192.168.100.6"/>
+    </group>
+    <node pkg="rostopic" type="rostopic" name="activate_gripper" args="pub /Robotiq3FGripperRobotOutput robotiq_3f_gripper_articulated_msgs/Robotiq3FGripperRobotOutput '{rACT: 1, rMOD: 0, rGTO: 1, rATR: 0, rGLV: 0, rICF: 0, rICS: 0, rPRA: 0, rSPA: 255, rFRA: 150, rPRB: 0, rSPB: 0, rFRB: 0, rPRC: 0, rSPC: 0, rFRC: 0, rPRS: 0, rSPS: 0, rFRS: 0}'"/>
+
+    <!-- Load controllers accordingly to parameters -->
+    <group ns="$(arg robot_name)">
+        <include file="$(find bh_control)/launch/controllers.launch">
+            <arg name="hardware_interface" value="$(arg hardware_interface)" />
+            <arg name="controllers" value="$(arg controllers)" />
+            <arg name="robot_name" value="$(arg robot_name)" />
+        </include>
+    </group>
+</launch>

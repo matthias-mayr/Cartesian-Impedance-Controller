@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- Spawn iiwa FRI drivers -->
+    <include ns="bh" file="$(find bh_control)/launch/hw.launch" >
+            <arg name="hardware_interface" value="argument not really needed" />
+            <arg name="robot_name" value="bh" />
+    </include>
+    <include ns="hh" file="$(find bh_control)/launch/hw.launch" >
+            <arg name="hardware_interface" value="argument not really needed" />
+            <arg name="robot_name" value="hh" />
+    </include>
+</launch>

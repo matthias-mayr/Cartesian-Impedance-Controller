@@ -1,0 +1,229 @@
+<?xml version="1.0"?>
+
+<robot name="lh_hardware" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+
+<!-- main gripper macro -->
+<xacro:macro name="schunk_wsg50" params="parent *origin">
+
+  <!-- connector plate -->
+  <joint name="gripper_connector" type="fixed">
+    <xacro:insert_block name="origin"/>
+    <parent link="${parent}" />
+    <child link="connector_plate" />
+  </joint>
+  <link name="connector_plate">
+    <visual>
+      <origin xyz="0.01 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.02 0.09 0.09"/>
+      </geometry>
+      <material name="Grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0.01 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.02 0.09 0.09"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- the actual gripper main component -->
+  <joint name="schunk_gripper" type="fixed">
+    <origin xyz="0.02 0 0" rpy="0 0 0"/>
+    <parent link="connector_plate" />
+    <child link="gripper_link" />
+  </joint>
+
+  <link name="gripper_link">
+    <inertial>
+      <origin xyz="0.05 0 0" />
+      <mass value="1.2" />
+      <xacro:box_inertia x="0.0725" y="0.146" z="0.05" mass="1.2"/>
+    </inertial>
+    <visual>
+      <!--<origin xyz="0 0 0 " rpy="0 0 1.570796327" />-->
+      <origin xyz="0.03625 0 0" rpy="0 0 0" />
+      <geometry>
+        <!--<mesh filename="package://bh_description/meshes/schunk_wsg50/schunk_wsg50_main.dae" scale="0.0254 0.0254 0.0254"/>-->
+        <box size="0.0725 0.146 0.05"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0.03625 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.0725 0.146 0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Finger 1 -->
+  <joint name="gripper_finger1_joint" type="fixed">
+    <origin xyz="0.0725 0 0.0" rpy="0 0 0"/>
+    <parent link="gripper_link" />
+    <child link="finger1_link" />
+  </joint>
+
+  <link name="finger1_link">
+     <visual>
+      <!--<origin xyz="0 -0.05 0 " rpy="${-PI/2} 0 ${-PI/2}" />-->
+      <origin xyz="0.05 -0.059 0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.1 0.018 0.03"/>
+        <!--<mesh filename="package://bh_description/meshes/schunk_wsg50/finger.dae" scale="0.0254 0.0254 0.0254"/>-->
+      </geometry>
+      <!--<material name="Grey"/>-->
+    </visual>
+    <collision>
+       <!--<origin xyz="0 -0.05 0 " rpy="${-PI/2} 0 ${-PI/2}" />-->
+      <origin xyz="0.05 -0.059 0" rpy="0 0 0" />
+      <geometry>
+        <!--<mesh filename="package://bh_description/meshes/schunk_wsg50/finger.dae" scale="0.0254 0.0254 0.0254"/>-->
+        <box size="0.1 0.018 0.03"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0.05 -0.059 0" rpy="0 0 0" />
+      <mass value="0.4" />
+      <xacro:box_inertia x="0.05" y="-0.009" z="0.03" mass="0.4"/>
+    </inertial>
+  </link>
+
+  <!-- Finger 2 -->
+  <joint name="gripper_finger2_joint" type="fixed">
+    <origin xyz="0.0725 0 0.0" rpy="0 0 0"/>
+    <parent link="gripper_link" />
+    <child link="finger2_link" />
+  </joint>
+
+  <link name="finger2_link">
+     <visual>
+      <!--<origin xyz="0 0.05 0 " rpy="${PI/2} 0 ${PI/2}" />-->
+      <origin xyz="0.05 0.059 0" rpy="0 0 0" />
+      <geometry>
+        <!--<mesh filename="package://bh_description/meshes/schunk_wsg50/finger.dae" scale="0.0254 0.0254 0.0254"/>-->
+        <box size="0.1 0.018 0.03"/>
+      </geometry>
+      <!--<material name="Grey"/>-->
+    </visual>
+    <collision>
+      <!--<origin xyz="0 0.05 0 " rpy="${PI/2} 0 ${PI/2}" />-->
+      <origin xyz="0.05 0.059 0" rpy="0 0 0" />
+      <geometry>
+        <!--<mesh filename="package://bh_description/meshes/schunk_wsg50/finger.dae" scale="0.0254 0.0254 0.0254"/>-->
+        <box size="0.1 0.018 0.03"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0.05 0.059 0" rpy="0 0 0" />
+      <mass value="0.4" />
+      <xacro:box_inertia x="0.05" y="-0.009" z="0.03" mass="0.4"/>
+    </inertial>
+  </link>
+
+  <gazebo reference="connector_plate">
+    <turnGravityOff>true</turnGravityOff>
+    <material>Gazebo/Gold</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+  </gazebo>
+
+  <gazebo reference="gripper_link">
+    <turnGravityOff>true</turnGravityOff>
+    <material>Gazebo/Gold</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+  </gazebo>
+
+  <gazebo reference="finger1_link">
+    <turnGravityOff>true</turnGravityOff>
+    <material>Gazebo/Gold</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+  </gazebo>
+
+  <gazebo reference="finger2_link">
+    <turnGravityOff>true</turnGravityOff>
+    <material>Gazebo/Gold</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+  </gazebo>
+
+  <!-- Finger 1 -->
+  <!--<joint name="gripper_finger1_joint" type="prismatic">-->
+    <!--<origin xyz="0.0725 0 0.0" rpy="0 0 0"/>-->
+    <!--<parent link="gripper_link" />-->
+    <!--<child link="finger1_link" />-->
+    <!--<axis xyz="0 1 0"/>-->
+    <!--<limit lower="-0.055" upper="0" velocity="0.400" effort="80"/>-->
+  <!--</joint>-->
+
+  <!--<link name="finger1_link">-->
+     <!--<visual>-->
+      <!--<origin xyz="0 0 0 " rpy="-1.570796327 0 -1.570796327" />-->
+      <!--<geometry>-->
+        <!--<mesh filename="package://bh_description/meshes/schunk_wsg50/finger.dae"/>-->
+      <!--</geometry>-->
+    <!--</visual>-->
+    <!--<collision>-->
+      <!--<origin xyz="0.05 -0.009 0" rpy="0 0 0" />-->
+      <!--<geometry>-->
+        <!--<box size="0.1 0.018 0.03"/>-->
+        <!--<mesh filename="package://bh_description/meshes/schunk_wsg50/finger.dae" scale="0.0254 0.0254 0.0254"/>-->
+      <!--</geometry>-->
+    <!--</collision>-->
+  <!--</link>-->
+
+  <!-- Finger 2 -->
+  <!--<joint name="gripper_finger2_joint" type="prismatic">-->
+    <!--<origin xyz="0.0725 0 0.0" rpy="0 0 0"/>-->
+    <!--<parent link="gripper_link" />-->
+    <!--<child link="finger2_link" />-->
+    <!--<axis xyz="0 1 0"/>-->
+    <!--<limit lower="0" upper="0.055" velocity="0.400" effort="80"/>-->
+    <!--<mimic joint="finger2_joint" multiplier="1" offset="0"/>-->
+  <!--</joint>-->
+
+  <!--<link name="finger2_link">-->
+     <!--<visual>-->
+      <!--<origin xyz="0 0 0 " rpy="1.570796327 0 1.570796327" />-->
+      <!--<geometry>-->
+        <!--<mesh filename="package://bh_description/meshes/schunk_wsg50/finger.dae"/>-->
+      <!--</geometry>-->
+    <!--</visual>-->
+    <!--<collision>-->
+      <!--<origin xyz="0.05 0.009 0" rpy="0 0 0" />-->
+      <!--<geometry>-->
+        <!--<box size="0.1 0.018 0.03"/>-->
+        <!--<mesh filename="package://bh_description/meshes/schunk_wsg50/finger.dae" scale="0.0254 0.0254 0.0254">-->
+      <!--</geometry>-->
+    <!--</collision>-->
+  <!--</link>-->
+
+  <!-- frames for groove and tip -->
+  <!--<joint name="gripper_groove_joint" type="fixed">-->
+    <!--<origin xyz="0.135 0 0"/>-->
+    <!--<parent link="gripper_link"/>-->
+    <!--<child link="gripper_groove_frame"/>-->
+  <!--</joint>-->
+  <!--<link name="gripper_groove_frame"/>-->
+  <!--<joint name="gripper_tip_joint" type="fixed">-->
+    <!--<origin xyz="0.1725 0 0"/>-->
+    <!--<parent link="gripper_link"/>-->
+    <!--<child link="gripper_tip_frame"/>-->
+  <!--</joint>-->
+  <!--<link name="gripper_tip_frame"/>-->
+
+
+  <!-- joint saying how much the gripper is open -->
+  <!--<joint name="gripper_joint" type="prismatic">-->
+		<!--<parent link="gripper_link"/>-->
+		<!--<child link="gripper_joint"/>-->
+		<!--<axis xyz="0 1 0"/>-->
+		<!--<limit lower="0" upper="0.11" velocity="0.400" effort="80"/>-->
+	<!--</joint>-->
+  <!--<link name="gripper_joint"/>-->
+
+
+</xacro:macro>
+</robot>

@@ -1,0 +1,8 @@
+<launch>
+    <arg name="moveit_controller_manager" default="moveit_simple_controller_manager/MoveItSimpleControllerManager"/>
+    <arg name="manager_name" default=""/>
+    <arg name="hardware_interface" default="PositionJointInterface"/>
+
+    <param name="moveit_controller_manager" value="$(arg moveit_controller_manager)"/>
+    <rosparam file="$(find bh_moveit)/config/$(arg manager_name)_$(arg hardware_interface)_controllers.yaml"/>
+</launch>

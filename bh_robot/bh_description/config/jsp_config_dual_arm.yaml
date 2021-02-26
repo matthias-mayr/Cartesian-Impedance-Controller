@@ -1,0 +1,7 @@
+rate: 25
+source_list:
+  ['/bh/joint_states', '/hh/joint_states']
+  #['/bh/joint_states', '/gripper', '/hh/joint_states','/WsgData/JointState']
+#dependent_joints:
+  #gripper_finger1_joint: {parent: gripper_joint, factor: -0.5}
+  #gripper_finger2_joint: {parent: gripper_joint, factor: 0.5}

@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Transformation to bh (right arm)  -->
+  <xacro:property name="cal_base_to_bh_xyz" value="0 0 0" />
+  <xacro:property name="cal_base_to_bh_rpy" value="0 0 0" />
+
+  <!-- Transformation to hh (left arm) -->
+  <xacro:property name="cal_base_to_hh_xyz" value="0 0 0" />
+  <xacro:property name="cal_base_to_hh_rpy" value="0 0 0" />
+
+  <!-- schunk gripper -->
+  <xacro:property name="cal_iiwa7_to_wsg_xyz" value="0 0 0" />
+  <xacro:property name="cal_iiwa7_to_wsg_rpy" value="3.1415926 -1.570796327 0"  />
+
+  <!-- Size of the chassis (just a box) -->
+  <xacro:property name="chassis_size_x" value="0.65"/>
+  <xacro:property name="chassis_size_y" value="0.58"/>
+  <xacro:property name="chassis_size_z" value="0.42"/>
+</robot>

@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+<robot name="hardware" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+<!-- It's apparently not possible to define properties inside a macro that should be available outside
+     https://answers.ros.org/question/303529/xacro-properties/ -->
+<xacro:property name="torso_left_xyz" value="0.065 0.1126 0.10074" />
+<xacro:property name="torso_right_xyz" value="0.065 -0.1126 0.10074" />
+<xacro:property name="torso_back_xyz" value="-0.13 0 0.10074" />
+
+<xacro:macro name="iiwa_torso" params="parent *origin">
+    <xacro:property name="mount_origin" value="0 0 0" />
+
+    <joint name="iiwa_torso_base_joint" type="fixed">
+            <parent link="${parent}" />
+            <child link = "iiwa_torso_base" />
+            <xacro:insert_block name="origin" />
+    </joint>
+
+    <joint name="iiwa_torso_left_joint" type="fixed">
+            <parent link="iiwa_torso_base" />
+            <child link = "iiwa_torso_left" />
+            <origin xyz="${torso_left_xyz}" rpy="-1.01985341 -0.3007097 -0.70361386" />
+    </joint>
+
+    <joint name="iiwa_torso_right_joint" type="fixed">
+            <parent link="iiwa_torso_base" />
+            <child link = "iiwa_torso_right" />
+            <origin xyz="${torso_right_xyz}" rpy="1.01985341 -0.3007097  0.70361386" />
+    </joint>
+
+    <joint name="iiwa_torso_back_joint" type="fixed">
+            <parent link="iiwa_torso_base" />
+            <child link = "iiwa_torso_back" />
+            <origin xyz="${torso_back_xyz}" rpy="1.01985341 -0.3007097 -1.39078124" />
+    </joint>
+
+    <link name="iiwa_torso_left">
+    </link>
+
+    <link name="iiwa_torso_right">
+    </link>
+
+    <link name="iiwa_torso_back">
+    </link>
+
+    <link name="iiwa_torso_base">
+        <inertial>
+        <origin
+            xyz="${mount_origin}" rpy="0 0 0" />
+        <mass
+            value="17.097" />
+        <inertia
+            ixx="0.231426028862462"
+            ixy="3.4651505109641E-07"
+            ixz="9.00820316949685E-07"
+            iyy="0.352096317978007"
+            iyz="1.23740976421988E-05"
+            izz="0.231751030960783" />
+        </inertial>
+        <visual>
+        <origin
+            xyz="${mount_origin}" rpy="0 0 0" />
+        <geometry>
+            <mesh
+            filename="package://bh_description/meshes/iiwa_mount/iiwa_torso.stl" />
+        </geometry>
+        <material name="grey">
+            <color rgba="0.8667 0.86667 0.8902 1" />
+        </material>
+        </visual>
+        <!--
+        <collision>
+        <origin
+            xyz="${mount_origin}" rpy="0 0 0" />
+        <geometry>
+            <mesh
+            filename="package://bh_description/meshes/iiwa_mount/iiwa_torso.stl" />
+        </geometry>
+        </collision>
+        -->
+    </link>
+</xacro:macro>
+</robot>

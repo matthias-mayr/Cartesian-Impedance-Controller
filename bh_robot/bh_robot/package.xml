@@ -1,0 +1,15 @@
+<package>
+  <name>bh_robot</name>
+  <version>1.0.0</version>
+  <description>
+    Launch files for the Big Helper robot at RVMI.
+  </description>
+  <maintainer email="francesco@mp.aau.dk">Francesco Rovida</maintainer>
+  <license>BSD</license>
+
+  <author>Francesco Rovida</author>
+
+  <run_depend>rosmon</run_depend>
+  <buildtool_depend>catkin</buildtool_depend>
+
+</package>

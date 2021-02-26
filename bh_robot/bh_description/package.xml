@@ -1,0 +1,15 @@
+<package>
+  <name>bh_description</name>
+  <version>1.0.0</version>
+  <description>
+    URDF and meshes for the Big Helper robot at RVMI.
+  </description>
+  <maintainer email="francesco@mp.aau.dk">Francesco Rovida</maintainer>
+  <license>BSD</license>
+
+  <author>Francesco Rovida</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <run_depend>urdf</run_depend>
+  <run_depend>xacro</run_depend>  
+</package>

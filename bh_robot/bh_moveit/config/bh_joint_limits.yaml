@@ -1,0 +1,42 @@
+# joint_limits.yaml allows the dynamics properties specified in the URDF to be overwritten or augmented as needed
+# Specific joint properties can be changed with the keys [max_position, min_position, max_velocity, max_acceleration]
+# Joint limits can be turned off with [has_velocity_limits, has_acceleration_limits]
+
+# The velocity values come from the KUKA iiwa7 data sheet.
+
+joint_limits:
+  bh_joint_1:
+    has_velocity_limits: true
+    max_velocity: 1.7104
+    has_acceleration_limits: true
+    max_acceleration: 0.5
+  bh_joint_2:
+    has_velocity_limits: true
+    max_velocity: 1.7104
+    has_acceleration_limits: true
+    max_acceleration: 0.5
+  bh_joint_3:
+    has_velocity_limits: true
+    max_velocity: 1.7453
+    has_acceleration_limits: true
+    max_acceleration: 0.8
+  bh_joint_4:
+    has_velocity_limits: true
+    max_velocity: 2.2689
+    has_acceleration_limits: true
+    max_acceleration: 0.8
+  bh_joint_5:
+    has_velocity_limits: true
+    max_velocity: 2.4435
+    has_acceleration_limits: true
+    max_acceleration: 0.8
+  bh_joint_6:
+    has_velocity_limits: true
+    max_velocity: 3.1416
+    has_acceleration_limits: true
+    max_acceleration: 0.8
+  bh_joint_7:
+    has_velocity_limits: true
+    max_velocity: 3.1416
+    has_acceleration_limits: true
+    max_acceleration: 0.8

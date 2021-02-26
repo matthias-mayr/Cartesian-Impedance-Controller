@@ -1,0 +1,17 @@
+<package>
+  <name>bh_gazebo</name>
+  <version>1.0.0</version>
+  <description>
+    Launch files for the Big Helper robot at RVMI. Also utility scripts to install
+  </description>
+  <maintainer email="daw@mp.aau.dk">David Wuthier</maintainer>
+  <license>BSD</license>
+
+  <author>David Wuthier</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>gazebo</build_depend>
+  <build_depend>gazebo_models_psa</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>tf2</build_depend>
+</package>

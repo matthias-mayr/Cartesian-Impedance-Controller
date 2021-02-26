@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="robot_name" default="bh"/>
+    <arg name="hardware_interface" default="only here for compatibility reasons"/>
+
+    <!-- Spawn iiwa FRI driver -->
+    <node pkg="iiwa_driver" type="iiwa_driver" name="$(arg robot_name)_driver" respawn="false" output="screen">
+        <remap from="/joint_states" to="/$(arg robot_name)/joint_states"/>
+        <remap from="/controller_manager" to="/$(arg robot_name)/controller_manager"/>
+        <remap from="/commanding_status" to="/$(arg robot_name)/commanding_status"/>
+    </node>
+</launch>

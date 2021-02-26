@@ -1,0 +1,40 @@
+<?xml version="1.0" ?>
+<sdf version="1.4">
+  <world name="default">
+    <include>
+      <uri>model://sun</uri>
+    </include>
+    <light type="point" name="light">
+      <pose>0 0 5.0 0 0 0</pose>
+      <diffuse>1 1 1 1</diffuse>
+      <specular>.1 .1 .1 1</specular>
+      <attenuation>
+        <range>50</range>
+        <constant>0.5</constant>
+        <linear>0.01</linear>
+        <quadratic>0.0</quadratic>
+      </attenuation>
+      <cast_shadows>false</cast_shadows>
+    </light>
+    <include>
+      <pose frame=''>0.7 -0.3 0.001 0.0 0.0 -1.5708</pose>
+      <uri>model://workcell</uri>
+    </include>
+    <include>
+      <pose frame=''>0.90 0.58 0.97 -0.001866 0.074522 0</pose>
+      <uri>model://motor</uri>
+    </include>
+    <include>
+      <pose frame=''>0.92 0.13 0.84 0.0 0.0 1.56</pose>
+      <uri>model://aruco</uri>
+    </include>
+<!--     <include>
+      <pose frame=''>0.615169 0.676558 0.973295 0.0 0.0 1.5708</pose>
+      <uri>model://piston_support</uri>
+    </include>
+    <include>
+      <pose frame=''>0.547544 0.756143 0.875835 0.0 0.0 1.5708</pose>
+      <uri>model://caps_support</uri>
+    </include>
+ -->  </world>
+</sdf>

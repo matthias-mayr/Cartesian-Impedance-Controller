@@ -1,0 +1,35 @@
+<package>
+  <name>bh_control</name>
+  <version>1.0.0</version>
+  <description>
+    Launch files for the Big Helper robot at RVMI. Also utility scripts to install
+  </description>
+  <maintainer email="daw@mp.aau.dk">David Wuthier</maintainer>
+  <license>BSD</license>
+
+  <author>David Wuthier</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>controller_interface</build_depend>
+  <build_depend>hardware_interface</build_depend>
+  <build_depend>pluginlib</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>eigen</build_depend>
+  <build_depend>iiwa_tools</build_depend>
+  <build_depend>eigen_conversions</build_depend>
+  <build_depend>tf_conversions</build_depend>
+
+
+  <run_depend>controller_interface</run_depend>
+  <run_depend>hardware_interface</run_depend>
+  <run_depend>pluginlib</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>iiwa_tools</run_depend>
+  <run_depend>eigen_conversions</run_depend>
+  <run_depend>tf_conversions</run_depend>
+
+   <export>
+    <!-- Other tools can request additional information be placed here -->
+    <controller_interface plugin="${prefix}/controller_plugins.xml"/>
+  </export>
+</package>

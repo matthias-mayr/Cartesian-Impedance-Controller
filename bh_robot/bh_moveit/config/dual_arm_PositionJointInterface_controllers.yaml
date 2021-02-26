@@ -1,0 +1,25 @@
+controller_list:
+  - name: bh/PositionJointInterface_trajectory_controller
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    default: true
+    joints:
+      - bh_joint_1
+      - bh_joint_2
+      - bh_joint_3
+      - bh_joint_4
+      - bh_joint_5
+      - bh_joint_6
+      - bh_joint_7
+  - name: hh/PositionJointInterface_trajectory_controller
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    default: false
+    joints:
+      - hh_joint_1
+      - hh_joint_2
+      - hh_joint_3
+      - hh_joint_4
+      - hh_joint_5
+      - hh_joint_6
+      - hh_joint_7

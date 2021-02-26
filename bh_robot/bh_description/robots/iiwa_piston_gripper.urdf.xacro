@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="bh_robot">
+  <!-- Variables -->
+  <!-- If we have a single robot we want to fully publish it. When we have dual arm we only want to parse the macro and include it there. -->
+  <xacro:arg name="publish_robot" default="true"/>
+  <xacro:arg name="hardware_interface" default="PositionJointInterface"/>
+  <xacro:arg name="robot_name" default="bh"/>
+
+  <xacro:macro name="iiwa_piston_gripper" params="*origin publish_robot hardware_interface robot_prefix">
+    <!-- Variables -->
+    <xacro:arg name="publish_robot" default="true"/>
+    <xacro:arg name="hardware_interface" default="PositionJointInterface"/>
+    <xacro:arg name="robot_prefix" default="bh"/>
+    
+    <!-- Macro for the inertia of a box -->
+    <xacro:macro name="box_inertia" params="x y z mass">
+      <inertia ixx="${0.0833333 * mass * (y*y + z*z)}" ixy="0.0" ixz="0.0"
+        iyy="${0.0833333 * mass * (x*x + z*z)}" iyz="0.0"
+        izz="${0.0833333 * mass * (x*x + y*y)}" />
+    </xacro:macro>
+
+    <!-- Include models -->
+    <xacro:include filename="$(find bh_description)/urdf/arms/iiwa7_gazebo_fix.xacro"/>
+    
+    <xacro:include filename="$(find bh_description)/urdf/primesense/primesense_camera.urdf.xacro"/>
+
+    <!-- Load the calibration parameters -->
+    <xacro:include filename="$(find bh_description)/calibration/robot_cal.xacro"/>
+
+    <!-- If we have a single robot we want to fully publish it. When we have dual arm we only want to parse the macro. -->
+    <xacro:if value="$(arg publish_robot)">
+      <xacro:include filename="$(find bh_description)/urdf/iiwa_table.urdf.xacro"/>
+      <xacro:include filename="$(find bh_description)/urdf/iiwa_mount/iiwa_torso.urdf.xacro"/>
+      
+      <xacro:include filename="$(find iiwa_description)/urdf/materials.xacro" />
+      <!-- Insert the BASE -->
+      <link name="world"/>
+      <iiwa_table parent="world">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+      </iiwa_table>
+      
+      <!-- Insert triangular mount -->
+      <iiwa_torso parent="torso_origin">
+        <origin xyz="0 0 0" rpy="0 0 ${PI}"/>
+      </iiwa_torso>
+    </xacro:if>
+
+    <!-- Insert the KUKA IIWA -->
+    <iiwa7 hardware_interface="$(arg hardware_interface)" parent="iiwa_torso_left" robot_name="$(arg robot_prefix)">
+      <origin xyz="${cal_base_to_bh_xyz}" rpy="${cal_base_to_bh_rpy}"/>
+    </iiwa7>
+
+    <joint name="ee_peg_base_joint" type="fixed">
+      <parent link="bh_link_ee"/>
+      <child link="peg_base"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+    </joint>
+
+    <joint name="peg_end_joint" type="fixed">
+      <parent link="peg_base"/>
+      <child link="peg"/>
+      <origin rpy="0 0 0" xyz="0 0 0.1"/>
+    </joint>
+
+    <link name="peg"/>
+
+    <link name="peg_base">
+      <inertial>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <!-- Rough guess -->
+        <mass value="0.3"/>
+        <xacro:box_inertia x="0.05" y="0.05" z="0.1" mass="0.3"/>
+      </inertial>
+      <visual>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <geometry>
+          <mesh filename="package://bh_description/meshes/peg_and_hole/peg_3mm.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+        <material name="indigo">
+          <color rgba="0.25 0.0 0.5 1"/>
+        </material>
+      </visual>
+      <collision>
+        <origin
+            xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+            <mesh filename="package://bh_description/meshes/peg_and_hole/peg_3mm.stl" scale="0.001 0.001 0.001" />
+        </geometry>
+      </collision>
+  </link>
+
+    <!--<primesense_camera name="realsense_$(arg left)" parent="$(arg left)_link_ee" joint_type="$(arg camera_joint_type)">
+      <origin xyz="$(arg camera_xyz)" rpy="$(arg camera_rpy)"/>
+    </primesense_camera>-->
+  </xacro:macro>
+  
+  <xacro:if value="$(arg publish_robot)">
+    <iiwa_piston_gripper hardware_interface="$(arg hardware_interface)" robot_prefix="$(arg robot_name)" publish_robot="$(arg publish_robot)">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </iiwa_piston_gripper>
+  </xacro:if>
+</robot>
