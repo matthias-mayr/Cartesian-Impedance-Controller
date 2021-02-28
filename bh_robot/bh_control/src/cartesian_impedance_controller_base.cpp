@@ -1,81 +1,66 @@
 #include "cartesian_impedance_controller_base.h"
-#include <iiwa_tools/iiwa_tools.h>
 #include "pseudo_inversion.h"
 
+void CartesianImpedanceController_base::initialize_parameters(Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_,
+                                                              Eigen::Vector3d &position_d_target_, Eigen::Quaterniond &orientation_d_target_,
+                                                              Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, Eigen::Matrix<double, 6, 6> &cartesian_damping_)
+{
+    this->position_d_ = position_d_;
+    this->orientation_d_ = orientation_d_;
+    this->position_d_target_ = position_d_target_;
+    this->orientation_d_target_ = orientation_d_target_;
 
+    this->cartesian_stiffness_ = cartesian_stiffness_;
+    this->cartesian_damping_ = cartesian_damping_;
+}
 
+void CartesianImpedanceController_base::initialize_parameters(Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_,
+                                                              Eigen::Vector3d &position_d_target_, Eigen::Quaterniond &orientation_d_target_,
+                                                              Eigen::Matrix<double, 7, 1> q_d_nullspace_, Eigen::Matrix<double, 7, 1> q_d_nullspace_target_)
+{
+    this->position_d_ = position_d_;
+    this->orientation_d_ = orientation_d_;
+    this->position_d_target_ = position_d_target_;
+    this->orientation_d_target_ = orientation_d_target_;
+    this->q_d_nullspace_ = q_d_nullspace_;
+    this->q_d_nullspace_target_ = q_d_nullspace_target_;
+}
 
-    bool CartesianImpedanceController_base::get_fk(const Eigen::Matrix<double, 7, 1> &q, Eigen::Vector3d &translation, Eigen::Quaterniond &orientation)
-    {
-        iiwa_tools::RobotState robot_state;
-        robot_state.position = q;
-
-        iiwa_tools::EefState ee_state = _tools.perform_fk(robot_state);
-        translation = ee_state.translation;
-        orientation = ee_state.orientation;
-        return true;
-    }
-
-    bool CartesianImpedanceController_base::get_jacobian(const Eigen::Matrix<double, 7, 1> &q, const Eigen::Matrix<double, 7, 1> &dq, Eigen::Matrix<double, 6, 7> &jacobian)
-  {
-    iiwa_tools::RobotState robot_state;
-    robot_state.position = q;
-    robot_state.velocity = dq;
-
-    jacobian = _tools.jacobian(robot_state);
-    jacobian = jacobian_perm_ * jacobian;
-    return true;
-  }
-
- bool CartesianImpedanceController_base::getStates( Eigen::Matrix<double, 7, 1> &q,  Eigen::Matrix<double, 7, 1> &dq, Eigen::Matrix<double, 7, 1> &q_interface,  Eigen::Matrix<double, 7, 1> &dq_interface)
- {
+bool CartesianImpedanceController_base::getStates(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq, Eigen::Matrix<double, 7, 1> &q_interface, Eigen::Matrix<double, 7, 1> &dq_interface)
+{
     //get from DART : q_interface, dq_interface and put them in q resp. dq
-    //
-        for (size_t i = 0; i < 7; ++i)
-    {
-      q[i] =  q_interface[i];//initial position dart;
-      dq[i] = dq_interface[i];//initial velocity dart;
-    }
-     return true;
- }
+    q = q_interface;
+    dq = dq_interface;
+    return true;
+}
 
- Eigen::Matrix<double, 7, 1> CartesianImpedanceController_base::saturateTorqueRate(
-      const Eigen::Matrix<double, 7, 1> &tau_d_calculated,
-      const Eigen::Matrix<double, 7, 1> &tau_J_d)
-  { // NOLINT (readability-identifier-naming)
+Eigen::Matrix<double, 7, 1> CartesianImpedanceController_base::saturateTorqueRate(
+    const Eigen::Matrix<double, 7, 1> &tau_d_calculated,
+    const Eigen::Matrix<double, 7, 1> &tau_J_d)
+{ // NOLINT (readability-identifier-naming)
     Eigen::Matrix<double, 7, 1> tau_d_saturated{};
     for (size_t i = 0; i < 7; i++)
     {
-      double difference = tau_d_calculated[i] - tau_J_d[i];
-      tau_d_saturated[i] =
-          tau_J_d[i] + std::max(std::min(difference, delta_tau_max_), -delta_tau_max_);
+        double difference = tau_d_calculated[i] - tau_J_d[i];
+        tau_d_saturated[i] =
+            tau_J_d[i] + std::max(std::min(difference, delta_tau_max_), -delta_tau_max_);
     }
     return tau_d_saturated;
-  }
+}
 
-bool CartesianImpedanceController_base::updateControl(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq, Eigen::Matrix<double, 7, 1> &q_interface, Eigen::Matrix<double, 7, 1> &dq_interface, Eigen::VectorXd &tau_d,Eigen::Matrix<double, 6, 1> &error){
-    
-    getStates(q,dq,q_interface,dq_interface);
-    Eigen::Matrix<double, 6, 7> jacobian;
-    get_jacobian(q, dq, jacobian);
-
-    // get forward kinematics
-    Eigen::Vector3d position;
-    Eigen::Quaterniond orientation;
-    get_fk(q, position, orientation);
-
-
-// compute error to desired pose
+bool CartesianImpedanceController_base::updateControl(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq,
+                                                      Eigen::Vector3d &position, Eigen::Quaterniond &orientation,
+                                                      Eigen::Matrix<double, 6, 7> &jacobian, Eigen::VectorXd &tau_d, Eigen::Matrix<double, 6, 1> &error)
+{
+    // compute error to desired pose
     // position error
-    
+
     error.head(3) << position - position_d_;
-    //tf::vectorEigenToTF(Eigen::Vector3d(error.head(3)), tf_pos_);
-    //tf_br_transform_.setOrigin(tf_pos_);
 
     // orientation error
     if (orientation_d_.coeffs().dot(orientation.coeffs()) < 0.0)
     {
-      orientation.coeffs() << -orientation.coeffs();
+        orientation.coeffs() << -orientation.coeffs();
     }
     // "difference" quaternion
     Eigen::Quaterniond error_quaternion(orientation * orientation_d_.inverse());
@@ -106,12 +91,16 @@ bool CartesianImpedanceController_base::updateControl(Eigen::Matrix<double, 7, 1
     // Saturate torque rate to avoid discontinuities
     tau_d << saturateTorqueRate(tau_d, tau_J_d_);
 
-
     return true;
 }
 
- void CartesianImpedanceController_base::update_parameters()
-  {
+void CartesianImpedanceController_base::update_parameters(double filter_params_, double &nullspace_stiffness_,
+                                                          double nullspace_stiffness_target_, const double delta_tau_max_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_,
+                                                          Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_damping_,
+                                                          Eigen::Matrix<double, 6, 6> cartesian_damping_target_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_,
+                                                          Eigen::Matrix<double, 7, 1> q_d_nullspace_target_, Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_,
+                                                          Eigen::Vector3d position_d_target_, Eigen::Quaterniond orientation_d_target_)
+{
     cartesian_stiffness_ =
         filter_params_ * cartesian_stiffness_target_ + (1.0 - filter_params_) * cartesian_stiffness_;
     cartesian_damping_ =
@@ -121,12 +110,11 @@ bool CartesianImpedanceController_base::updateControl(Eigen::Matrix<double, 7, 1
     position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
     q_d_nullspace_ = filter_params_ * q_d_nullspace_target_ + (1.0 - filter_params_) * q_d_nullspace_;
     orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
-    
-  }
 
-    void publish()
-    {
-        //publish in DART?
-    }
-
-
+    this->cartesian_stiffness_ = cartesian_stiffness_;
+    this->cartesian_damping_ = cartesian_damping_;
+    this->nullspace_stiffness_ = nullspace_stiffness_;
+    this->position_d_ = position_d_;
+    this->q_d_nullspace_ = q_d_nullspace_;
+    this->orientation_d_ = orientation_d_;
+}

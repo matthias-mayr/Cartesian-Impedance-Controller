@@ -30,7 +30,7 @@ namespace bh_control
 
   class CartesianImpedanceController : public controller_interface::Controller<hardware_interface::EffortJointInterface>, public CartesianImpedanceController_base
   {
-    friend class CartesianImpedanceController_base;
+
 
   public:
     bool init(hardware_interface::EffortJointInterface *hw, ros::NodeHandle &node_handle) override;
