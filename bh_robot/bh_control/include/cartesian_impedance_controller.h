@@ -6,7 +6,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-
 #include <controller_interface/controller.h>
 #include <pluginlib/class_list_macros.h>
 #include <dynamic_reconfigure/server.h>
@@ -42,7 +41,6 @@ namespace bh_control
     
      //cartesian_impedance_controller base tools
     CartesianImpedanceController_base base_tools;
-    
     // Saturation
     Eigen::Matrix<double, 7, 1> saturateTorqueRate(
         const Eigen::Matrix<double, 7, 1> &tau_d_calculated,

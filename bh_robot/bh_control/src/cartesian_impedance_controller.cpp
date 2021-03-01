@@ -13,9 +13,6 @@
 
 
 
-
-
-
 namespace bh_control
 {
   bool CartesianImpedanceController::get_fk(const Eigen::Matrix<double, 7, 1> &q, Eigen::Vector3d &translation, Eigen::Quaterniond &orientation)
@@ -129,10 +126,11 @@ namespace bh_control
 
     cartesian_stiffness_.setZero();
     cartesian_damping_.setZero();
+    base_tools.initialize_parameters(filter_params_, nullspace_stiffness_, nullspace_stiffness_target_);
+    base_tools.initialize_parameters(position_d_, orientation_d_,
+                                     position_d_target_, orientation_d_target_, 
+                                     cartesian_stiffness_, cartesian_damping_);
 
-    base_tools.initialize_parameters(position_d_,orientation_d_,
-    position_d_target_,orientation_d_target_,cartesian_stiffness_,cartesian_damping_);
-    
     complianceParamCallback();
     return true;
   }
@@ -148,7 +146,7 @@ namespace bh_control
       q_initial[i] = joint_handles_[i].getPosition();
       dq_initial[i] = joint_handles_[i].getVelocity();
     }
- 
+
     // get end effector pose
     // set equilibrium point to current state
     Eigen::Vector3d tmp_pos;
@@ -164,30 +162,32 @@ namespace bh_control
     // set nullspace equilibrium configuration to initial q
     q_d_nullspace_ = q_initial;
     q_d_nullspace_target_ = q_d_nullspace_;
-    
-  base_tools.initialize_parameters(position_d_,orientation_d_,position_d_target_,orientation_d_target_,q_d_nullspace_,q_d_nullspace_target_);
+
+    base_tools.initialize_parameters(position_d_, orientation_d_, position_d_target_, orientation_d_target_, q_d_nullspace_, q_d_nullspace_target_);
   }
 
   void CartesianImpedanceController::update(const ros::Time & /*time*/,
                                             const ros::Duration & /*period*/)
   {
-    
+
     if (traj_running_)
     {
       trajectoryUpdate();
     }
     // get state variables
-    
+
     Eigen::Matrix<double, 7, 1> q;
     Eigen::Matrix<double, 7, 1> dq;
     Eigen::Matrix<double, 7, 1> q_interface;
     Eigen::Matrix<double, 7, 1> dq_interface;
- 
+
     for (size_t i = 0; i < 7; ++i)
     {
       q_interface[i] = joint_handles_[i].getPosition();
       dq_interface[i] = joint_handles_[i].getVelocity();
     }
+    //put into q and dq
+    base_tools.getStates(q,dq,q_interface,dq_interface);
     //get jacobian
     Eigen::Matrix<double, 6, 7> jacobian;
     get_jacobian(q, dq, jacobian);
@@ -199,19 +199,20 @@ namespace bh_control
 
     Eigen::VectorXd tau_d;
     Eigen::Matrix<double, 6, 1> error;
-  base_tools.updateControl(q,dq,q_interface,dq_interface,position,orientation,tau_d,error);
+
+    base_tools.updateControl(q, dq, position, orientation, jacobian, tau_d, error, delta_tau_max_);
     // compute error to desired pose
     // position error
     tf::vectorEigenToTF(Eigen::Vector3d(error.head(3)), tf_pos_);
     tf_br_transform_.setOrigin(tf_pos_);
-  
+
     for (size_t i = 0; i < 7; ++i)
     {
       joint_handles_[i].setCommand(tau_d(i));
       // saves last desired torque. These values used to came from the panda.
       tau_J_d_[i] = tau_d(i);
     }
-  /*
+    /*
     if (verbose_)
     {
       ROS_INFO_STREAM_THROTTLE(0.1, "\nERROR:\n"
@@ -219,7 +220,7 @@ namespace bh_control
       ROS_INFO_STREAM_THROTTLE(0.1, "\nParameters:\nCartesian Stiffness:\n"
                                         << cartesian_stiffness_ << "\nCartesian damping:\n"
                                         << cartesian_damping_ << "\nNullspace stiffness:\n"
-                                        << nullspace_stiffness_ << "\nq_d_nullspace:\n"
+                                        << nullspace_stiffness_ << "\nq_d_nullspace:\n"  
                                         << q_d_nullspace_);
       ROS_INFO_STREAM_THROTTLE(0.1, "\ntau_task:\n"
                                         << tau_task);
@@ -228,24 +229,16 @@ namespace bh_control
     }
  */
     publish();
-    update_parameters();
-  }
-
-
   // update parameters changed online either through dynamic reconfigure or through the interactive
   // target by filtering
-void CartesianImpedanceController::update_parameters()
-{
-    cartesian_stiffness_ =
-        filter_params_ * cartesian_stiffness_target_ + (1.0 - filter_params_) * cartesian_stiffness_;
-    cartesian_damping_ =
-        filter_params_ * cartesian_damping_target_ + (1.0 - filter_params_) * cartesian_damping_;
-    nullspace_stiffness_ =
-        filter_params_ * nullspace_stiffness_target_ + (1.0 - filter_params_) * nullspace_stiffness_;
-    position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
-    q_d_nullspace_ = filter_params_ * q_d_nullspace_target_ + (1.0 - filter_params_) * q_d_nullspace_;
-    orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
-}
+    base_tools.update_parameters(filter_params_, nullspace_stiffness_,
+                                 nullspace_stiffness_target_, delta_tau_max_, cartesian_stiffness_,
+                                 cartesian_stiffness_target_, cartesian_damping_,
+                                 cartesian_damping_target_, q_d_nullspace_,
+                                 q_d_nullspace_target_, position_d_, orientation_d_,
+                                 position_d_target_, orientation_d_target_);
+  }
+
 
   void CartesianImpedanceController::trajectoryStart(const trajectory_msgs::JointTrajectory &trajectory)
   {
