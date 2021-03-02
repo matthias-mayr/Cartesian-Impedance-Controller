@@ -1,8 +1,8 @@
 <package>
-  <name>bh_control</name>
+  <name>cartesian_impedance_controller</name>
   <version>1.0.0</version>
   <description>
-    Launch files for the Big Helper robot at RVMI. Also utility scripts to install
+    A Cartesian Impedance Controller implementation
   </description>
   <maintainer email="daw@mp.aau.dk">David Wuthier</maintainer>
   <license>BSD</license>

@@ -1,5 +1,0 @@
-<launch>
-  <!-- Base launch file to boot arms with correct tool config -->
-  <param name="/bh/toolName" type="string" value="no_gripper" />
-  <param name="/hh/toolName" type="string" value="wsg" />
-</launch>

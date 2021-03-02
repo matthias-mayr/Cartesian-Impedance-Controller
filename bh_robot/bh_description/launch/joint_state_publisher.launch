@@ -1,6 +1,0 @@
-<launch>
-  <arg name="config" default="$(find bh_description)/config/jsp_config_wsg_gripper.yaml"/>
-  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
-    <rosparam command="load" file="$(arg config)" />
-  </node>
-</launch>

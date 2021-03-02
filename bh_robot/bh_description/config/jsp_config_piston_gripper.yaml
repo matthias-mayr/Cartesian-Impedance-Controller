@@ -1,3 +1,0 @@
-rate: 25
-source_list:
-  ['/bh/joint_states', '/gripper']

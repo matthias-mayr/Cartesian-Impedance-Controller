@@ -11,7 +11,7 @@
 
 #include "pseudo_inversion.h"
 
-namespace bh_control
+namespace cartesian_impendance_controller
 {
   bool CartesianImpedanceController::get_fk(const Eigen::Matrix<double, 7, 1> &q, Eigen::Vector3d &translation, Eigen::Quaterniond &orientation)
   {

@@ -1,5 +1,0 @@
-<library path="lib/libbh_control">
-  <class name="bh_control/CartesianImpedanceController" 
-         type="bh_control::CartesianImpedanceController"           
-         base_class_type="controller_interface::ControllerBase" />
-</library>

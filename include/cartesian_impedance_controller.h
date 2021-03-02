@@ -24,7 +24,7 @@
 
 #include <Eigen/Dense>
 
-namespace bh_control
+namespace cartesian_impendance_controller
 {
 
   class CartesianImpedanceController : public controller_interface::Controller<hardware_interface::EffortJointInterface>, public CartesianImpedanceController_base
@@ -116,6 +116,6 @@ namespace bh_control
     tf::Vector3 tf_pos_;
     tf::Quaternion tf_rot_;
   };
-  PLUGINLIB_EXPORT_CLASS(bh_control::CartesianImpedanceController, controller_interface::ControllerBase);
+  PLUGINLIB_EXPORT_CLASS(cartesian_impendance_controller::CartesianImpedanceController, controller_interface::ControllerBase);
 
 } // namespace franka_example_controllers
