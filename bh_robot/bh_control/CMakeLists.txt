@@ -45,7 +45,7 @@ catkin_package(
 ###########
 ## Build ##
 ###########
-add_library(bh_control src/cartesian_impedance_controller.cpp)
+add_library(bh_control src/cartesian_impedance_controller.cpp src/cartesian_impedance_controller_base.cpp)
 
 # Yes, this is necessary. Otherwise the control plugin crashes.
 if(ENABLE_SIMD)
