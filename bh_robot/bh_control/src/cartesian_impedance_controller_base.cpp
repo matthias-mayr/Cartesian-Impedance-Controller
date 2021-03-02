@@ -1,35 +1,24 @@
 #include "cartesian_impedance_controller_base.h"
 #include "pseudo_inversion.h"
 
-void CartesianImpedanceController_base::initialize_parameters(double &filter_params_,
-double &nullspace_stiffness_, double &nullspace_stiffness_target_)
+void CartesianImpedanceController_base::initialize_parameters(double &filter_params_, double &nullspace_stiffness_,
+                                                              double &nullspace_stiffness_target_, Eigen::Vector3d &position_d_,
+                                                              Eigen::Quaterniond &orientation_d_, Eigen::Vector3d &position_d_target_,
+                                                              Eigen::Quaterniond &orientation_d_target_,
+                                                              Eigen::Matrix<double, 6, 6> &cartesian_stiffness_,
+                                                              Eigen::Matrix<double, 6, 6> &cartesian_damping_,
+                                                              Eigen::Matrix<double, 7, 1> q_d_nullspace_,
+                                                              Eigen::Matrix<double, 7, 1> q_d_nullspace_target_)
 {
-this->filter_params_=filter_params_;
-this->nullspace_stiffness_=nullspace_stiffness_;
-this->nullspace_stiffness_target_=nullspace_stiffness_target_;
-}
-
-void CartesianImpedanceController_base::initialize_parameters(Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_,
-                                                              Eigen::Vector3d &position_d_target_, Eigen::Quaterniond &orientation_d_target_,
-                                                              Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, Eigen::Matrix<double, 6, 6> &cartesian_damping_)
-{
+    this->filter_params_ = filter_params_;
+    this->nullspace_stiffness_ = nullspace_stiffness_;
+    this->nullspace_stiffness_target_ = nullspace_stiffness_target_;
     this->position_d_ = position_d_;
     this->orientation_d_ = orientation_d_;
     this->position_d_target_ = position_d_target_;
     this->orientation_d_target_ = orientation_d_target_;
-
     this->cartesian_stiffness_ = cartesian_stiffness_;
     this->cartesian_damping_ = cartesian_damping_;
-}
-
-void CartesianImpedanceController_base::initialize_parameters(Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_,
-                                                              Eigen::Vector3d &position_d_target_, Eigen::Quaterniond &orientation_d_target_,
-                                                              Eigen::Matrix<double, 7, 1> q_d_nullspace_, Eigen::Matrix<double, 7, 1> q_d_nullspace_target_)
-{
-    this->position_d_ = position_d_;
-    this->orientation_d_ = orientation_d_;
-    this->position_d_target_ = position_d_target_;
-    this->orientation_d_target_ = orientation_d_target_;
     this->q_d_nullspace_ = q_d_nullspace_;
     this->q_d_nullspace_target_ = q_d_nullspace_target_;
 }
@@ -58,7 +47,7 @@ Eigen::Matrix<double, 7, 1> CartesianImpedanceController_base::saturateTorqueRat
 
 bool CartesianImpedanceController_base::updateControl(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq,
                                                       Eigen::Vector3d &position, Eigen::Quaterniond &orientation,
-                                                      Eigen::Matrix<double, 6, 7> &jacobian, Eigen::VectorXd &tau_d, Eigen::Matrix<double, 6, 1> &error,const double delta_tau_max_)
+                                                      Eigen::Matrix<double, 6, 7> &jacobian, Eigen::VectorXd &tau_d, Eigen::Matrix<double, 6, 1> &error, const double delta_tau_max_)
 {
     // compute error to desired pose
     // position error
@@ -97,7 +86,7 @@ bool CartesianImpedanceController_base::updateControl(Eigen::Matrix<double, 7, 1
     // Desired torque. Used to contain coriolis as well
     tau_d << tau_task + tau_nullspace;
     // Saturate torque rate to avoid discontinuities
-    tau_d << saturateTorqueRate(tau_d, tau_J_d_,delta_tau_max_);
+    tau_d << saturateTorqueRate(tau_d, tau_J_d_, delta_tau_max_);
 
     return true;
 }

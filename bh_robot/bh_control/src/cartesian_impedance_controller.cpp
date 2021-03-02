@@ -11,8 +11,6 @@
 
 #include "pseudo_inversion.h"
 
-
-
 namespace bh_control
 {
   bool CartesianImpedanceController::get_fk(const Eigen::Matrix<double, 7, 1> &q, Eigen::Vector3d &translation, Eigen::Quaterniond &orientation)
@@ -126,10 +124,6 @@ namespace bh_control
 
     cartesian_stiffness_.setZero();
     cartesian_damping_.setZero();
-    base_tools.initialize_parameters(filter_params_, nullspace_stiffness_, nullspace_stiffness_target_);
-    base_tools.initialize_parameters(position_d_, orientation_d_,
-                                     position_d_target_, orientation_d_target_, 
-                                     cartesian_stiffness_, cartesian_damping_);
 
     complianceParamCallback();
     return true;
@@ -163,7 +157,11 @@ namespace bh_control
     q_d_nullspace_ = q_initial;
     q_d_nullspace_target_ = q_d_nullspace_;
 
-    base_tools.initialize_parameters(position_d_, orientation_d_, position_d_target_, orientation_d_target_, q_d_nullspace_, q_d_nullspace_target_);
+    base_tools.initialize_parameters(filter_params_,nullspace_stiffness_,nullspace_stiffness_target_,
+     position_d_, orientation_d_, position_d_target_, orientation_d_target_,
+      cartesian_stiffness_, cartesian_stiffness_target_,
+      q_d_nullspace_, q_d_nullspace_target_);
+ 
   }
 
   void CartesianImpedanceController::update(const ros::Time & /*time*/,
@@ -199,7 +197,6 @@ namespace bh_control
 
     Eigen::VectorXd tau_d;
     Eigen::Matrix<double, 6, 1> error;
-
     base_tools.updateControl(q, dq, position, orientation, jacobian, tau_d, error, delta_tau_max_);
     // compute error to desired pose
     // position error

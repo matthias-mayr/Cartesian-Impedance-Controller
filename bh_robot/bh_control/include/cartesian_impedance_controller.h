@@ -41,6 +41,7 @@ namespace bh_control
     
      //cartesian_impedance_controller base tools
     CartesianImpedanceController_base base_tools;
+
     // Saturation
     Eigen::Matrix<double, 7, 1> saturateTorqueRate(
         const Eigen::Matrix<double, 7, 1> &tau_d_calculated,
@@ -56,6 +57,7 @@ namespace bh_control
     double nullspace_stiffness_{20.0};
     double nullspace_stiffness_target_{5.0};
     const double delta_tau_max_{1.0};
+
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_;
     Eigen::Matrix<double, 6, 6> cartesian_damping_;
