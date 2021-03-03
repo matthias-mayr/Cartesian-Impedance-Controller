@@ -47,7 +47,7 @@ Eigen::Matrix<double, 7, 1> CartesianImpedanceController_base::saturateTorqueRat
 
 bool CartesianImpedanceController_base::updateControl(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq,
                                                       Eigen::Vector3d &position, Eigen::Quaterniond &orientation,
-                                                      Eigen::Matrix<double, 6, 7> &jacobian, Eigen::VectorXd &tau_d, Eigen::Matrix<double, 6, 1> &error, const double delta_tau_max_)
+                                                      Eigen::Matrix<double, 6, 7> &jacobian, Eigen::VectorXd &tau_d,Eigen::VectorXd &tau_task,Eigen::VectorXd &tau_nullspace, Eigen::Matrix<double, 6, 1> &error)
 {
     // compute error to desired pose
     // position error
@@ -68,7 +68,7 @@ bool CartesianImpedanceController_base::updateControl(Eigen::Matrix<double, 7, 1
 
     // compute control
     // allocate variables
-    Eigen::VectorXd tau_task(7), tau_nullspace(7);
+   // Eigen::VectorXd tau_task(7), tau_nullspace(7);
     // pseudoinverse for nullspace handling
     // kinematic pseuoinverse
     Eigen::MatrixXd jacobian_transpose_pinv;
@@ -86,7 +86,7 @@ bool CartesianImpedanceController_base::updateControl(Eigen::Matrix<double, 7, 1
     // Desired torque. Used to contain coriolis as well
     tau_d << tau_task + tau_nullspace;
     // Saturate torque rate to avoid discontinuities
-    tau_d << saturateTorqueRate(tau_d, tau_J_d_, delta_tau_max_);
+    //tau_d << saturateTorqueRate(tau_d, tau_J_d_, delta_tau_max_);
 
     return true;
 }

@@ -47,10 +47,10 @@ namespace cartesian_impedance_controller
         const Eigen::Matrix<double, 7, 1> &tau_d_calculated,
         const Eigen::Matrix<double, 7, 1> &tau_J_d); // NOLINT (readability-identifier-naming)
 
-    // void update_parameters();
+    void update_parameters();
     bool get_fk(const Eigen::Matrix<double, 7, 1> &q, Eigen::Vector3d &translation, Eigen::Quaterniond &rotation);
     bool get_jacobian(const Eigen::Matrix<double, 7, 1> &q, const Eigen::Matrix<double, 7, 1> &dq, Eigen::Matrix<double, 6, 7> &jacobian);
-
+  
     std::vector<hardware_interface::JointHandle> joint_handles_;
 
     double filter_params_{0.005};
@@ -70,6 +70,11 @@ namespace cartesian_impedance_controller
     Eigen::Quaterniond orientation_d_;
     Eigen::Vector3d position_d_target_;
     Eigen::Quaterniond orientation_d_target_;
+
+    // the other trajectory
+    ros::Subscriber sub_pose;
+    const geometry_msgs::PoseStampedConstPtr pose_msg;
+  void ee_poseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
 
     // IIWA Tools - this is GPLv3
     iiwa_tools::IiwaTools _tools;

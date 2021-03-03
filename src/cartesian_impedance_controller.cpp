@@ -11,6 +11,8 @@
 
 #include "pseudo_inversion.h"
 
+#include <Eigen/Dense>
+
 namespace cartesian_impedance_controller
 {
   bool CartesianImpedanceController::get_fk(const Eigen::Matrix<double, 7, 1> &q, Eigen::Vector3d &translation, Eigen::Quaterniond &orientation)
@@ -48,7 +50,10 @@ namespace cartesian_impedance_controller
     as_->registerGoalCallback(boost::bind(&CartesianImpedanceController::goalCallback, this));
     as_->registerPreemptCallback(boost::bind(&CartesianImpedanceController::preemptCallback, this));
     as_->start();
-
+    
+    //the other traj generator
+    sub_pose=node_handle.subscribe("publish_pose", 1, &CartesianImpedanceController::ee_poseCallback, this);
+   
     sub_trajectory_ = node_handle.subscribe("command", 1, &CartesianImpedanceController::trajectoryCallback, this);
 
     sub_equilibrium_pose_ = node_handle.subscribe(
@@ -157,23 +162,22 @@ namespace cartesian_impedance_controller
     q_d_nullspace_ = q_initial;
     q_d_nullspace_target_ = q_d_nullspace_;
 
-    base_tools.initialize_parameters(filter_params_,nullspace_stiffness_,nullspace_stiffness_target_,
+      base_tools.initialize_parameters(filter_params_,nullspace_stiffness_,nullspace_stiffness_target_,
      position_d_, orientation_d_, position_d_target_, orientation_d_target_,
       cartesian_stiffness_, cartesian_stiffness_target_,
       q_d_nullspace_, q_d_nullspace_target_);
  
   }
 
-  void CartesianImpedanceController::update(const ros::Time & /*time*/,
-                                            const ros::Duration & /*period*/)
-  {
 
+  void CartesianImpedanceController::update(const ros::Time& /*time*/,
+                                                  const ros::Duration& /*period*/) {
+    
+    
     if (traj_running_)
     {
       trajectoryUpdate();
     }
-    // get state variables
-
     Eigen::Matrix<double, 7, 1> q;
     Eigen::Matrix<double, 7, 1> dq;
     Eigen::Matrix<double, 7, 1> q_interface;
@@ -186,56 +190,93 @@ namespace cartesian_impedance_controller
     }
     //put into q and dq
     base_tools.getStates(q,dq,q_interface,dq_interface);
-    //get jacobian
+
+
     Eigen::Matrix<double, 6, 7> jacobian;
     get_jacobian(q, dq, jacobian);
-
+    
     // get forward kinematics
     Eigen::Vector3d position;
     Eigen::Quaterniond orientation;
     get_fk(q, position, orientation);
 
-    Eigen::VectorXd tau_d;
+
+    // if (verbose_){
+    //   tf::vectorEigenToTF(position, tf_pos_);
+    //   ROS_INFO_STREAM_THROTTLE(0.1, "\nCARTESIAN POSITION:\n" << position);
+    //   tf_br_transform_.setOrigin(tf_pos_);
+    //   tf::quaternionEigenToTF(orientation, tf_rot_);
+    //   tf_br_transform_.setRotation(tf_rot_);
+    //   tf_br_.sendTransform(tf::StampedTransform(tf_br_transform_, ros::Time::now(), "world", "fk_ee"));
+    // }
+    
+    // compute error to desired pose
+    // position error
+   //Eigen::VectorXd tau_d;
+    Eigen::VectorXd tau_d(7), tau_task(7), tau_nullspace(7);
     Eigen::Matrix<double, 6, 1> error;
-    base_tools.updateControl(q, dq, position, orientation, jacobian, tau_d, error, delta_tau_max_);
+    base_tools.updateControl(q, dq, position, orientation, jacobian, tau_d,tau_task,tau_nullspace, error);
+    tau_d << saturateTorqueRate(tau_d, tau_J_d_);
     // compute error to desired pose
     // position error
     tf::vectorEigenToTF(Eigen::Vector3d(error.head(3)), tf_pos_);
     tf_br_transform_.setOrigin(tf_pos_);
 
-    for (size_t i = 0; i < 7; ++i)
-    {
+    for (size_t i = 0; i < 7; ++i) {
       joint_handles_[i].setCommand(tau_d(i));
       // saves last desired torque. These values used to came from the panda.
       tau_J_d_[i] = tau_d(i);
     }
-    /*
-    if (verbose_)
-    {
-      ROS_INFO_STREAM_THROTTLE(0.1, "\nERROR:\n"
-                                        << error);
-      ROS_INFO_STREAM_THROTTLE(0.1, "\nParameters:\nCartesian Stiffness:\n"
-                                        << cartesian_stiffness_ << "\nCartesian damping:\n"
-                                        << cartesian_damping_ << "\nNullspace stiffness:\n"
-                                        << nullspace_stiffness_ << "\nq_d_nullspace:\n"  
-                                        << q_d_nullspace_);
-      ROS_INFO_STREAM_THROTTLE(0.1, "\ntau_task:\n"
-                                        << tau_task);
-      ROS_INFO_STREAM_THROTTLE(0.1, "\ntau_nullspace:\n"
-                                        << tau_nullspace);
+    if (verbose_) {
+      ROS_INFO_STREAM_THROTTLE(0.1, "\nERROR:\n" << error);
+      ROS_INFO_STREAM_THROTTLE(0.1, "\nParameters:\nCartesian Stiffness:\n" << cartesian_stiffness_ <<
+      "\nCartesian damping:\n" << cartesian_damping_ << "\nNullspace stiffness:\n" << nullspace_stiffness_ << "\nq_d_nullspace:\n" << q_d_nullspace_);
+      ROS_INFO_STREAM_THROTTLE(0.1, "\ntau_task:\n" << tau_task);
+      ROS_INFO_STREAM_THROTTLE(0.1, "\ntau_nullspace:\n" << tau_nullspace);
     }
- */
+
     publish();
-  // update parameters changed online either through dynamic reconfigure or through the interactive
-  // target by filtering
     base_tools.update_parameters(filter_params_, nullspace_stiffness_,
                                  nullspace_stiffness_target_, delta_tau_max_, cartesian_stiffness_,
                                  cartesian_stiffness_target_, cartesian_damping_,
                                  cartesian_damping_target_, q_d_nullspace_,
                                  q_d_nullspace_target_, position_d_, orientation_d_,
                                  position_d_target_, orientation_d_target_);
-  }
 
+  }
+   Eigen::Matrix<double, 7, 1> CartesianImpedanceController::saturateTorqueRate(
+      const Eigen::Matrix<double, 7, 1>& tau_d_calculated,
+      const Eigen::Matrix<double, 7, 1>& tau_J_d) {  // NOLINT (readability-identifier-naming)
+    Eigen::Matrix<double, 7, 1> tau_d_saturated{};
+    for (size_t i = 0; i < 7; i++) {
+      double difference = tau_d_calculated[i] - tau_J_d[i];
+      tau_d_saturated[i] =
+          tau_J_d[i] + std::max(std::min(difference, delta_tau_max_), -delta_tau_max_);
+    }
+    return tau_d_saturated;
+  }
+  void CartesianImpedanceController::update_parameters()
+  {
+    cartesian_stiffness_ =
+        filter_params_ * cartesian_stiffness_target_ + (1.0 - filter_params_) * cartesian_stiffness_;
+    cartesian_damping_ =
+        filter_params_ * cartesian_damping_target_ + (1.0 - filter_params_) * cartesian_damping_;
+    nullspace_stiffness_ =
+        filter_params_ * nullspace_stiffness_target_ + (1.0 - filter_params_) * nullspace_stiffness_;
+    position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
+    q_d_nullspace_ = filter_params_ * q_d_nullspace_target_ + (1.0 - filter_params_) * q_d_nullspace_;
+    orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
+  }
+void CartesianImpedanceController::ee_poseCallback(const geometry_msgs::PoseStampedConstPtr &msg){
+position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
+    Eigen::Quaterniond last_orientation_d_target(orientation_d_target_);
+    orientation_d_target_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y,
+        msg->pose.orientation.z, msg->pose.orientation.w;
+    if (last_orientation_d_target.coeffs().dot(orientation_d_target_.coeffs()) < 0.0)
+    {
+      orientation_d_target_.coeffs() << -orientation_d_target_.coeffs();
+    }
+}
 
   void CartesianImpedanceController::trajectoryStart(const trajectory_msgs::JointTrajectory &trajectory)
   {
