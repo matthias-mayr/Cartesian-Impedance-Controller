@@ -52,7 +52,7 @@ namespace cartesian_impedance_controller
     as_->start();
     
     //the other traj generator
-    sub_pose=node_handle.subscribe("publish_pose", 1, &CartesianImpedanceController::ee_poseCallback, this);
+    sub_pose=node_handle.subscribe("target_pose", 1, &CartesianImpedanceController::ee_poseCallback, this);
    
     sub_trajectory_ = node_handle.subscribe("command", 1, &CartesianImpedanceController::trajectoryCallback, this);
 
