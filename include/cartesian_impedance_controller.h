@@ -24,6 +24,9 @@
 
 #include <Eigen/Dense>
 
+#include "cartesian_impedance_controller/impedance_configConfig.h"
+
+
 namespace cartesian_impedance_controller
 {
 
@@ -53,9 +56,12 @@ namespace cartesian_impedance_controller
   
     std::vector<hardware_interface::JointHandle> joint_handles_;
 
-    double filter_params_{0.005};
+    //double filter_params_{0.005};
+    double filter_params_{1};
+
     double nullspace_stiffness_{20.0};
     double nullspace_stiffness_target_{5.0};
+
     const double delta_tau_max_{1.0};
 
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
@@ -74,8 +80,11 @@ namespace cartesian_impedance_controller
     // the other trajectory
     ros::Subscriber sub_pose;
     const geometry_msgs::PoseStampedConstPtr pose_msg;
-  void ee_poseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
+    void ee_poseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
 
+  //change the damping and stiffness in runtime
+    ros::Subscriber sub_parameters;
+    //void sub_parametersCallback(const );
     // IIWA Tools - this is GPLv3
     iiwa_tools::IiwaTools _tools;
     std::string end_effector_;
@@ -86,9 +95,9 @@ namespace cartesian_impedance_controller
     Eigen::PermutationMatrix<Eigen::Dynamic, 6> jacobian_perm_;
 
     // Dynamic reconfigure
-    //   std::unique_ptr<dynamic_reconfigure::Server<franka_example_controllers::compliance_paramConfig>>
-    //       dynamic_server_compliance_param_;
-    //   ros::NodeHandle dynamic_reconfigure_compliance_param_node_;
+  void dynamicConfigCallback(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level);
+   
+    
     void complianceParamCallback();
 
     // Trajectory handling
@@ -120,6 +129,9 @@ namespace cartesian_impedance_controller
     tf::Transform tf_br_transform_;
     tf::Vector3 tf_pos_;
     tf::Quaternion tf_rot_;
+
+
+
   };
   PLUGINLIB_EXPORT_CLASS(cartesian_impedance_controller::CartesianImpedanceController, controller_interface::ControllerBase);
 
