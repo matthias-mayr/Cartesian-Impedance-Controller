@@ -13,6 +13,7 @@
 
 #include <Eigen/Dense>
 #include <cartesian_impedance_controller/impedance_configConfig.h>
+#include <cartesian_impedance_controller/wrench_configConfig.h>
 #include <dynamic_reconfigure/server.h>
 
 namespace cartesian_impedance_controller
@@ -116,12 +117,21 @@ namespace cartesian_impedance_controller
 
     
      //DYNAMIC RECONFIGURE
-    dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig> dynamic_config_server;
-    dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>::CallbackType f;
-    f=boost::bind(&CartesianImpedanceController::dynamicConfigCallback,this,_1,_2);
-    dynamic_config_server.setCallback(f);
     
+    dynamic_reconfigure_compliance_param_node_=ros::NodeHandle("cartesian_impedance_controller_reconfigure");
+    dynamic_server_compliance_param_=std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>>
+    (dynamic_reconfigure_compliance_param_node_);
+    dynamic_server_compliance_param_->setCallback(
+      boost::bind(&CartesianImpedanceController::dynamicConfigCallback,this,_1,_2));
+
     
+    dynamic_reconfigure_wrench_param_node_=ros::NodeHandle("cartesian_wrench_reconfigure");
+    dynamic_server_wrench_param_=std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::wrench_configConfig>>
+    (dynamic_reconfigure_wrench_param_node_);
+    dynamic_server_wrench_param_->setCallback(
+      boost::bind(&CartesianImpedanceController::dynamicWrenchCallback,this,_1,_2));
+
+
 
     // Initialize variables
     position_d_.setZero();
@@ -164,10 +174,7 @@ namespace cartesian_impedance_controller
     q_d_nullspace_ = q_initial;
     q_d_nullspace_target_ = q_d_nullspace_;
 
-    base_tools.initialize_parameters(filter_params_, nullspace_stiffness_, nullspace_stiffness_target_,
-                                     position_d_, orientation_d_, position_d_target_, orientation_d_target_,
-                                     cartesian_stiffness_, cartesian_stiffness_target_,
-                                     q_d_nullspace_, q_d_nullspace_target_);
+
   }
 
   void CartesianImpedanceController::update(const ros::Time & /*time*/,
@@ -372,6 +379,9 @@ cartesian_stiffness_target_.setIdentity();
     nullspace_stiffness_target_ = config.nullspace_stiffness;    
 
   }
+   void CartesianImpedanceController::dynamicWrenchCallback(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level){
+  
+   }
 
   void CartesianImpedanceController::equilibriumPoseCallback(
       const geometry_msgs::PoseStampedConstPtr &msg)

@@ -25,7 +25,7 @@
 #include <Eigen/Dense>
 
 #include "cartesian_impedance_controller/impedance_configConfig.h"
-
+#include "cartesian_impedance_controller/wrench_configConfig.h"
 
 namespace cartesian_impedance_controller
 {
@@ -56,8 +56,8 @@ namespace cartesian_impedance_controller
   
     std::vector<hardware_interface::JointHandle> joint_handles_;
 
-    //double filter_params_{0.005};
-    double filter_params_{1};
+    double filter_params_{0.005};
+    //double filter_params_{1};
 
     double nullspace_stiffness_{20.0};
     double nullspace_stiffness_target_{5.0};
@@ -95,8 +95,15 @@ namespace cartesian_impedance_controller
     Eigen::PermutationMatrix<Eigen::Dynamic, 6> jacobian_perm_;
 
     // Dynamic reconfigure
+    ros::NodeHandle dynamic_reconfigure_compliance_param_node_;
+    std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>> 
+    dynamic_server_compliance_param_;
   void dynamicConfigCallback(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level);
    
+   ros::NodeHandle dynamic_reconfigure_wrench_param_node_;
+   std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::wrench_configConfig>> 
+    dynamic_server_wrench_param_;
+   void dynamicWrenchCallback(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level);
     
     void complianceParamCallback();
 
