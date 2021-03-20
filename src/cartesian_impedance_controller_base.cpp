@@ -106,12 +106,18 @@ void CartesianImpedanceController_base::update_parameters(double filter_params_,
         filter_params_ * nullspace_stiffness_target_ + (1.0 - filter_params_) * nullspace_stiffness_;
     position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
     q_d_nullspace_ = filter_params_ * q_d_nullspace_target_ + (1.0 - filter_params_) * q_d_nullspace_;
-    orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
-
+   
+     orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
+     
+    this->filter_params_ = filter_params_;
+    this->nullspace_stiffness_ = nullspace_stiffness_;
+    this->nullspace_stiffness_target_ = nullspace_stiffness_target_;
+    this->position_d_ = position_d_;
+    this->orientation_d_ = orientation_d_;
+    this->position_d_target_ = position_d_target_;
+    this->orientation_d_target_ = orientation_d_target_;
     this->cartesian_stiffness_ = cartesian_stiffness_;
     this->cartesian_damping_ = cartesian_damping_;
-    this->nullspace_stiffness_ = nullspace_stiffness_;
-    this->position_d_ = position_d_;
     this->q_d_nullspace_ = q_d_nullspace_;
-    this->orientation_d_ = orientation_d_;
+    this->q_d_nullspace_target_ = q_d_nullspace_target_;
 }
