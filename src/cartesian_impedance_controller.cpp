@@ -116,12 +116,11 @@ namespace cartesian_impedance_controller
 
     
      //DYNAMIC RECONFIGURE
-    dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig> dynamic_config_server;
-    dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>::CallbackType f;
-    f=boost::bind(&CartesianImpedanceController::dynamicConfigCallback,this,_1,_2);
-    dynamic_config_server.setCallback(f);
-    
-    
+    dynamic_reconfigure_compliance_param_node_=ros::NodeHandle("cartesian_impedance_controller_reconfigure");
+    dynamic_server_compliance_param_=std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>>
+    (dynamic_reconfigure_compliance_param_node_);
+    dynamic_server_compliance_param_->setCallback(
+      boost::bind(&CartesianImpedanceController::dynamicConfigCallback,this,_1,_2));
 
     // Initialize variables
     position_d_.setZero();
