@@ -26,6 +26,7 @@
 
 #include "cartesian_impedance_controller/impedance_configConfig.h"
 #include "cartesian_impedance_controller/wrench_configConfig.h"
+#include "ros_logger/ros_logger.h"
 
 namespace cartesian_impedance_controller
 {
@@ -57,7 +58,7 @@ namespace cartesian_impedance_controller
     std::vector<hardware_interface::JointHandle> joint_handles_;
 
     double filter_params_{0.005};
-    //double filter_params_{1};
+
 
     double nullspace_stiffness_{20.0};
     double nullspace_stiffness_target_{5.0};
@@ -82,9 +83,20 @@ namespace cartesian_impedance_controller
     const geometry_msgs::PoseStampedConstPtr pose_msg;
     void ee_poseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
 
-  //change the damping and stiffness in runtime
-    ros::Subscriber sub_parameters;
-    //void sub_parametersCallback(const );
+    //for logging data
+    //------------------------------------------------------------------------
+    ros::Subscriber latest_request_subscriber;
+    void latest_requestCallback(const geometry_msgs::PoseStampedConstPtr &msg);
+    Logger logger;
+    const char* path{"/home/oussama/catkin_ws/src/cartesian_trajectory_generator/generated_logs"};
+    bool is_new_request{false};
+    geometry_msgs::PoseStamped latest_poseStamped_request;
+    double distance_to_goal{-1};
+    bool begin_log{false};
+    std::vector<geometry_msgs::PoseStamped> pose_trajectory;
+     Eigen::Vector3d position_new_request;
+    //------------------------------------------------------------------------
+
     // IIWA Tools - this is GPLv3
     iiwa_tools::IiwaTools _tools;
     std::string end_effector_;

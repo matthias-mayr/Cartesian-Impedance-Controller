@@ -2,19 +2,21 @@
 #include "cartesian_impedance_controller_base.h"
 #include <cmath>
 #include <memory>
-//#include <iostream>
+
 #include <controller_interface/controller_base.h>
 #include <ros/ros.h>
 #include <eigen_conversions/eigen_msg.h>
 #include <tf_conversions/tf_eigen.h>
 #include <iiwa_tools/iiwa_tools.h>
-#include<dynamic_reconfigure/server.h>
+#include <dynamic_reconfigure/server.h>
 #include "pseudo_inversion.h"
 
 #include <Eigen/Dense>
 #include <cartesian_impedance_controller/impedance_configConfig.h>
 #include <cartesian_impedance_controller/wrench_configConfig.h>
 #include <dynamic_reconfigure/server.h>
+
+#include "ros_logger/ros_logger.h"
 
 namespace cartesian_impedance_controller
 {
@@ -57,9 +59,16 @@ namespace cartesian_impedance_controller
 
     //the other traj generator
     sub_pose = node_handle.subscribe("target_pose", 1, &CartesianImpedanceController::ee_poseCallback, this);
-    
-    sub_trajectory_ = node_handle.subscribe("command", 1, &CartesianImpedanceController::trajectoryCallback, this);
 
+    //for logging data
+    //-----------------------------------------------------------------------------------------------------------------------------
+    latest_request_subscriber = node_handle.subscribe("latest_request", 1, &CartesianImpedanceController::latest_requestCallback, this);
+    logger.set_preferences(",", 1, 1); //separator, print first line, overwrite
+    logger.log_to(path, "real_trajectory.txt");
+
+    //-----------------------------------------------------------------------------------------------------------------------------
+
+    sub_trajectory_ = node_handle.subscribe("command", 1, &CartesianImpedanceController::trajectoryCallback, this);
     sub_equilibrium_pose_ = node_handle.subscribe(
         "equilibrium_pose", 20, &CartesianImpedanceController::equilibriumPoseCallback, this,
         ros::TransportHints().reliable().tcpNoDelay());
@@ -115,23 +124,20 @@ namespace cartesian_impedance_controller
     pub_torques_.msg_.layout.dim[0].stride = 0;
     pub_torques_.msg_.data.resize(n_joints_);
 
-    
-     //DYNAMIC RECONFIGURE
-    
-    dynamic_reconfigure_compliance_param_node_=ros::NodeHandle("cartesian_impedance_controller_reconfigure");
-    dynamic_server_compliance_param_=std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>>
-    (dynamic_reconfigure_compliance_param_node_);
+    //DYNAMIC RECONFIGURE
+    //-------------------------------------------------------------------------------------------------------------------------------------
+
+    dynamic_reconfigure_compliance_param_node_ = ros::NodeHandle("cartesian_impedance_controller_reconfigure");
+    dynamic_server_compliance_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>>(dynamic_reconfigure_compliance_param_node_);
     dynamic_server_compliance_param_->setCallback(
-      boost::bind(&CartesianImpedanceController::dynamicConfigCallback,this,_1,_2));
+        boost::bind(&CartesianImpedanceController::dynamicConfigCallback, this, _1, _2));
 
-    
-    dynamic_reconfigure_wrench_param_node_=ros::NodeHandle("cartesian_wrench_reconfigure");
-    dynamic_server_wrench_param_=std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::wrench_configConfig>>
-    (dynamic_reconfigure_wrench_param_node_);
+    dynamic_reconfigure_wrench_param_node_ = ros::NodeHandle("cartesian_wrench_reconfigure");
+    dynamic_server_wrench_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::wrench_configConfig>>(dynamic_reconfigure_wrench_param_node_);
     dynamic_server_wrench_param_->setCallback(
-      boost::bind(&CartesianImpedanceController::dynamicWrenchCallback,this,_1,_2));
+        boost::bind(&CartesianImpedanceController::dynamicWrenchCallback, this, _1, _2));
 
-
+    //-------------------------------------------------------------------------------------------------------------------------------------
 
     // Initialize variables
     position_d_.setZero();
@@ -173,8 +179,6 @@ namespace cartesian_impedance_controller
     // set nullspace equilibrium configuration to initial q
     q_d_nullspace_ = q_initial;
     q_d_nullspace_target_ = q_d_nullspace_;
-
-
   }
 
   void CartesianImpedanceController::update(const ros::Time & /*time*/,
@@ -189,6 +193,43 @@ namespace cartesian_impedance_controller
     Eigen::Matrix<double, 7, 1> q_interface;
     Eigen::Matrix<double, 7, 1> dq_interface;
 
+    //for logging data
+    //------------------------------------------------------------------------
+    if (is_new_request)
+    {
+      ROS_INFO("Recieved a new request from node \"cartesian_trajectory_generator_ros\"");
+      begin_log = true;
+      is_new_request = false;
+    }
+    //start exporting data
+    if (begin_log)
+    {
+      //precision 0.1mm
+      if (distance_to_goal > 0.001)
+      {
+        distance_to_goal = (position_new_request - position_d_).norm();
+        geometry_msgs::PoseStamped current_pose;
+        current_pose.header.stamp = ros::Time::now();
+        current_pose.pose.position.x = position_d_[0];
+        current_pose.pose.position.y = position_d_[1];
+        current_pose.pose.position.z = position_d_[2];
+        current_pose.pose.orientation.x = orientation_d_.coeffs()[0];
+        current_pose.pose.orientation.y = orientation_d_.coeffs()[1];
+        current_pose.pose.orientation.z = orientation_d_.coeffs()[2];
+        current_pose.pose.orientation.w = orientation_d_.coeffs()[3];
+        pose_trajectory.push_back(current_pose);
+      }
+      else
+      {
+        if(logger.log_push_all(pose_trajectory)){
+          ROS_INFO("Trajectory saved");
+            }else{
+          ROS_ERROR("Failed to save trajectory");
+            }
+        begin_log = false;
+      }
+    }
+    //------------------------------------------------------------------------
     for (size_t i = 0; i < 7; ++i)
     {
       q_interface[i] = joint_handles_[i].getPosition();
@@ -245,17 +286,15 @@ namespace cartesian_impedance_controller
       ROS_INFO_STREAM_THROTTLE(0.1, "\ntau_nullspace:\n"
                                         << tau_nullspace);
     }
-    
+
     publish();
-    
+
     base_tools.update_parameters(filter_params_, nullspace_stiffness_,
                                  nullspace_stiffness_target_, delta_tau_max_, cartesian_stiffness_,
                                  cartesian_stiffness_target_, cartesian_damping_,
                                  cartesian_damping_target_, q_d_nullspace_,
                                  q_d_nullspace_target_, position_d_, orientation_d_,
                                  position_d_target_, orientation_d_target_);
-    
-  
   }
   Eigen::Matrix<double, 7, 1> CartesianImpedanceController::saturateTorqueRate(
       const Eigen::Matrix<double, 7, 1> &tau_d_calculated,
@@ -282,7 +321,25 @@ namespace cartesian_impedance_controller
       orientation_d_target_.coeffs() << -orientation_d_target_.coeffs();
     }
   }
+  //for logging data
+  //------------------------------------------------------------------------------------------------------
+  void CartesianImpedanceController::latest_requestCallback(const geometry_msgs::PoseStampedConstPtr &msg)
+  {
 
+    latest_poseStamped_request.pose.position.x = msg->pose.position.x;
+    latest_poseStamped_request.pose.position.y = msg->pose.position.y;
+    latest_poseStamped_request.pose.position.z = msg->pose.position.z;
+    latest_poseStamped_request.pose.orientation.x = msg->pose.orientation.x;
+    latest_poseStamped_request.pose.orientation.y = msg->pose.orientation.y;
+    latest_poseStamped_request.pose.orientation.z = msg->pose.orientation.z;
+    latest_poseStamped_request.pose.orientation.w = msg->pose.orientation.w;
+
+    position_new_request << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
+    distance_to_goal = (position_new_request - position_d_).norm();
+
+    is_new_request = true;
+  }
+  //------------------------------------------------------------------------------------------------------
   void CartesianImpedanceController::trajectoryStart(const trajectory_msgs::JointTrajectory &trajectory)
   {
     traj_duration_ = trajectory.points[trajectory.points.size() - 1].time_from_start;
@@ -324,7 +381,8 @@ namespace cartesian_impedance_controller
     }
   }
 
-   void CartesianImpedanceController::complianceParamCallback() {
+  void CartesianImpedanceController::complianceParamCallback()
+  {
     // Default values of the panda parameters
     double translational_stiffness = 200;
     double rotational_stiffness = 100;
@@ -342,7 +400,6 @@ namespace cartesian_impedance_controller
         << 2.0 * sqrt(rotational_stiffness) * Eigen::Matrix3d::Identity();
     nullspace_stiffness_target_ = nullspace_stiffness;
   }
-
 
   void CartesianImpedanceController::goalCallback()
   {
@@ -362,10 +419,10 @@ namespace cartesian_impedance_controller
     trajectoryStart(*msg);
   }
 
+  void CartesianImpedanceController::dynamicConfigCallback(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level)
+  {
 
-  void CartesianImpedanceController::dynamicConfigCallback(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level){
- 
-cartesian_stiffness_target_.setIdentity();
+    cartesian_stiffness_target_.setIdentity();
     cartesian_stiffness_target_.topLeftCorner(3, 3)
         << config.translational_stiffness * Eigen::Matrix3d::Identity();
     cartesian_stiffness_target_.bottomRightCorner(3, 3)
@@ -376,12 +433,11 @@ cartesian_stiffness_target_.setIdentity();
         << 2.0 * sqrt(config.translational_stiffness) * Eigen::Matrix3d::Identity();
     cartesian_damping_target_.bottomRightCorner(3, 3)
         << 2.0 * sqrt(config.rotational_stiffness) * Eigen::Matrix3d::Identity();
-    nullspace_stiffness_target_ = config.nullspace_stiffness;    
-
+    nullspace_stiffness_target_ = config.nullspace_stiffness;
   }
-   void CartesianImpedanceController::dynamicWrenchCallback(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level){
-  
-   }
+  void CartesianImpedanceController::dynamicWrenchCallback(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level)
+  {
+  }
 
   void CartesianImpedanceController::equilibriumPoseCallback(
       const geometry_msgs::PoseStampedConstPtr &msg)

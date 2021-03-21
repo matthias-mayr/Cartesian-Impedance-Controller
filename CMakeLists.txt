@@ -33,6 +33,7 @@ find_package(catkin REQUIRED COMPONENTS
   control_msgs
   message_generation
   dynamic_reconfigure
+  ros_logger
 )
 
 add_message_files(FILES
