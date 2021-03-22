@@ -1,29 +1,9 @@
 #include "cartesian_impedance_controller_base.h"
 #include "pseudo_inversion.h"
 
-void CartesianImpedanceController_base::initialize_parameters(double &filter_params_, double &nullspace_stiffness_,
-                                                              double &nullspace_stiffness_target_, Eigen::Vector3d &position_d_,
-                                                              Eigen::Quaterniond &orientation_d_, Eigen::Vector3d &position_d_target_,
-                                                              Eigen::Quaterniond &orientation_d_target_,
-                                                              Eigen::Matrix<double, 6, 6> &cartesian_stiffness_,
-                                                              Eigen::Matrix<double, 6, 6> &cartesian_damping_,
-                                                              Eigen::Matrix<double, 7, 1> q_d_nullspace_,
-                                                              Eigen::Matrix<double, 7, 1> q_d_nullspace_target_)
-{
-    this->filter_params_ = filter_params_;
-    this->nullspace_stiffness_ = nullspace_stiffness_;
-    this->nullspace_stiffness_target_ = nullspace_stiffness_target_;
-    this->position_d_ = position_d_;
-    this->orientation_d_ = orientation_d_;
-    this->position_d_target_ = position_d_target_;
-    this->orientation_d_target_ = orientation_d_target_;
-    this->cartesian_stiffness_ = cartesian_stiffness_;
-    this->cartesian_damping_ = cartesian_damping_;
-    this->q_d_nullspace_ = q_d_nullspace_;
-    this->q_d_nullspace_target_ = q_d_nullspace_target_;
-}
 
-bool CartesianImpedanceController_base::getStates(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq, Eigen::Matrix<double, 7, 1> &q_interface, Eigen::Matrix<double, 7, 1> &dq_interface)
+
+bool CartesianImpedanceController_base::get_states(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq, Eigen::Matrix<double, 7, 1> &q_interface, Eigen::Matrix<double, 7, 1> &dq_interface)
 {
     //get from DART : q_interface, dq_interface and put them in q resp. dq
     q = q_interface;
@@ -45,9 +25,9 @@ Eigen::Matrix<double, 7, 1> CartesianImpedanceController_base::saturateTorqueRat
     return tau_d_saturated;
 }
 
-bool CartesianImpedanceController_base::updateControl(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq,
+bool CartesianImpedanceController_base::update_control(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq,
                                                       Eigen::Vector3d &position, Eigen::Quaterniond &orientation,
-                                                      Eigen::Matrix<double, 6, 7> &jacobian, Eigen::VectorXd &tau_d,Eigen::VectorXd &tau_task,Eigen::VectorXd &tau_nullspace, Eigen::Matrix<double, 6, 1> &error)
+                                                      Eigen::Matrix<double, 6, 7> &jacobian, Eigen::VectorXd &tau_d,Eigen::VectorXd &tau_task,Eigen::VectorXd &tau_nullspace,Eigen::VectorXd &tau_wrench, Eigen::Matrix<double, 6, 1> &error)
 {
     // compute error to desired pose
     // position error
@@ -84,7 +64,7 @@ bool CartesianImpedanceController_base::updateControl(Eigen::Matrix<double, 7, 1
                           (2.0 * sqrt(nullspace_stiffness_)) * dq);
 
     // Desired torque. Used to contain coriolis as well
-    tau_d << tau_task + tau_nullspace;
+    tau_d << tau_task + tau_nullspace+tau_wrench;
     // Saturate torque rate to avoid discontinuities
     //tau_d << saturateTorqueRate(tau_d, tau_J_d_, delta_tau_max_);
 

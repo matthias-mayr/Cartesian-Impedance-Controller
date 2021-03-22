@@ -78,7 +78,7 @@ namespace cartesian_impedance_controller
     Eigen::Vector3d position_d_target_;
     Eigen::Quaterniond orientation_d_target_;
 
-    // the other trajectory
+    // the  trajectory generator
     ros::Subscriber sub_pose;
     const geometry_msgs::PoseStampedConstPtr pose_msg;
     void ee_poseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
@@ -96,6 +96,11 @@ namespace cartesian_impedance_controller
     std::vector<geometry_msgs::PoseStamped> pose_trajectory;
      Eigen::Vector3d position_new_request;
     //------------------------------------------------------------------------
+
+    //for simulating a wrench
+    bool apply_wrench{false};
+    Eigen::MatrixXd f;
+    
 
     // IIWA Tools - this is GPLv3
     iiwa_tools::IiwaTools _tools;
@@ -117,6 +122,8 @@ namespace cartesian_impedance_controller
     dynamic_server_wrench_param_;
    void dynamicWrenchCallback(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level);
     
+
+    //compliance parameters
     void complianceParamCallback();
 
     // Trajectory handling

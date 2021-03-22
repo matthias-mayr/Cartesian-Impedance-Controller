@@ -195,12 +195,7 @@ namespace cartesian_impedance_controller
 
     //for logging data
     //------------------------------------------------------------------------
-    if (is_new_request)
-    {
-      ROS_INFO("Recieved a new request from node \"cartesian_trajectory_generator_ros\"");
-      begin_log = true;
-      is_new_request = false;
-    }
+
     //start exporting data
     if (begin_log)
     {
@@ -222,12 +217,21 @@ namespace cartesian_impedance_controller
       else
       {
         if(logger.log_push_all(pose_trajectory)){
+          ROS_INFO("Trajectory successfully executed.");
           ROS_INFO("Trajectory saved");
             }else{
           ROS_ERROR("Failed to save trajectory");
             }
         begin_log = false;
+        pose_trajectory.clear();
       }
+    }
+
+        if (is_new_request && !begin_log)
+    {
+      ROS_INFO("Recieved a new request from node \"cartesian_trajectory_generator_ros\"");
+      begin_log = true;
+      is_new_request = false;
     }
     //------------------------------------------------------------------------
     for (size_t i = 0; i < 7; ++i)
@@ -236,7 +240,7 @@ namespace cartesian_impedance_controller
       dq_interface[i] = joint_handles_[i].getVelocity();
     }
     //put into q and dq
-    base_tools.getStates(q, dq, q_interface, dq_interface);
+    base_tools.get_states(q, dq, q_interface, dq_interface);
 
     Eigen::Matrix<double, 6, 7> jacobian;
     get_jacobian(q, dq, jacobian);
@@ -257,9 +261,20 @@ namespace cartesian_impedance_controller
 
     // compute error to desired pose
     // position error
-    Eigen::VectorXd tau_d(7), tau_task(7), tau_nullspace(7);
+    Eigen::VectorXd tau_d(7), tau_task(7), tau_nullspace(7),tau_wrench(7);
     Eigen::Matrix<double, 6, 1> error;
-    base_tools.updateControl(q, dq, position, orientation, jacobian, tau_d, tau_task, tau_nullspace, error);
+
+    //applying wrench through dynamic parameters
+    if(apply_wrench){
+      tau_wrench << jacobian.transpose()*f;
+    }else{
+     for(int i=0;i<7;i++){
+       tau_wrench(i)=0;
+     }
+    }
+    
+
+    base_tools.update_control(q, dq, position, orientation, jacobian, tau_d, tau_task, tau_nullspace,tau_wrench, error);
     tau_d << saturateTorqueRate(tau_d, tau_J_d_);
     // compute error to desired pose
     // position error
@@ -418,7 +433,8 @@ namespace cartesian_impedance_controller
     ROS_INFO("Got trajectory msg");
     trajectoryStart(*msg);
   }
-
+  //Dynamic reconfigure
+  //--------------------------------------------------------------------------------------------------------------------------------------
   void CartesianImpedanceController::dynamicConfigCallback(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level)
   {
 
@@ -435,10 +451,17 @@ namespace cartesian_impedance_controller
         << 2.0 * sqrt(config.rotational_stiffness) * Eigen::Matrix3d::Identity();
     nullspace_stiffness_target_ = config.nullspace_stiffness;
   }
+
   void CartesianImpedanceController::dynamicWrenchCallback(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level)
   {
-  }
+    Eigen::MatrixXd temp(6,1);
+    temp << config.f_x ,config.f_y,config.f_z,config.tau_x,config.tau_y,config.tau_z;
+    f.resizeLike(temp);
+    f << temp;
+    apply_wrench=config.apply_wrench;
 
+  }
+  //--------------------------------------------------------------------------------------------------------------------------------------
   void CartesianImpedanceController::equilibriumPoseCallback(
       const geometry_msgs::PoseStampedConstPtr &msg)
   {
