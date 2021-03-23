@@ -4,6 +4,21 @@
         "/opt/ros/melodic/lib/python2.7/dist-packages"
     ],
     "files.associations": {
-        "core": "cpp"
+        "core": "cpp",
+        "*.tcc": "cpp",
+        "deque": "cpp",
+        "list": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp",
+        "vector": "cpp",
+        "hash_map": "cpp",
+        "hash_set": "cpp",
+        "system_error": "cpp",
+        "mixinvector": "cpp",
+        "polytope": "cpp",
+        "buffered_value": "cpp",
+        "fast_back_stack": "cpp",
+        "sstream": "cpp"
     }
 }

@@ -49,6 +49,7 @@ generate_messages(
 generate_dynamic_reconfigure_options(
   cfg/impedance_config.cfg
   cfg/wrench_config.cfg
+  cfg/log_config.cfg
 )
 
 catkin_package(

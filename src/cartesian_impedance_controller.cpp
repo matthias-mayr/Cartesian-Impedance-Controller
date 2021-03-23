@@ -14,6 +14,7 @@
 #include <Eigen/Dense>
 #include <cartesian_impedance_controller/impedance_configConfig.h>
 #include <cartesian_impedance_controller/wrench_configConfig.h>
+#include "cartesian_impedance_controller/log_configConfig.h"
 #include <dynamic_reconfigure/server.h>
 
 #include "ros_logger/ros_logger.h"
@@ -63,9 +64,6 @@ namespace cartesian_impedance_controller
     //for logging data
     //-----------------------------------------------------------------------------------------------------------------------------
     latest_request_subscriber = node_handle.subscribe("latest_request", 1, &CartesianImpedanceController::latest_requestCallback, this);
-    logger.set_preferences(",", 1, 1); //separator, print first line, overwrite
-    logger.log_to(path, "real_trajectory.txt");
-
     //-----------------------------------------------------------------------------------------------------------------------------
 
     sub_trajectory_ = node_handle.subscribe("command", 1, &CartesianImpedanceController::trajectoryCallback, this);
@@ -126,17 +124,21 @@ namespace cartesian_impedance_controller
 
     //DYNAMIC RECONFIGURE
     //-------------------------------------------------------------------------------------------------------------------------------------
-
+    //change stiffness
     dynamic_reconfigure_compliance_param_node_ = ros::NodeHandle("cartesian_impedance_controller_reconfigure");
     dynamic_server_compliance_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>>(dynamic_reconfigure_compliance_param_node_);
     dynamic_server_compliance_param_->setCallback(
         boost::bind(&CartesianImpedanceController::dynamicConfigCallback, this, _1, _2));
-
+    //apply a wrench at TCP
     dynamic_reconfigure_wrench_param_node_ = ros::NodeHandle("cartesian_wrench_reconfigure");
     dynamic_server_wrench_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::wrench_configConfig>>(dynamic_reconfigure_wrench_param_node_);
     dynamic_server_wrench_param_->setCallback(
         boost::bind(&CartesianImpedanceController::dynamicWrenchCallback, this, _1, _2));
-
+    //log data
+    dynamic_log_node_ = ros::NodeHandle("log_reconfigure");
+    dynamic_server_log_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::log_configConfig>>(dynamic_log_node_);
+    dynamic_server_log_->setCallback(
+        boost::bind(&CartesianImpedanceController::logCallback, this, _1, _2));
     //-------------------------------------------------------------------------------------------------------------------------------------
 
     // Initialize variables
@@ -193,47 +195,6 @@ namespace cartesian_impedance_controller
     Eigen::Matrix<double, 7, 1> q_interface;
     Eigen::Matrix<double, 7, 1> dq_interface;
 
-    //for logging data
-    //------------------------------------------------------------------------
-
-    //start exporting data
-    if (begin_log)
-    {
-      //precision 0.1mm
-      if (distance_to_goal > 0.001)
-      {
-        distance_to_goal = (position_new_request - position_d_).norm();
-        geometry_msgs::PoseStamped current_pose;
-        current_pose.header.stamp = ros::Time::now();
-        current_pose.pose.position.x = position_d_[0];
-        current_pose.pose.position.y = position_d_[1];
-        current_pose.pose.position.z = position_d_[2];
-        current_pose.pose.orientation.x = orientation_d_.coeffs()[0];
-        current_pose.pose.orientation.y = orientation_d_.coeffs()[1];
-        current_pose.pose.orientation.z = orientation_d_.coeffs()[2];
-        current_pose.pose.orientation.w = orientation_d_.coeffs()[3];
-        pose_trajectory.push_back(current_pose);
-      }
-      else
-      {
-        if(logger.log_push_all(pose_trajectory)){
-          ROS_INFO("Trajectory successfully executed.");
-          ROS_INFO("Trajectory saved");
-            }else{
-          ROS_ERROR("Failed to save trajectory");
-            }
-        begin_log = false;
-        pose_trajectory.clear();
-      }
-    }
-
-        if (is_new_request && !begin_log)
-    {
-      ROS_INFO("Recieved a new request from node \"cartesian_trajectory_generator_ros\"");
-      begin_log = true;
-      is_new_request = false;
-    }
-    //------------------------------------------------------------------------
     for (size_t i = 0; i < 7; ++i)
     {
       q_interface[i] = joint_handles_[i].getPosition();
@@ -250,6 +211,116 @@ namespace cartesian_impedance_controller
     Eigen::Quaterniond orientation;
     get_fk(q, position, orientation);
 
+    //logging data
+    //--------------------------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------------------------
+
+    //TRAJECTORY
+    //start exporting data
+    if (begin_log)
+    {
+      //precision 0.1mm, keep push vals until pose close enough or time out
+      if (distance_to_goal > 0.001 && time_now - time_start < time_out) //Time out currently set to 10 seconds for easier debugging
+      {
+        time_now = (ros::Time::now()).toSec();
+        distance_to_goal = (position_new_request - position).norm();
+        geometry_msgs::PoseStamped current_pose;
+        current_pose.header.stamp = ros::Time::now();
+        current_pose.pose.position.x = position[0];
+        current_pose.pose.position.y = position[1];
+        current_pose.pose.position.z = position[2];
+        current_pose.pose.orientation.x = orientation.coeffs()[0];
+        current_pose.pose.orientation.y = orientation.coeffs()[1];
+        current_pose.pose.orientation.z = orientation.coeffs()[2];
+        current_pose.pose.orientation.w = orientation.coeffs()[3];
+        pose_trajectory.push_back(current_pose);
+      }
+      else
+      {
+        logger.set_preferences(",", print_title_trajectory, over_write_trajectory); //separator, print first line, overwrite
+        logger.log_to(path, file_name_trajectory);
+        if (logger.log_push_all(pose_trajectory))
+        {
+          if (time_now - time_start < time_out)
+          {
+            ROS_INFO("LOG: Trajectory successfully executed.");
+          }
+          else
+          {
+            ROS_ERROR("LOG: Time-out. requested pose was not reached");
+          }
+          ROS_INFO("LOG: Trajectory saved");
+        }
+        else
+        {
+          ROS_ERROR("LOG: Failed to save trajectory");
+        }
+        //trajectory done. reset some parameters
+        begin_log = false;
+        pose_trajectory.clear();
+        time_start = 0;
+        time_now = 0;
+      }
+    }
+
+    if (is_new_request && !begin_log)
+    {
+      ROS_INFO("LOG: Recieved a new request from node \"cartesian_trajectory_generator_ros\"");
+      begin_log = true;
+      is_new_request = false;
+      time_start = (ros::Time::now()).toSec();
+    }
+
+    //SIMULATION
+    if (begin_log_simulation)
+    {
+      if (time_now_simulation - time_start_simulation < simulation_time_total)
+      {
+        //push data
+        time_now_simulation = (ros::Time::now()).toSec();
+        time_VECTOR.push_back(time_now_simulation);
+        position_VECTOR.push_back(position);
+        orientation_VECTOR.push_back(orientation.coeffs());
+        position_d_VECTOR.push_back(position_d_);
+        orientation_d_VECTOR.push_back(orientation_d_.coeffs());
+        translational_stiffness_VECTOR.push_back(translational_stiffness);
+        rotational_stiffness_VECTOR.push_back(rotational_stiffness);
+        nullspace_stiffness_VECTOR.push_back(nullspace_stiffness);
+      }
+      else
+      {
+        //log data
+       
+        logger.set_preferences(",", print_title_simulation, over_write_simulation); //separator, print first line, overwrite
+        logger.log_to(path, file_name_simulation);
+        logger.log_push_all(time_VECTOR, position_VECTOR,
+                            orientation_VECTOR, position_d_VECTOR,
+                            orientation_d_VECTOR, translational_stiffness_VECTOR,
+                            rotational_stiffness_VECTOR, nullspace_stiffness_VECTOR);
+        ROS_INFO("LOG: Simulation saved.");
+      time_VECTOR.clear();
+      position_VECTOR.clear();
+      orientation_VECTOR.clear();
+      position_d_VECTOR.clear();
+      orientation_d_VECTOR.clear();
+      translational_stiffness_VECTOR.clear();
+      rotational_stiffness_VECTOR.clear();
+      nullspace_stiffness_VECTOR.clear();
+      begin_log_simulation = false;
+      }    
+    }
+
+    if (start_simulation)
+    {
+      start_simulation = false;
+      ROS_INFO("Started to log data which will last %f seconds", simulation_time_total);
+      time_start_simulation = (ros::Time::now()).toSec();
+      begin_log_simulation = true;
+    }
+
+    //--------------------------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------------------------
+
     // if (verbose_){
     //   tf::vectorEigenToTF(position, tf_pos_);
     //   ROS_INFO_STREAM_THROTTLE(0.1, "\nCARTESIAN POSITION:\n" << position);
@@ -261,20 +332,23 @@ namespace cartesian_impedance_controller
 
     // compute error to desired pose
     // position error
-    Eigen::VectorXd tau_d(7), tau_task(7), tau_nullspace(7),tau_wrench(7);
+    Eigen::VectorXd tau_d(7), tau_task(7), tau_nullspace(7), tau_wrench(7);
     Eigen::Matrix<double, 6, 1> error;
 
     //applying wrench through dynamic parameters
-    if(apply_wrench){
-      tau_wrench << jacobian.transpose()*f;
-    }else{
-     for(int i=0;i<7;i++){
-       tau_wrench(i)=0;
-     }
+    if (apply_wrench)
+    {
+      tau_wrench << jacobian.transpose() * f;
     }
-    
+    else
+    {
+      for (int i = 0; i < 7; i++)
+      {
+        tau_wrench(i) = 0;
+      }
+    }
 
-    base_tools.update_control(q, dq, position, orientation, jacobian, tau_d, tau_task, tau_nullspace,tau_wrench, error);
+    base_tools.update_control(q, dq, position, orientation, jacobian, tau_d, tau_task, tau_nullspace, tau_wrench, error);
     tau_d << saturateTorqueRate(tau_d, tau_J_d_);
     // compute error to desired pose
     // position error
@@ -354,6 +428,26 @@ namespace cartesian_impedance_controller
 
     is_new_request = true;
   }
+
+  void CartesianImpedanceController::logCallback(cartesian_impedance_controller::log_configConfig &config, uint32_t level)
+  {
+    file_name_trajectory = config.file_name_trajectory;
+    print_title_trajectory = config.print_title_trajectory;
+    over_write_trajectory = config.overwrite_trajectory;
+    file_name_simulation = config.file_name_simulation;
+    print_title_simulation = config.print_title_simulation;
+    over_write_simulation = config.overwrite_simulation;
+    if (!begin_log_simulation)
+    {
+      simulation_time_total = config.simulation_time;
+      if (config.start_simulation)
+      {
+        start_simulation = config.start_simulation;
+      }
+    }
+    config.start_simulation = false;
+  }
+
   //------------------------------------------------------------------------------------------------------
   void CartesianImpedanceController::trajectoryStart(const trajectory_msgs::JointTrajectory &trajectory)
   {
@@ -398,10 +492,7 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceController::complianceParamCallback()
   {
-    // Default values of the panda parameters
-    double translational_stiffness = 200;
-    double rotational_stiffness = 100;
-    double nullspace_stiffness = 0;
+
     cartesian_stiffness_target_.setIdentity();
     cartesian_stiffness_target_.topLeftCorner(3, 3)
         << translational_stiffness * Eigen::Matrix3d::Identity();
@@ -438,6 +529,9 @@ namespace cartesian_impedance_controller
   void CartesianImpedanceController::dynamicConfigCallback(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level)
   {
 
+    translational_stiffness = config.translational_stiffness;
+    rotational_stiffness = config.rotational_stiffness;
+    nullspace_stiffness = config.nullspace_stiffness;
     cartesian_stiffness_target_.setIdentity();
     cartesian_stiffness_target_.topLeftCorner(3, 3)
         << config.translational_stiffness * Eigen::Matrix3d::Identity();
@@ -454,12 +548,11 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceController::dynamicWrenchCallback(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level)
   {
-    Eigen::MatrixXd temp(6,1);
-    temp << config.f_x ,config.f_y,config.f_z,config.tau_x,config.tau_y,config.tau_z;
+    Eigen::MatrixXd temp(6, 1);
+    temp << config.f_x, config.f_y, config.f_z, config.tau_x, config.tau_y, config.tau_z;
     f.resizeLike(temp);
     f << temp;
-    apply_wrench=config.apply_wrench;
-
+    apply_wrench = config.apply_wrench;
   }
   //--------------------------------------------------------------------------------------------------------------------------------------
   void CartesianImpedanceController::equilibriumPoseCallback(

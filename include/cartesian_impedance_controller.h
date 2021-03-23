@@ -26,6 +26,7 @@
 
 #include "cartesian_impedance_controller/impedance_configConfig.h"
 #include "cartesian_impedance_controller/wrench_configConfig.h"
+#include "cartesian_impedance_controller/log_configConfig.h"
 #include "ros_logger/ros_logger.h"
 
 namespace cartesian_impedance_controller
@@ -84,20 +85,53 @@ namespace cartesian_impedance_controller
     void ee_poseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
 
     //for logging data
-    //------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------------------------
     ros::Subscriber latest_request_subscriber;
     void latest_requestCallback(const geometry_msgs::PoseStampedConstPtr &msg);
     Logger logger;
     const char* path{"/home/oussama/catkin_ws/src/cartesian_trajectory_generator/generated_logs"};
+    //trajectory
+    std::string file_name_trajectory{"real_trajectory.txt"}; 
+    bool print_title_trajectory{true};
+    bool over_write_trajectory{true};
     bool is_new_request{false};
     geometry_msgs::PoseStamped latest_poseStamped_request;
     double distance_to_goal{-1};
     bool begin_log{false};
     std::vector<geometry_msgs::PoseStamped> pose_trajectory;
      Eigen::Vector3d position_new_request;
-    //------------------------------------------------------------------------
+     double time_out{10}; // if trajectory takes longer , pose never reached
+     double time_start{0};
+     double time_now{0};
+    //simulation
+    double simulation_time_total{0};
+    double time_start_simulation{0};
+    double time_now_simulation{0};
+    bool start_simulation{false};
+    bool begin_log_simulation{false};
+    std::string file_name_simulation{"simulation.txt"}; 
+    bool print_title_simulation{true};
+    bool over_write_simulation{true};
+    //--
+    std::vector<double> time_VECTOR;
+    std::vector<Eigen::Vector3d> position_VECTOR;
+    std::vector<Eigen::Vector4d> orientation_VECTOR;
+    std::vector<Eigen::Vector3d> position_d_VECTOR;
+    std::vector<Eigen::Vector4d> orientation_d_VECTOR;
+    std::vector<double> translational_stiffness_VECTOR;
+    std::vector<double> rotational_stiffness_VECTOR; 
+    std::vector<double> nullspace_stiffness_VECTOR;
 
-    //for simulating a wrench
+    //--
+
+    //dynamic reconfigure
+    void logCallback(cartesian_impedance_controller::log_configConfig &config, uint32_t level);
+     ros::NodeHandle dynamic_log_node_;
+   std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::log_configConfig>> 
+    dynamic_server_log_; 
+    //------------------------------------------------------------------------------------------------
+
+    //simulating a wrench
     bool apply_wrench{false};
     Eigen::MatrixXd f;
     
@@ -117,6 +151,7 @@ namespace cartesian_impedance_controller
     dynamic_server_compliance_param_;
   void dynamicConfigCallback(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level);
    
+   
    ros::NodeHandle dynamic_reconfigure_wrench_param_node_;
    std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::wrench_configConfig>> 
     dynamic_server_wrench_param_;
@@ -125,6 +160,11 @@ namespace cartesian_impedance_controller
 
     //compliance parameters
     void complianceParamCallback();
+
+        // Default values of the panda parameters
+    double translational_stiffness = 200;
+    double rotational_stiffness = 100;
+    double nullspace_stiffness = 0;
 
     // Trajectory handling
     std::unique_ptr<actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>> as_;
