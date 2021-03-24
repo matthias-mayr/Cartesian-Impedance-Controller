@@ -211,6 +211,9 @@ namespace cartesian_impedance_controller
     Eigen::Quaterniond orientation;
     get_fk(q, position, orientation);
 
+    // Update nullspace
+    q_d_nullspace_target_ = q;
+
     //logging data
     //--------------------------------------------------------------------------------------------------------
     //--------------------------------------------------------------------------------------------------------
