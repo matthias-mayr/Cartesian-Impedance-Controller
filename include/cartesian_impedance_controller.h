@@ -58,7 +58,7 @@ namespace cartesian_impedance_controller
   
     std::vector<hardware_interface::JointHandle> joint_handles_;
 
-    double filter_params_{0.005};
+    double filter_params_{1};
 
 
     double nullspace_stiffness_{20.0};
@@ -121,7 +121,7 @@ namespace cartesian_impedance_controller
     std::vector<double> translational_stiffness_VECTOR;
     std::vector<double> rotational_stiffness_VECTOR; 
     std::vector<double> nullspace_stiffness_VECTOR;
-
+    std::vector<double> v_VECTOR;
     //--
 
     //dynamic reconfigure

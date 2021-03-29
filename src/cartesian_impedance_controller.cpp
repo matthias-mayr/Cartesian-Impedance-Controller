@@ -202,16 +202,18 @@ namespace cartesian_impedance_controller
     }
     //put into q and dq
     base_tools.get_states(q, dq, q_interface, dq_interface);
-
+  
     Eigen::Matrix<double, 6, 7> jacobian;
     get_jacobian(q, dq, jacobian);
-
+    Eigen::Matrix<double,6,1> dx;
+    dx << jacobian * dq;
+    double v=sqrt(dx(0)*dx(0)+dx(1)*dx(1)+dx(2)*dx(2));
     // get forward kinematics
     Eigen::Vector3d position;
     Eigen::Quaterniond orientation;
     get_fk(q, position, orientation);
 
-    //logging data
+    //Log data
     //--------------------------------------------------------------------------------------------------------
     //--------------------------------------------------------------------------------------------------------
 
@@ -220,7 +222,7 @@ namespace cartesian_impedance_controller
     if (begin_log)
     {
       //precision 0.1mm, keep push vals until pose close enough or time out
-      if (distance_to_goal > 0.001 && time_now - time_start < time_out) //Time out currently set to 10 seconds for easier debugging
+      if (distance_to_goal > 0.001 && v<0.001 || time_now - time_start < time_out) //Time out currently set to 10 seconds for easier debugging
       {
         time_now = (ros::Time::now()).toSec();
         distance_to_goal = (position_new_request - position).norm();
@@ -249,13 +251,12 @@ namespace cartesian_impedance_controller
           {
             ROS_ERROR("LOG: Time-out. requested pose was not reached");
           }
-          ROS_INFO("LOG: Trajectory saved");
         }
         else
         {
           ROS_ERROR("LOG: Failed to save trajectory");
         }
-        //trajectory done. reset some parameters
+        //trajectory done. reset parameters to make it ready for a new recording.
         begin_log = false;
         pose_trajectory.clear();
         time_start = 0;
@@ -286,6 +287,7 @@ namespace cartesian_impedance_controller
         translational_stiffness_VECTOR.push_back(translational_stiffness);
         rotational_stiffness_VECTOR.push_back(rotational_stiffness);
         nullspace_stiffness_VECTOR.push_back(nullspace_stiffness);
+        v_VECTOR.push_back(v);
       }
       else
       {
@@ -296,7 +298,7 @@ namespace cartesian_impedance_controller
         logger.log_push_all(time_VECTOR, position_VECTOR,
                             orientation_VECTOR, position_d_VECTOR,
                             orientation_d_VECTOR, translational_stiffness_VECTOR,
-                            rotational_stiffness_VECTOR, nullspace_stiffness_VECTOR);
+                            rotational_stiffness_VECTOR, nullspace_stiffness_VECTOR,v_VECTOR);
         ROS_INFO("LOG: Simulation saved.");
       time_VECTOR.clear();
       position_VECTOR.clear();
@@ -306,6 +308,7 @@ namespace cartesian_impedance_controller
       translational_stiffness_VECTOR.clear();
       rotational_stiffness_VECTOR.clear();
       nullspace_stiffness_VECTOR.clear();
+      v_VECTOR.clear();
       begin_log_simulation = false;
       }    
     }
