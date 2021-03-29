@@ -27,7 +27,7 @@ Eigen::Matrix<double, 7, 1> CartesianImpedanceController_base::saturateTorqueRat
 
 bool CartesianImpedanceController_base::update_control(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq,
                                                       Eigen::Vector3d &position, Eigen::Quaterniond &orientation,
-                                                      Eigen::Matrix<double, 6, 7> &jacobian, Eigen::VectorXd &tau_d,Eigen::VectorXd &tau_task,Eigen::VectorXd &tau_nullspace,Eigen::VectorXd &tau_wrench, Eigen::Matrix<double, 6, 1> &error)
+                                                      Eigen::Matrix<double, 6, 7> &jacobian, Eigen::VectorXd &tau_d,Eigen::VectorXd &tau_task,Eigen::VectorXd &tau_nullspace,Eigen::VectorXd &tau_wrench, Eigen::Matrix<double, 6, 1> &error,Eigen::Matrix<double, 6, 1> &cartesian_wrench)
 {
     // compute error to desired pose
     // position error
@@ -54,6 +54,9 @@ bool CartesianImpedanceController_base::update_control(Eigen::Matrix<double, 7, 
     Eigen::MatrixXd jacobian_transpose_pinv;
     pseudoInverse(jacobian.transpose(), jacobian_transpose_pinv);
 
+
+
+    
     // Cartesian PD control with damping ratio = 1
     tau_task << jacobian.transpose() *
                     (-cartesian_stiffness_ * error - cartesian_damping_ * (jacobian * dq));
@@ -65,9 +68,9 @@ bool CartesianImpedanceController_base::update_control(Eigen::Matrix<double, 7, 
 
     // Desired torque. Used to contain coriolis as well
     tau_d << tau_task + tau_nullspace+tau_wrench;
-    // Saturate torque rate to avoid discontinuities
-    //tau_d << saturateTorqueRate(tau_d, tau_J_d_, delta_tau_max_);
 
+    //calculating forces acting on the TCP
+    cartesian_wrench<<jacobian_transpose_pinv*tau_wrench;
     return true;
 }
 

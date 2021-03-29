@@ -108,6 +108,7 @@ namespace cartesian_impedance_controller
     double time_start_simulation{0};
     double time_now_simulation{0};
     bool start_simulation{false};
+    bool stop_simulation{false};
     bool begin_log_simulation{false};
     std::string file_name_simulation{"simulation.txt"}; 
     bool print_title_simulation{true};
@@ -122,6 +123,7 @@ namespace cartesian_impedance_controller
     std::vector<double> rotational_stiffness_VECTOR; 
     std::vector<double> nullspace_stiffness_VECTOR;
     std::vector<double> v_VECTOR;
+    std::vector <Eigen::Matrix<double, 6, 1>> cartesian_wrench_VECTOR;
     //--
 
     //dynamic reconfigure

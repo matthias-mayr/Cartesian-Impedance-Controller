@@ -219,10 +219,11 @@ namespace cartesian_impedance_controller
 
     //TRAJECTORY
     //start exporting data
+
     if (begin_log)
     {
       //precision 0.1mm, keep push vals until pose close enough or time out
-      if (distance_to_goal > 0.001 && v<0.001 || time_now - time_start < time_out) //Time out currently set to 10 seconds for easier debugging
+      if (distance_to_goal > 0.001 || time_now - time_start < time_out) //Time out currently set to 10 seconds for easier debugging
       {
         time_now = (ros::Time::now()).toSec();
         distance_to_goal = (position_new_request - position).norm();
@@ -272,58 +273,7 @@ namespace cartesian_impedance_controller
       time_start = (ros::Time::now()).toSec();
     }
 
-    //SIMULATION
-    if (begin_log_simulation)
-    {
-      if (time_now_simulation - time_start_simulation < simulation_time_total)
-      {
-        //push data
-        time_now_simulation = (ros::Time::now()).toSec();
-        time_VECTOR.push_back(time_now_simulation);
-        position_VECTOR.push_back(position);
-        orientation_VECTOR.push_back(orientation.coeffs());
-        position_d_VECTOR.push_back(position_d_);
-        orientation_d_VECTOR.push_back(orientation_d_.coeffs());
-        translational_stiffness_VECTOR.push_back(translational_stiffness);
-        rotational_stiffness_VECTOR.push_back(rotational_stiffness);
-        nullspace_stiffness_VECTOR.push_back(nullspace_stiffness);
-        v_VECTOR.push_back(v);
-      }
-      else
-      {
-        //log data
-       
-        logger.set_preferences(",", print_title_simulation, over_write_simulation); //separator, print first line, overwrite
-        logger.log_to(path, file_name_simulation);
-        logger.log_push_all(time_VECTOR, position_VECTOR,
-                            orientation_VECTOR, position_d_VECTOR,
-                            orientation_d_VECTOR, translational_stiffness_VECTOR,
-                            rotational_stiffness_VECTOR, nullspace_stiffness_VECTOR,v_VECTOR);
-        ROS_INFO("LOG: Simulation saved.");
-      time_VECTOR.clear();
-      position_VECTOR.clear();
-      orientation_VECTOR.clear();
-      position_d_VECTOR.clear();
-      orientation_d_VECTOR.clear();
-      translational_stiffness_VECTOR.clear();
-      rotational_stiffness_VECTOR.clear();
-      nullspace_stiffness_VECTOR.clear();
-      v_VECTOR.clear();
-      begin_log_simulation = false;
-      }    
-    }
-
-    if (start_simulation)
-    {
-      start_simulation = false;
-      ROS_INFO("Started to log data which will last %f seconds", simulation_time_total);
-      time_start_simulation = (ros::Time::now()).toSec();
-      begin_log_simulation = true;
-    }
-
-    //--------------------------------------------------------------------------------------------------------
-    //--------------------------------------------------------------------------------------------------------
-
+ 
     // if (verbose_){
     //   tf::vectorEigenToTF(position, tf_pos_);
     //   ROS_INFO_STREAM_THROTTLE(0.1, "\nCARTESIAN POSITION:\n" << position);
@@ -350,8 +300,8 @@ namespace cartesian_impedance_controller
         tau_wrench(i) = 0;
       }
     }
-
-    base_tools.update_control(q, dq, position, orientation, jacobian, tau_d, tau_task, tau_nullspace, tau_wrench, error);
+    Eigen::Matrix<double, 6, 1> cartesian_wrench;
+    base_tools.update_control(q, dq, position, orientation, jacobian, tau_d, tau_task, tau_nullspace, tau_wrench, error,cartesian_wrench);
     tau_d << saturateTorqueRate(tau_d, tau_J_d_);
     // compute error to desired pose
     // position error
@@ -364,6 +314,71 @@ namespace cartesian_impedance_controller
       // saves last desired torque. These values used to came from the panda.
       tau_J_d_[i] = tau_d(i);
     }
+
+
+   //SIMULATION
+    //--------------------------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------------------------
+
+    if (begin_log_simulation)
+    {
+      if (time_now_simulation - time_start_simulation < simulation_time_total && !stop_simulation)
+      {
+        //push data
+        time_now_simulation = (ros::Time::now()).toSec();
+        time_VECTOR.push_back(time_now_simulation);
+        position_VECTOR.push_back(position);
+        orientation_VECTOR.push_back(orientation.coeffs());
+        position_d_VECTOR.push_back(position_d_);
+        orientation_d_VECTOR.push_back(orientation_d_.coeffs());
+        translational_stiffness_VECTOR.push_back(translational_stiffness);
+        rotational_stiffness_VECTOR.push_back(rotational_stiffness);
+        nullspace_stiffness_VECTOR.push_back(nullspace_stiffness);
+        v_VECTOR.push_back(v);
+        cartesian_wrench_VECTOR.push_back(cartesian_wrench);
+        //wrench
+
+      }
+      else
+      {
+        //log data
+       
+        logger.set_preferences(",", print_title_simulation, over_write_simulation); //separator, print first line, overwrite
+        logger.log_to(path, file_name_simulation);
+        logger.log_push_all(time_VECTOR, position_VECTOR,
+                            orientation_VECTOR, position_d_VECTOR,
+                            orientation_d_VECTOR, translational_stiffness_VECTOR,
+                            rotational_stiffness_VECTOR, nullspace_stiffness_VECTOR,v_VECTOR,cartesian_wrench_VECTOR);
+        ROS_INFO("LOG: Simulation saved.");
+      time_VECTOR.clear();
+      position_VECTOR.clear();
+      orientation_VECTOR.clear();
+      position_d_VECTOR.clear();
+      orientation_d_VECTOR.clear();
+      translational_stiffness_VECTOR.clear();
+      rotational_stiffness_VECTOR.clear();
+      nullspace_stiffness_VECTOR.clear();
+      v_VECTOR.clear();
+      cartesian_wrench_VECTOR.clear();
+      begin_log_simulation = false;
+      stop_simulation=false;
+      }    
+    }
+
+    if (start_simulation)
+    {
+      start_simulation = false;
+      ROS_INFO("Started to log data which will last %f seconds", simulation_time_total);
+      time_start_simulation = (ros::Time::now()).toSec();
+      begin_log_simulation = true;
+    }
+
+    //--------------------------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------------------------
+
+
+
+
     if (verbose_)
     {
       ROS_INFO_STREAM_THROTTLE(0.1, "\nERROR:\n"
@@ -440,6 +455,7 @@ namespace cartesian_impedance_controller
     file_name_simulation = config.file_name_simulation;
     print_title_simulation = config.print_title_simulation;
     over_write_simulation = config.overwrite_simulation;
+    stop_simulation=config.stop_simulation;
     if (!begin_log_simulation)
     {
       simulation_time_total = config.simulation_time;
@@ -449,6 +465,7 @@ namespace cartesian_impedance_controller
       }
     }
     config.start_simulation = false;
+    config.stop_simulation = false;
   }
 
   //------------------------------------------------------------------------------------------------------
