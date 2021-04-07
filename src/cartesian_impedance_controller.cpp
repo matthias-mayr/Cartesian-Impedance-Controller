@@ -63,7 +63,7 @@ namespace cartesian_impedance_controller
 
     //for logging data
     //-----------------------------------------------------------------------------------------------------------------------------
-    latest_request_subscriber = node_handle.subscribe("latest_request", 1, &CartesianImpedanceController::latest_requestCallback, this);
+    //latest_request_subscriber = node_handle.subscribe("latest_request", 1, &CartesianImpedanceController::latest_requestCallback, this);
     //-----------------------------------------------------------------------------------------------------------------------------
 
     sub_trajectory_ = node_handle.subscribe("command", 1, &CartesianImpedanceController::trajectoryCallback, this);
@@ -212,73 +212,6 @@ namespace cartesian_impedance_controller
     Eigen::Vector3d position;
     Eigen::Quaterniond orientation;
     get_fk(q, position, orientation);
-
-    //Log data
-    //--------------------------------------------------------------------------------------------------------
-    //--------------------------------------------------------------------------------------------------------
-
-
-    //--------------------------------------------------------------------------------------------------------
-
-    //TRAJECTORY
-    //start exporting data
-
-    if (begin_log)
-    {
-      //precision 0.1mm, keep push vals until pose close enough or time out
-      if (distance_to_goal > 0.001 || time_now - time_start < time_out) //Time out currently set to 10 seconds for easier debugging
-      {
-        time_now = (ros::Time::now()).toSec();
-        distance_to_goal = (position_new_request - position).norm();
-        geometry_msgs::PoseStamped current_pose;
-        current_pose.header.stamp = ros::Time::now();
-        current_pose.pose.position.x = position[0];
-        current_pose.pose.position.y = position[1];
-        current_pose.pose.position.z = position[2];
-        current_pose.pose.orientation.x = orientation.coeffs()[0];
-        current_pose.pose.orientation.y = orientation.coeffs()[1];
-        current_pose.pose.orientation.z = orientation.coeffs()[2];
-        current_pose.pose.orientation.w = orientation.coeffs()[3];
-        pose_trajectory.push_back(current_pose);
-      }
-      else
-      {
-        logger.set_preferences(",", print_title_trajectory, over_write_trajectory); //separator, print first line, overwrite
-        logger.log_to(path, file_name_trajectory);
-        if (logger.log_push_all(pose_trajectory))
-        {
-          if (time_now - time_start < time_out)
-          {
-            ROS_INFO("LOG: Trajectory successfully executed.");
-          }
-          else
-          {
-            ROS_ERROR("LOG: Time-out. requested pose was not reached");
-          }
-        }
-        else
-        {
-          ROS_ERROR("LOG: Failed to save trajectory");
-        }
-        //trajectory done. reset parameters to make it ready for a new recording.
-        begin_log = false;
-        pose_trajectory.clear();
-        time_start = 0;
-        time_now = 0;
-      }
-    }
-
-    if (is_new_request && !begin_log)
-    {
-      ROS_INFO("LOG: Recieved a new request from node \"cartesian_trajectory_generator_ros\"");
-      begin_log = true;
-      is_new_request = false;
-      time_start = (ros::Time::now()).toSec();
-    }
-
-
-    //--------------------------------------------------------------------------------------------------------
-    //--------------------------------------------------------------------------------------------------------
 
  
     // if (verbose_){
@@ -445,8 +378,10 @@ void CartesianImpedanceController::log_stuff(Eigen::Vector3d position, Eigen::Qu
       orientation_d_target_.coeffs() << -orientation_d_target_.coeffs();
     }
   }
+ 
   //for logging data
   //------------------------------------------------------------------------------------------------------
+ /*
   void CartesianImpedanceController::latest_requestCallback(const geometry_msgs::PoseStampedConstPtr &msg)
   {
 
@@ -463,12 +398,9 @@ void CartesianImpedanceController::log_stuff(Eigen::Vector3d position, Eigen::Qu
 
     is_new_request = true;
   }
-
+*/
   void CartesianImpedanceController::logCallback(cartesian_impedance_controller::log_configConfig &config, uint32_t level)
   {
-    file_name_trajectory = config.file_name_trajectory;
-    print_title_trajectory = config.print_title_trajectory;
-    over_write_trajectory = config.overwrite_trajectory;
     file_name_simulation = config.file_name_simulation;
     print_title_simulation = config.print_title_simulation;
     over_write_simulation = config.overwrite_simulation;

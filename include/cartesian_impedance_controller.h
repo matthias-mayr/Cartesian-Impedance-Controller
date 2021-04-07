@@ -84,23 +84,12 @@ namespace cartesian_impedance_controller
 
     //for logging data
     //-----------------------------------------------------------------------------------------------
-    ros::Subscriber latest_request_subscriber;
-    void latest_requestCallback(const geometry_msgs::PoseStampedConstPtr &msg);
+    
+    //ros::Subscriber latest_request_subscriber;
+    //void latest_requestCallback(const geometry_msgs::PoseStampedConstPtr &msg);
+    
     Logger logger;
-    const char* path{"/home/oussama/catkin_ws/src/cartesian_trajectory_generator/generated_logs"};
-    //trajectory
-    std::string file_name_trajectory{"real_trajectory.txt"}; 
-    bool print_title_trajectory{true};
-    bool over_write_trajectory{true};
-    bool is_new_request{false};
-    geometry_msgs::PoseStamped latest_poseStamped_request;
-    double distance_to_goal{-1};
-    bool begin_log{false};
-    std::vector<geometry_msgs::PoseStamped> pose_trajectory;
-     Eigen::Vector3d position_new_request;
-     double time_out{10}; // if trajectory takes longer , pose never reached
-     double time_start{0};
-     double time_now{0};
+    const char* path{"/home/oussama/catkin_ws/generated_logs"};
     //simulation
     double simulation_time_total{0};
     double time_start_simulation{0};
@@ -123,7 +112,7 @@ namespace cartesian_impedance_controller
     std::vector<double> v_VECTOR;
     std::vector <Eigen::Matrix<double, 6, 1>> cartesian_wrench_VECTOR;
     std::vector < Eigen::Matrix<double, 7, 1>> joints_VECTOR;
-    void log_stuff(Eigen::Vector3d position, Eigen::Quaterniond orientation, double v,Eigen::Matrix<double, 6, 1> cartesian_wrench, Eigen::Matrix<double, 7, 1> joints );
+    void log_stuff(Eigen::Vector3d position, Eigen::Quaterniond orientation, double v,Eigen::Matrix<double, 6, 1> cartesian_wrench, Eigen::Matrix<double, 7, 1> jointsf );
   
     void logCallback(cartesian_impedance_controller::log_configConfig &config, uint32_t level);
      ros::NodeHandle dynamic_log_node_;
