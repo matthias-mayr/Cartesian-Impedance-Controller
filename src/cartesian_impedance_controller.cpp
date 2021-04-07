@@ -150,7 +150,7 @@ namespace cartesian_impedance_controller
     cartesian_stiffness_.setZero();
     cartesian_damping_.setZero();
 
-    complianceParamCallback();
+    base_tools.update_compliance(translational_stiffness,rotational_stiffness,nullspace_stiffness, cartesian_stiffness_target_,cartesian_damping_target_,nullspace_stiffness_target_);
     return true;
   }
 
@@ -217,10 +217,7 @@ namespace cartesian_impedance_controller
     //--------------------------------------------------------------------------------------------------------
     //--------------------------------------------------------------------------------------------------------
 
-//--------------------------------------------------------------------------------------------------------
-    //--------------------------------------------------------------------------------------------------------
 
-//--------------------------------------------------------------------------------------------------------
     //--------------------------------------------------------------------------------------------------------
 
     //TRAJECTORY
@@ -279,10 +276,8 @@ namespace cartesian_impedance_controller
       time_start = (ros::Time::now()).toSec();
     }
 
-//--------------------------------------------------------------------------------------------------------
-    //--------------------------------------------------------------------------------------------------------
 
-//--------------------------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------------------------
     //--------------------------------------------------------------------------------------------------------
 
  
@@ -328,68 +323,7 @@ namespace cartesian_impedance_controller
     }
 
 
-   //SIMULATION
-    //--------------------------------------------------------------------------------------------------------
-    //--------------------------------------------------------------------------------------------------------
-
-    if (begin_log_simulation)
-    {
-      if (time_now_simulation - time_start_simulation < simulation_time_total && !stop_simulation)
-      {
-        //push data
-        time_now_simulation = (ros::Time::now()).toSec();
-        time_VECTOR.push_back(time_now_simulation);
-        position_VECTOR.push_back(position);
-        orientation_VECTOR.push_back(orientation.coeffs());
-        position_d_VECTOR.push_back(position_d_);
-        orientation_d_VECTOR.push_back(orientation_d_.coeffs());
-       
-        translational_stiffness_VECTOR.push_back(translational_stiffness);
-        rotational_stiffness_VECTOR.push_back(rotational_stiffness);
-        nullspace_stiffness_VECTOR.push_back(nullspace_stiffness);
-        v_VECTOR.push_back(v);
-        cartesian_wrench_VECTOR.push_back(cartesian_wrench);
-        //wrench
-
-      }
-      else
-      {
-        //log data
-       
-        logger.set_preferences(",", print_title_simulation, over_write_simulation); //separator, print first line, overwrite
-        logger.log_to(path, file_name_simulation);
-        logger.log_push_all(time_VECTOR, position_VECTOR,
-                            orientation_VECTOR, position_d_VECTOR,
-                            orientation_d_VECTOR, translational_stiffness_VECTOR,
-                            rotational_stiffness_VECTOR, nullspace_stiffness_VECTOR,v_VECTOR,cartesian_wrench_VECTOR);
-        ROS_INFO("LOG: Simulation saved.");
-      time_VECTOR.clear();
-      position_VECTOR.clear();
-      orientation_VECTOR.clear();
-      position_d_VECTOR.clear();
-      orientation_d_VECTOR.clear();
-      translational_stiffness_VECTOR.clear();
-      rotational_stiffness_VECTOR.clear();
-      nullspace_stiffness_VECTOR.clear();
-      v_VECTOR.clear();
-      cartesian_wrench_VECTOR.clear();
-      begin_log_simulation = false;
-      stop_simulation=false;
-      }    
-    }
-
-    if (start_simulation)
-    {
-      start_simulation = false;
-      ROS_INFO("Started to log data which will last %f seconds", simulation_time_total);
-      time_start_simulation = (ros::Time::now()).toSec();
-      begin_log_simulation = true;
-    }
-
-    //--------------------------------------------------------------------------------------------------------
-    //--------------------------------------------------------------------------------------------------------
-
-
+  log_stuff(position, orientation,v,cartesian_wrench,q );
 
 
     if (verbose_)
@@ -416,6 +350,76 @@ namespace cartesian_impedance_controller
                                  q_d_nullspace_target_, position_d_, orientation_d_,
                                  position_d_target_, orientation_d_target_);
   }
+
+
+void CartesianImpedanceController::log_stuff(Eigen::Vector3d position, Eigen::Quaterniond orientation, double v,Eigen::Matrix<double, 6, 1> cartesian_wrench, Eigen::Matrix<double, 7, 1> joints ){
+   //SIMULATION
+    //--------------------------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------------------------
+
+    if (begin_log_simulation)
+    {
+      if (time_now_simulation - time_start_simulation < simulation_time_total && !stop_simulation)
+      {
+        //push data
+        time_now_simulation = (ros::Time::now()).toSec();
+        time_VECTOR.push_back(time_now_simulation);
+        position_VECTOR.push_back(position);
+        orientation_VECTOR.push_back(orientation.coeffs());
+        position_d_VECTOR.push_back(position_d_);
+        orientation_d_VECTOR.push_back(orientation_d_.coeffs());
+       
+        translational_stiffness_VECTOR.push_back(translational_stiffness);
+        rotational_stiffness_VECTOR.push_back(rotational_stiffness);
+        nullspace_stiffness_VECTOR.push_back(nullspace_stiffness);
+        v_VECTOR.push_back(v);
+        cartesian_wrench_VECTOR.push_back(cartesian_wrench);
+        joints_VECTOR.push_back(joints);
+        //wrench
+
+      }
+      else
+      {
+        //log data
+       
+        logger.set_preferences(",", print_title_simulation, over_write_simulation); //separator, print first line, overwrite
+        logger.log_to(path, file_name_simulation);
+        logger.log_push_all(time_VECTOR, position_VECTOR,
+                            orientation_VECTOR, position_d_VECTOR,
+                            orientation_d_VECTOR, translational_stiffness_VECTOR,
+                            rotational_stiffness_VECTOR, nullspace_stiffness_VECTOR,v_VECTOR,cartesian_wrench_VECTOR,joints_VECTOR);
+        ROS_INFO("LOG: Simulation saved.");
+      time_VECTOR.clear();
+      position_VECTOR.clear();
+      orientation_VECTOR.clear();
+      position_d_VECTOR.clear();
+      orientation_d_VECTOR.clear();
+      translational_stiffness_VECTOR.clear();
+      rotational_stiffness_VECTOR.clear();
+      nullspace_stiffness_VECTOR.clear();
+      v_VECTOR.clear();
+      cartesian_wrench_VECTOR.clear();
+      joints_VECTOR.clear();
+      begin_log_simulation = false;
+      stop_simulation=false;
+      }    
+    }
+
+    if (start_simulation)
+    {
+      start_simulation = false;
+      ROS_INFO("Started to log data which will last %f seconds", simulation_time_total);
+      time_start_simulation = (ros::Time::now()).toSec();
+      begin_log_simulation = true;
+    }
+
+    //--------------------------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------------------------
+
+
+}
+
+
   Eigen::Matrix<double, 7, 1> CartesianImpedanceController::saturateTorqueRate(
       const Eigen::Matrix<double, 7, 1> &tau_d_calculated,
       const Eigen::Matrix<double, 7, 1> &tau_J_d)
@@ -526,18 +530,9 @@ namespace cartesian_impedance_controller
   void CartesianImpedanceController::complianceParamCallback()
   {
 
-    cartesian_stiffness_target_.setIdentity();
-    cartesian_stiffness_target_.topLeftCorner(3, 3)
-        << translational_stiffness * Eigen::Matrix3d::Identity();
-    cartesian_stiffness_target_.bottomRightCorner(3, 3)
-        << rotational_stiffness * Eigen::Matrix3d::Identity();
-    cartesian_damping_target_.setIdentity();
-    // Damping ratio = 1
-    cartesian_damping_target_.topLeftCorner(3, 3)
-        << 2.0 * sqrt(translational_stiffness) * Eigen::Matrix3d::Identity();
-    cartesian_damping_target_.bottomRightCorner(3, 3)
-        << 2.0 * sqrt(rotational_stiffness) * Eigen::Matrix3d::Identity();
-    nullspace_stiffness_target_ = nullspace_stiffness;
+
+    base_tools.update_compliance(translational_stiffness,rotational_stiffness,nullspace_stiffness, cartesian_stiffness_target_,cartesian_damping_target_,nullspace_stiffness_target_);
+
   }
 
   void CartesianImpedanceController::goalCallback()
@@ -565,18 +560,7 @@ namespace cartesian_impedance_controller
     translational_stiffness = config.translational_stiffness;
     rotational_stiffness = config.rotational_stiffness;
     nullspace_stiffness = config.nullspace_stiffness;
-    cartesian_stiffness_target_.setIdentity();
-    cartesian_stiffness_target_.topLeftCorner(3, 3)
-        << config.translational_stiffness * Eigen::Matrix3d::Identity();
-    cartesian_stiffness_target_.bottomRightCorner(3, 3)
-        << config.rotational_stiffness * Eigen::Matrix3d::Identity();
-    cartesian_damping_target_.setIdentity();
-    // Damping ratio = 1
-    cartesian_damping_target_.topLeftCorner(3, 3)
-        << 2.0 * sqrt(config.translational_stiffness) * Eigen::Matrix3d::Identity();
-    cartesian_damping_target_.bottomRightCorner(3, 3)
-        << 2.0 * sqrt(config.rotational_stiffness) * Eigen::Matrix3d::Identity();
-    nullspace_stiffness_target_ = config.nullspace_stiffness;
+    base_tools.update_compliance(translational_stiffness,rotational_stiffness,nullspace_stiffness, cartesian_stiffness_target_,cartesian_damping_target_,nullspace_stiffness_target_);
   }
 
   void CartesianImpedanceController::dynamicWrenchCallback(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level)

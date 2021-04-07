@@ -46,7 +46,7 @@ namespace cartesian_impedance_controller
     
      //cartesian_impedance_controller base tools
     CartesianImpedanceController_base base_tools;
-
+    
     // Saturation
     Eigen::Matrix<double, 7, 1> saturateTorqueRate(
         const Eigen::Matrix<double, 7, 1> &tau_d_calculated,
@@ -59,8 +59,6 @@ namespace cartesian_impedance_controller
     std::vector<hardware_interface::JointHandle> joint_handles_;
 
     double filter_params_{1};
-
-
     double nullspace_stiffness_{20.0};
     double nullspace_stiffness_target_{5.0};
 
@@ -124,9 +122,9 @@ namespace cartesian_impedance_controller
     std::vector<double> nullspace_stiffness_VECTOR;
     std::vector<double> v_VECTOR;
     std::vector <Eigen::Matrix<double, 6, 1>> cartesian_wrench_VECTOR;
-    //--
-
-    //dynamic reconfigure
+    std::vector < Eigen::Matrix<double, 7, 1>> joints_VECTOR;
+    void log_stuff(Eigen::Vector3d position, Eigen::Quaterniond orientation, double v,Eigen::Matrix<double, 6, 1> cartesian_wrench, Eigen::Matrix<double, 7, 1> joints );
+  
     void logCallback(cartesian_impedance_controller::log_configConfig &config, uint32_t level);
      ros::NodeHandle dynamic_log_node_;
    std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::log_configConfig>> 

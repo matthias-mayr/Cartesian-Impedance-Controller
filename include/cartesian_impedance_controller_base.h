@@ -23,6 +23,8 @@ public:
     Eigen::Matrix<double, 7, 1> saturateTorqueRate(
         const Eigen::Matrix<double, 7, 1> &tau_d_calculated,
         const Eigen::Matrix<double, 7, 1> &tau_J_d, const double delta_tau_max_);
+
+    void update_compliance(double &translational_stiffness, double &rotational_stiffness, double &nullspace_stiffness, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_damping_target_,double &nullspace_stiffness_target_);
 private:
     // Saturation
  // NOLINT (readability-identifier-naming)

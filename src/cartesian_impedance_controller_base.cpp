@@ -98,3 +98,22 @@ void CartesianImpedanceController_base::update_parameters(double filter_params_,
     this->q_d_nullspace_ = q_d_nullspace_;
     this->orientation_d_ = orientation_d_;
 }
+
+void CartesianImpedanceController_base::update_compliance(double &translational_stiffness, double &rotational_stiffness, double &nullspace_stiffness, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_damping_target_,double &nullspace_stiffness_target_){
+
+    cartesian_stiffness_target_.setIdentity();
+    cartesian_stiffness_target_.topLeftCorner(3, 3)
+        << translational_stiffness * Eigen::Matrix3d::Identity();
+    cartesian_stiffness_target_.bottomRightCorner(3, 3)
+        << rotational_stiffness * Eigen::Matrix3d::Identity();
+    cartesian_damping_target_.setIdentity();
+    // Damping ratio = 1
+    cartesian_damping_target_.topLeftCorner(3, 3)
+        <<3.0 * sqrt(translational_stiffness) * Eigen::Matrix3d::Identity();
+    cartesian_damping_target_.bottomRightCorner(3, 3)
+        << 3.0 * sqrt(rotational_stiffness) * Eigen::Matrix3d::Identity();
+    nullspace_stiffness_target_ = nullspace_stiffness;
+
+
+
+}
