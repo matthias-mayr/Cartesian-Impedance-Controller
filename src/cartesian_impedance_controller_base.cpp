@@ -1,4 +1,4 @@
-#include "cartesian_impedance_controller_base.h"
+#include "cartesian_impedance_controller/cartesian_impedance_controller_base.h"
 #include "pseudo_inversion.h"
 
 
@@ -109,9 +109,9 @@ void CartesianImpedanceController_base::update_compliance(double &translational_
     cartesian_damping_target_.setIdentity();
     // Damping ratio = 1
     cartesian_damping_target_.topLeftCorner(3, 3)
-        <<3.0 * sqrt(translational_stiffness) * Eigen::Matrix3d::Identity();
+        <<damping_factor_ * sqrt(translational_stiffness) * Eigen::Matrix3d::Identity();
     cartesian_damping_target_.bottomRightCorner(3, 3)
-        << 3.0 * sqrt(rotational_stiffness) * Eigen::Matrix3d::Identity();
+        << damping_factor_ * sqrt(rotational_stiffness) * Eigen::Matrix3d::Identity();
     nullspace_stiffness_target_ = nullspace_stiffness;
 
 

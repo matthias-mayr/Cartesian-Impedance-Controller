@@ -13,7 +13,6 @@ pkg_check_modules(tinyxml2 REQUIRED tinyxml2)
 pkg_check_modules(SpaceVecAlg REQUIRED SpaceVecAlg)
 pkg_check_modules(RBDyn REQUIRED RBDyn)
 pkg_check_modules(mc_rbdyn_urdf REQUIRED mc_rbdyn_urdf)
-
 find_package(catkin REQUIRED COMPONENTS
   actionlib
   roscpp
@@ -94,3 +93,10 @@ endif()
 target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC -std=c++14)
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC include ${catkin_INCLUDE_DIRS} ${Eigen3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${tinyxml2_INCLUDE_DIRS} ${SpaceVecAlg_INCLUDE_DIRS} ${RBDyn_INCLUDE_DIRS} ${mc_rbdyn_urdf_INCLUDE_DIRS})
 target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${tinyxml2_LIBRARIES} ${SpaceVecAlg_LIBRARIES} ${RBDyn_LIBRARIES} ${mc_rbdyn_urdf_LIBRARIES} ${Eigen3_LIBRARIES})
+
+
+## Install project namespaced headers
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE)

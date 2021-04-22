@@ -1,5 +1,5 @@
-#include "cartesian_impedance_controller.h"
-#include "cartesian_impedance_controller_base.h"
+#include "cartesian_impedance_controller/cartesian_impedance_controller.h"
+#include "cartesian_impedance_controller/cartesian_impedance_controller_base.h"
 #include <cmath>
 #include <memory>
 

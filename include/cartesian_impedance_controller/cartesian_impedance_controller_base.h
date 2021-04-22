@@ -36,7 +36,7 @@ private:
 
 
     //Parameters
-
+    double damping_factor_{5};
     double filter_params_;
     double nullspace_stiffness_;
     double nullspace_stiffness_target_;
