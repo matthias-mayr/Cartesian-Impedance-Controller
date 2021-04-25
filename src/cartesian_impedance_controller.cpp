@@ -150,7 +150,7 @@ namespace cartesian_impedance_controller
     cartesian_stiffness_.setZero();
     cartesian_damping_.setZero();
 
-    base_tools.update_compliance(translational_stiffness,rotational_stiffness,nullspace_stiffness, cartesian_stiffness_target_,cartesian_damping_target_,nullspace_stiffness_target_);
+    base_tools.update_compliance(translational_stiffness, rotational_stiffness, nullspace_stiffness, cartesian_stiffness_target_, cartesian_damping_target_, nullspace_stiffness_target_);
     return true;
   }
 
@@ -197,23 +197,20 @@ namespace cartesian_impedance_controller
 
     for (size_t i = 0; i < 7; ++i)
     {
-      q_interface[i] = joint_handles_[i].getPosition();
-      dq_interface[i] = joint_handles_[i].getVelocity();
+      q[i] = joint_handles_[i].getPosition();
+      dq[i] = joint_handles_[i].getVelocity();
     }
-    //put into q and dq
-    base_tools.get_states(q, dq, q_interface, dq_interface);
-  
+
     Eigen::Matrix<double, 6, 7> jacobian;
     get_jacobian(q, dq, jacobian);
-    Eigen::Matrix<double,6,1> dx;
+    Eigen::Matrix<double, 6, 1> dx;
     dx << jacobian * dq;
-    double v=sqrt(dx(0)*dx(0)+dx(1)*dx(1)+dx(2)*dx(2));
+    double v = sqrt(dx(0) * dx(0) + dx(1) * dx(1) + dx(2) * dx(2));
     // get forward kinematics
     Eigen::Vector3d position;
     Eigen::Quaterniond orientation;
     get_fk(q, position, orientation);
 
- 
     // if (verbose_){
     //   tf::vectorEigenToTF(position, tf_pos_);
     //   ROS_INFO_STREAM_THROTTLE(0.1, "\nCARTESIAN POSITION:\n" << position);
@@ -227,11 +224,28 @@ namespace cartesian_impedance_controller
     // position error
     Eigen::VectorXd tau_d(7), tau_task(7), tau_nullspace(7), tau_wrench(7);
     Eigen::Matrix<double, 6, 1> error;
+    error.head(3) << position - position_d_;
+
+    // orientation error
+    if (orientation_d_.coeffs().dot(orientation.coeffs()) < 0.0)
+    {
+      orientation.coeffs() << -orientation.coeffs();
+    }
+    // "difference" quaternion
+    Eigen::Quaterniond error_quaternion(orientation * orientation_d_.inverse());
+    // convert to axis angle
+    Eigen::AngleAxisd error_quaternion_angle_axis(error_quaternion);
+    // compute "orientation error"
+    error.tail(3) << error_quaternion_angle_axis.axis() * error_quaternion_angle_axis.angle();
 
     //applying wrench through dynamic parameters
+    Eigen::Matrix<double, 6, 1> cartesian_wrench;
     if (apply_wrench)
     {
       tau_wrench << jacobian.transpose() * f;
+      Eigen::MatrixXd jacobian_transpose_pinv;
+      pseudoInverse(jacobian.transpose(), jacobian_transpose_pinv);
+      cartesian_wrench << jacobian_transpose_pinv * tau_wrench;
     }
     else
     {
@@ -240,13 +254,19 @@ namespace cartesian_impedance_controller
         tau_wrench(i) = 0;
       }
     }
-    Eigen::Matrix<double, 6, 1> cartesian_wrench;
-    base_tools.update_control(q, dq, position, orientation, jacobian, tau_d, tau_task, tau_nullspace, tau_wrench, error,cartesian_wrench);
-    tau_d << saturateTorqueRate(tau_d, tau_J_d_);
+    
+    base_tools.update_control(q, dq, position, orientation, jacobian, tau_d, tau_task, tau_nullspace);
+        // necessary for applying virtual wrenches at TCP
+      tau_d << tau_d + tau_wrench;
+      
+      tau_d << saturateTorqueRate(tau_d, tau_J_d_);
     // compute error to desired pose
     // position error
     tf::vectorEigenToTF(Eigen::Vector3d(error.head(3)), tf_pos_);
     tf_br_transform_.setOrigin(tf_pos_);
+
+  
+  
 
     for (size_t i = 0; i < 7; ++i)
     {
@@ -255,9 +275,8 @@ namespace cartesian_impedance_controller
       tau_J_d_[i] = tau_d(i);
     }
 
-
-  log_stuff(position, orientation,v,cartesian_wrench,q );
-
+    //for exporting data, uncomment if the package "ros_logger" is not available
+    log_stuff(position, orientation, v, cartesian_wrench, q);
 
     if (verbose_)
     {
@@ -284,9 +303,9 @@ namespace cartesian_impedance_controller
                                  position_d_target_, orientation_d_target_);
   }
 
-
-void CartesianImpedanceController::log_stuff(Eigen::Vector3d position, Eigen::Quaterniond orientation, double v,Eigen::Matrix<double, 6, 1> cartesian_wrench, Eigen::Matrix<double, 7, 1> joints ){
-   //SIMULATION
+  void CartesianImpedanceController::log_stuff(Eigen::Vector3d position, Eigen::Quaterniond orientation, double v, Eigen::Matrix<double, 6, 1> cartesian_wrench, Eigen::Matrix<double, 7, 1> joints)
+  {
+    //SIMULATION
     //--------------------------------------------------------------------------------------------------------
     //--------------------------------------------------------------------------------------------------------
 
@@ -301,7 +320,7 @@ void CartesianImpedanceController::log_stuff(Eigen::Vector3d position, Eigen::Qu
         orientation_VECTOR.push_back(orientation.coeffs());
         position_d_VECTOR.push_back(position_d_);
         orientation_d_VECTOR.push_back(orientation_d_.coeffs());
-       
+
         translational_stiffness_VECTOR.push_back(translational_stiffness);
         rotational_stiffness_VECTOR.push_back(rotational_stiffness);
         nullspace_stiffness_VECTOR.push_back(nullspace_stiffness);
@@ -309,33 +328,32 @@ void CartesianImpedanceController::log_stuff(Eigen::Vector3d position, Eigen::Qu
         cartesian_wrench_VECTOR.push_back(cartesian_wrench);
         joints_VECTOR.push_back(joints);
         //wrench
-
       }
       else
       {
         //log data
-       
+
         logger.set_preferences(",", print_title_simulation, over_write_simulation); //separator, print first line, overwrite
         logger.log_to(path, file_name_simulation);
         logger.log_push_all(time_VECTOR, position_VECTOR,
                             orientation_VECTOR, position_d_VECTOR,
                             orientation_d_VECTOR, translational_stiffness_VECTOR,
-                            rotational_stiffness_VECTOR, nullspace_stiffness_VECTOR,v_VECTOR,cartesian_wrench_VECTOR,joints_VECTOR);
+                            rotational_stiffness_VECTOR, nullspace_stiffness_VECTOR, v_VECTOR, cartesian_wrench_VECTOR, joints_VECTOR);
         ROS_INFO("LOG: Simulation saved.");
-      time_VECTOR.clear();
-      position_VECTOR.clear();
-      orientation_VECTOR.clear();
-      position_d_VECTOR.clear();
-      orientation_d_VECTOR.clear();
-      translational_stiffness_VECTOR.clear();
-      rotational_stiffness_VECTOR.clear();
-      nullspace_stiffness_VECTOR.clear();
-      v_VECTOR.clear();
-      cartesian_wrench_VECTOR.clear();
-      joints_VECTOR.clear();
-      begin_log_simulation = false;
-      stop_simulation=false;
-      }    
+        time_VECTOR.clear();
+        position_VECTOR.clear();
+        orientation_VECTOR.clear();
+        position_d_VECTOR.clear();
+        orientation_d_VECTOR.clear();
+        translational_stiffness_VECTOR.clear();
+        rotational_stiffness_VECTOR.clear();
+        nullspace_stiffness_VECTOR.clear();
+        v_VECTOR.clear();
+        cartesian_wrench_VECTOR.clear();
+        joints_VECTOR.clear();
+        begin_log_simulation = false;
+        stop_simulation = false;
+      }
     }
 
     if (start_simulation)
@@ -348,10 +366,7 @@ void CartesianImpedanceController::log_stuff(Eigen::Vector3d position, Eigen::Qu
 
     //--------------------------------------------------------------------------------------------------------
     //--------------------------------------------------------------------------------------------------------
-
-
-}
-
+  }
 
   Eigen::Matrix<double, 7, 1> CartesianImpedanceController::saturateTorqueRate(
       const Eigen::Matrix<double, 7, 1> &tau_d_calculated,
@@ -378,10 +393,10 @@ void CartesianImpedanceController::log_stuff(Eigen::Vector3d position, Eigen::Qu
       orientation_d_target_.coeffs() << -orientation_d_target_.coeffs();
     }
   }
- 
+
   //for logging data
   //------------------------------------------------------------------------------------------------------
- /*
+  /*
   void CartesianImpedanceController::latest_requestCallback(const geometry_msgs::PoseStampedConstPtr &msg)
   {
 
@@ -404,7 +419,7 @@ void CartesianImpedanceController::log_stuff(Eigen::Vector3d position, Eigen::Qu
     file_name_simulation = config.file_name_simulation;
     print_title_simulation = config.print_title_simulation;
     over_write_simulation = config.overwrite_simulation;
-    stop_simulation=config.stop_simulation;
+    stop_simulation = config.stop_simulation;
     if (!begin_log_simulation)
     {
       simulation_time_total = config.simulation_time;
@@ -461,10 +476,7 @@ void CartesianImpedanceController::log_stuff(Eigen::Vector3d position, Eigen::Qu
 
   void CartesianImpedanceController::complianceParamCallback()
   {
-
-
-    base_tools.update_compliance(translational_stiffness,rotational_stiffness,nullspace_stiffness, cartesian_stiffness_target_,cartesian_damping_target_,nullspace_stiffness_target_);
-
+    base_tools.update_compliance(translational_stiffness, rotational_stiffness, nullspace_stiffness, cartesian_stiffness_target_, cartesian_damping_target_, nullspace_stiffness_target_);
   }
 
   void CartesianImpedanceController::goalCallback()
@@ -488,11 +500,10 @@ void CartesianImpedanceController::log_stuff(Eigen::Vector3d position, Eigen::Qu
   //--------------------------------------------------------------------------------------------------------------------------------------
   void CartesianImpedanceController::dynamicConfigCallback(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level)
   {
-
     translational_stiffness = config.translational_stiffness;
     rotational_stiffness = config.rotational_stiffness;
     nullspace_stiffness = config.nullspace_stiffness;
-    base_tools.update_compliance(translational_stiffness,rotational_stiffness,nullspace_stiffness, cartesian_stiffness_target_,cartesian_damping_target_,nullspace_stiffness_target_);
+    base_tools.update_compliance(translational_stiffness, rotational_stiffness, nullspace_stiffness, cartesian_stiffness_target_, cartesian_damping_target_, nullspace_stiffness_target_);
   }
 
   void CartesianImpedanceController::dynamicWrenchCallback(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level)

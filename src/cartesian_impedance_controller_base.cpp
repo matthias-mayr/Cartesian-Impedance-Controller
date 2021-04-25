@@ -3,13 +3,7 @@
 
 
 
-bool CartesianImpedanceController_base::get_states(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq, Eigen::Matrix<double, 7, 1> &q_interface, Eigen::Matrix<double, 7, 1> &dq_interface)
-{
-    //get from DART : q_interface, dq_interface and put them in q resp. dq
-    q = q_interface;
-    dq = dq_interface;
-    return true;
-}
+
 
 Eigen::Matrix<double, 7, 1> CartesianImpedanceController_base::saturateTorqueRate(
     const Eigen::Matrix<double, 7, 1> &tau_d_calculated,
@@ -27,11 +21,11 @@ Eigen::Matrix<double, 7, 1> CartesianImpedanceController_base::saturateTorqueRat
 
 bool CartesianImpedanceController_base::update_control(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq,
                                                       Eigen::Vector3d &position, Eigen::Quaterniond &orientation,
-                                                      Eigen::Matrix<double, 6, 7> &jacobian, Eigen::VectorXd &tau_d,Eigen::VectorXd &tau_task,Eigen::VectorXd &tau_nullspace,Eigen::VectorXd &tau_wrench, Eigen::Matrix<double, 6, 1> &error,Eigen::Matrix<double, 6, 1> &cartesian_wrench)
+                                                      Eigen::Matrix<double, 6, 7> &jacobian, Eigen::VectorXd &tau_d,Eigen::VectorXd &tau_task,Eigen::VectorXd &tau_nullspace)
 {
     // compute error to desired pose
     // position error
-
+    Eigen::Matrix<double, 6, 1> error;
     error.head(3) << position - position_d_;
 
     // orientation error
@@ -55,7 +49,6 @@ bool CartesianImpedanceController_base::update_control(Eigen::Matrix<double, 7, 
     pseudoInverse(jacobian.transpose(), jacobian_transpose_pinv);
 
 
-
     
     // Cartesian PD control with damping ratio = 1
     tau_task << jacobian.transpose() *
@@ -67,10 +60,7 @@ bool CartesianImpedanceController_base::update_control(Eigen::Matrix<double, 7, 
                           (2.0 * sqrt(nullspace_stiffness_)) * dq);
 
     // Desired torque. Used to contain coriolis as well
-    tau_d << tau_task + tau_nullspace+tau_wrench;
-
-    //calculating forces acting on the TCP
-    cartesian_wrench<<jacobian_transpose_pinv*tau_wrench;
+    tau_d << tau_task + tau_nullspace;
     return true;
 }
 
