@@ -254,25 +254,21 @@ namespace cartesian_impedance_controller
         tau_wrench(i) = 0;
       }
     }
-    
+
     base_tools.update_control(q, dq, position, orientation, jacobian, tau_d, tau_task, tau_nullspace);
-        // necessary for applying virtual wrenches at TCP
-      tau_d << tau_d + tau_wrench;
-      
-      tau_d << saturateTorqueRate(tau_d, tau_J_d_);
+    // necessary for applying virtual wrenches at TCP
+    tau_d << tau_d + tau_wrench;
+
+    //tau_d << saturateTorqueRate(tau_d, tau_J_d_);
+    base_tools.saturateTorqueRate(tau_d, tau_J_d_, delta_tau_max_);
     // compute error to desired pose
     // position error
     tf::vectorEigenToTF(Eigen::Vector3d(error.head(3)), tf_pos_);
     tf_br_transform_.setOrigin(tf_pos_);
 
-  
-  
-
     for (size_t i = 0; i < 7; ++i)
     {
       joint_handles_[i].setCommand(tau_d(i));
-      // saves last desired torque. These values used to came from the panda.
-      tau_J_d_[i] = tau_d(i);
     }
 
     //for exporting data, uncomment if the package "ros_logger" is not available
@@ -296,7 +292,7 @@ namespace cartesian_impedance_controller
     publish();
 
     base_tools.update_parameters(filter_params_, nullspace_stiffness_,
-                                 nullspace_stiffness_target_, delta_tau_max_, cartesian_stiffness_,
+                                 nullspace_stiffness_target_, cartesian_stiffness_,
                                  cartesian_stiffness_target_, cartesian_damping_,
                                  cartesian_damping_target_, q_d_nullspace_,
                                  q_d_nullspace_target_, position_d_, orientation_d_,
@@ -366,20 +362,6 @@ namespace cartesian_impedance_controller
 
     //--------------------------------------------------------------------------------------------------------
     //--------------------------------------------------------------------------------------------------------
-  }
-
-  Eigen::Matrix<double, 7, 1> CartesianImpedanceController::saturateTorqueRate(
-      const Eigen::Matrix<double, 7, 1> &tau_d_calculated,
-      const Eigen::Matrix<double, 7, 1> &tau_J_d)
-  { // NOLINT (readability-identifier-naming)
-    Eigen::Matrix<double, 7, 1> tau_d_saturated{};
-    for (size_t i = 0; i < 7; i++)
-    {
-      double difference = tau_d_calculated[i] - tau_J_d[i];
-      tau_d_saturated[i] =
-          tau_J_d[i] + std::max(std::min(difference, delta_tau_max_), -delta_tau_max_);
-    }
-    return tau_d_saturated;
   }
 
   void CartesianImpedanceController::ee_poseCallback(const geometry_msgs::PoseStampedConstPtr &msg)

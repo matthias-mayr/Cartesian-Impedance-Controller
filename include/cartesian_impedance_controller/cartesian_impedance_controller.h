@@ -47,10 +47,6 @@ namespace cartesian_impedance_controller
      //cartesian_impedance_controller base tools
     CartesianImpedanceController_base base_tools;
     
-    // Saturation
-    Eigen::Matrix<double, 7, 1> saturateTorqueRate(
-        const Eigen::Matrix<double, 7, 1> &tau_d_calculated,
-        const Eigen::Matrix<double, 7, 1> &tau_J_d); // NOLINT (readability-identifier-naming)
 
     void update_parameters();
     bool get_fk(const Eigen::Matrix<double, 7, 1> &q, Eigen::Vector3d &translation, Eigen::Quaterniond &rotation);

@@ -1,13 +1,9 @@
 #include "cartesian_impedance_controller/cartesian_impedance_controller_base.h"
 #include "pseudo_inversion.h"
 
-
-
-
-
 Eigen::Matrix<double, 7, 1> CartesianImpedanceController_base::saturateTorqueRate(
     const Eigen::Matrix<double, 7, 1> &tau_d_calculated,
-    const Eigen::Matrix<double, 7, 1> &tau_J_d, const double delta_tau_max_)
+    Eigen::Matrix<double, 7, 1> &tau_J_d, const double delta_tau_max_)
 { // NOLINT (readability-identifier-naming)
     Eigen::Matrix<double, 7, 1> tau_d_saturated{};
     for (size_t i = 0; i < 7; i++)
@@ -16,12 +12,17 @@ Eigen::Matrix<double, 7, 1> CartesianImpedanceController_base::saturateTorqueRat
         tau_d_saturated[i] =
             tau_J_d[i] + std::max(std::min(difference, delta_tau_max_), -delta_tau_max_);
     }
+    // saves last desired torque.
+    for (size_t i = 0; i < 7; i++)
+    {
+        tau_J_d[i] = tau_d_saturated[i];
+    }
     return tau_d_saturated;
 }
 
 bool CartesianImpedanceController_base::update_control(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq,
-                                                      Eigen::Vector3d &position, Eigen::Quaterniond &orientation,
-                                                      Eigen::Matrix<double, 6, 7> &jacobian, Eigen::VectorXd &tau_d,Eigen::VectorXd &tau_task,Eigen::VectorXd &tau_nullspace)
+                                                       Eigen::Vector3d &position, Eigen::Quaterniond &orientation,
+                                                       Eigen::Matrix<double, 6, 7> &jacobian, Eigen::VectorXd &tau_d, Eigen::VectorXd &tau_task, Eigen::VectorXd &tau_nullspace)
 {
     // compute error to desired pose
     // position error
@@ -42,14 +43,12 @@ bool CartesianImpedanceController_base::update_control(Eigen::Matrix<double, 7, 
 
     // compute control
     // allocate variables
-   // Eigen::VectorXd tau_task(7), tau_nullspace(7);
+    // Eigen::VectorXd tau_task(7), tau_nullspace(7);
     // pseudoinverse for nullspace handling
     // kinematic pseuoinverse
     Eigen::MatrixXd jacobian_transpose_pinv;
     pseudoInverse(jacobian.transpose(), jacobian_transpose_pinv);
 
-
-    
     // Cartesian PD control with damping ratio = 1
     tau_task << jacobian.transpose() *
                     (-cartesian_stiffness_ * error - cartesian_damping_ * (jacobian * dq));
@@ -65,7 +64,7 @@ bool CartesianImpedanceController_base::update_control(Eigen::Matrix<double, 7, 
 }
 
 void CartesianImpedanceController_base::update_parameters(double filter_params_, double &nullspace_stiffness_,
-                                                          double nullspace_stiffness_target_, const double delta_tau_max_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_,
+                                                          double nullspace_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_,
                                                           Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_damping_,
                                                           Eigen::Matrix<double, 6, 6> cartesian_damping_target_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_,
                                                           Eigen::Matrix<double, 7, 1> q_d_nullspace_target_, Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_,
@@ -89,7 +88,8 @@ void CartesianImpedanceController_base::update_parameters(double filter_params_,
     this->orientation_d_ = orientation_d_;
 }
 
-void CartesianImpedanceController_base::update_compliance(double &translational_stiffness, double &rotational_stiffness, double &nullspace_stiffness, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_damping_target_,double &nullspace_stiffness_target_){
+void CartesianImpedanceController_base::update_compliance(double &translational_stiffness, double &rotational_stiffness, double &nullspace_stiffness, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_damping_target_, double &nullspace_stiffness_target_)
+{
 
     cartesian_stiffness_target_.setIdentity();
     cartesian_stiffness_target_.topLeftCorner(3, 3)
@@ -99,11 +99,8 @@ void CartesianImpedanceController_base::update_compliance(double &translational_
     cartesian_damping_target_.setIdentity();
     // Damping ratio = 1
     cartesian_damping_target_.topLeftCorner(3, 3)
-        <<damping_factor_ * sqrt(translational_stiffness) * Eigen::Matrix3d::Identity();
+        << 2 * sqrt(translational_stiffness) * Eigen::Matrix3d::Identity();
     cartesian_damping_target_.bottomRightCorner(3, 3)
-        << damping_factor_ * sqrt(rotational_stiffness) * Eigen::Matrix3d::Identity();
+        << 2 * sqrt(rotational_stiffness) * Eigen::Matrix3d::Identity();
     nullspace_stiffness_target_ = nullspace_stiffness;
-
-
-
 }
