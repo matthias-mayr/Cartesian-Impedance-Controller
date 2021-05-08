@@ -1,6 +1,11 @@
 #include "cartesian_impedance_controller/cartesian_impedance_controller_base.h"
 #include "pseudo_inversion.h"
 
+#include <Eigen/Core>
+#include <Eigen/LU>
+#include <Eigen/SVD>
+
+
 Eigen::Matrix<double, 7, 1> CartesianImpedanceController_base::saturateTorqueRate(
     const Eigen::Matrix<double, 7, 1> &tau_d_calculated,
     Eigen::Matrix<double, 7, 1> &tau_J_d, const double delta_tau_max_)
@@ -22,7 +27,9 @@ Eigen::Matrix<double, 7, 1> CartesianImpedanceController_base::saturateTorqueRat
 
 bool CartesianImpedanceController_base::update_control(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq,
                                                        Eigen::Vector3d &position, Eigen::Quaterniond &orientation,
-                                                       Eigen::Matrix<double, 6, 7> &jacobian, Eigen::VectorXd &tau_d, Eigen::VectorXd &tau_task, Eigen::VectorXd &tau_nullspace)
+                                                       Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_,
+                                                       Eigen::Matrix<double, 6, 7> &jacobian, Eigen::VectorXd &tau_d, 
+                                                       Eigen::VectorXd &tau_task, Eigen::VectorXd &tau_nullspace)
 {
     // compute error to desired pose
     // position error

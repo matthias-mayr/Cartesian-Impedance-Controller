@@ -46,6 +46,9 @@ namespace cartesian_impedance_controller
 
   bool CartesianImpedanceController::init(hardware_interface::EffortJointInterface *hw, ros::NodeHandle &node_handle)
   {
+
+
+
     ROS_INFO("CartesianImpedanceController namespace: %s", node_handle.getNamespace().c_str());
     node_handle.param<bool>("verbose", verbose_, false);
 
@@ -181,6 +184,7 @@ namespace cartesian_impedance_controller
     // set nullspace equilibrium configuration to initial q
     q_d_nullspace_ = q_initial;
     q_d_nullspace_target_ = q_d_nullspace_;
+
   }
 
   void CartesianImpedanceController::update(const ros::Time & /*time*/,
@@ -252,10 +256,12 @@ namespace cartesian_impedance_controller
       for (int i = 0; i < 7; i++)
       {
         tau_wrench(i) = 0;
+        cartesian_wrench << 0,0,0,0,0,0;
       }
     }
+ 
 
-    base_tools.update_control(q, dq, position, orientation, jacobian, tau_d, tau_task, tau_nullspace);
+    base_tools.update_control(q, dq, position, orientation,position_d_,orientation_d_, jacobian, tau_d, tau_task, tau_nullspace);
     // necessary for applying virtual wrenches at TCP
     tau_d << tau_d + tau_wrench;
 
@@ -378,24 +384,7 @@ namespace cartesian_impedance_controller
 
   //for logging data
   //------------------------------------------------------------------------------------------------------
-  /*
-  void CartesianImpedanceController::latest_requestCallback(const geometry_msgs::PoseStampedConstPtr &msg)
-  {
 
-    latest_poseStamped_request.pose.position.x = msg->pose.position.x;
-    latest_poseStamped_request.pose.position.y = msg->pose.position.y;
-    latest_poseStamped_request.pose.position.z = msg->pose.position.z;
-    latest_poseStamped_request.pose.orientation.x = msg->pose.orientation.x;
-    latest_poseStamped_request.pose.orientation.y = msg->pose.orientation.y;
-    latest_poseStamped_request.pose.orientation.z = msg->pose.orientation.z;
-    latest_poseStamped_request.pose.orientation.w = msg->pose.orientation.w;
-
-    position_new_request << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
-    distance_to_goal = (position_new_request - position_d_).norm();
-
-    is_new_request = true;
-  }
-*/
   void CartesianImpedanceController::logCallback(cartesian_impedance_controller::log_configConfig &config, uint32_t level)
   {
     file_name_simulation = config.file_name_simulation;
@@ -495,6 +484,7 @@ namespace cartesian_impedance_controller
     f.resizeLike(temp);
     f << temp;
     apply_wrench = config.apply_wrench;
+
   }
   //--------------------------------------------------------------------------------------------------------------------------------------
   void CartesianImpedanceController::equilibriumPoseCallback(

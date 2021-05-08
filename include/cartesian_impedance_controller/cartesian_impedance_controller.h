@@ -84,7 +84,7 @@ namespace cartesian_impedance_controller
     //ros::Subscriber latest_request_subscriber;
     //void latest_requestCallback(const geometry_msgs::PoseStampedConstPtr &msg);
     
-    Logger logger;
+    DataExporter logger;
     const char* path{"/home/oussama/catkin_ws/generated_logs"};
     //simulation
     double simulation_time_total{0};
