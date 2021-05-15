@@ -54,8 +54,6 @@ namespace cartesian_impedance_controller
   
     std::vector<hardware_interface::JointHandle> joint_handles_;
 
-
-
     const double delta_tau_max_{1.0};
 
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
@@ -95,18 +93,8 @@ namespace cartesian_impedance_controller
     bool print_title_simulation{true};
     bool over_write_simulation{true};
     //--
-    std::vector<double> time_VECTOR;
-    std::vector<Eigen::Vector3d> position_VECTOR;
-    std::vector<Eigen::Vector4d> orientation_VECTOR;
-    std::vector<Eigen::Vector3d> position_d_VECTOR;
-    std::vector<Eigen::Vector4d> orientation_d_VECTOR;
-    std::vector<double> translational_stiffness_VECTOR;
-    std::vector<double> rotational_stiffness_VECTOR; 
-    std::vector<double> nullspace_stiffness_VECTOR;
-    std::vector<double> v_VECTOR;
-    std::vector <Eigen::Matrix<double, 6, 1>> cartesian_wrench_VECTOR;
-    std::vector < Eigen::Matrix<double, 7, 1>> joints_VECTOR;
-    void log_stuff(Eigen::Vector3d position, Eigen::Quaterniond orientation, double v,Eigen::Matrix<double, 6, 1> cartesian_wrench, Eigen::Matrix<double, 7, 1> jointsf );
+       std::vector<std::string> data_VECTOR;
+    void log_stuff(Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::VectorXd q, Eigen::VectorXd dq,Eigen::VectorXd tau_d);
   
     void logCallback(cartesian_impedance_controller::log_configConfig &config, uint32_t level);
      ros::NodeHandle dynamic_log_node_;
@@ -180,9 +168,7 @@ namespace cartesian_impedance_controller
     tf::Vector3 tf_pos_;
     tf::Quaternion tf_rot_;
 
-
-
   };
   PLUGINLIB_EXPORT_CLASS(cartesian_impedance_controller::CartesianImpedanceController, controller_interface::ControllerBase);
 
-} // namespace franka_example_controllers
+} // namespace

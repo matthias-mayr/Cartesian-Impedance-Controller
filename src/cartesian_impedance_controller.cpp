@@ -47,8 +47,6 @@ namespace cartesian_impedance_controller
   bool CartesianImpedanceController::init(hardware_interface::EffortJointInterface *hw, ros::NodeHandle &node_handle)
   {
 
-
-
     ROS_INFO("CartesianImpedanceController namespace: %s", node_handle.getNamespace().c_str());
     node_handle.param<bool>("verbose", verbose_, false);
 
@@ -153,7 +151,7 @@ namespace cartesian_impedance_controller
     cartesian_stiffness_.setZero();
     cartesian_damping_.setZero();
 
-    base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_,cartesian_stiffness_target_, cartesian_damping_target_);
+    base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_);
     return true;
   }
 
@@ -184,14 +182,13 @@ namespace cartesian_impedance_controller
     // set nullspace equilibrium configuration to initial q
     q_d_nullspace_ = q_initial;
     q_d_nullspace_target_ = q_d_nullspace_;
-
   }
 
   void CartesianImpedanceController::update(const ros::Time & /*time*/,
                                             const ros::Duration & /*period*/)
-  
+
   {
-//ROS_INFO_STREAM_THROTTLE(0.1, "\nParameters:\nCartesian Stiffness:\n" << cartesian_stiffness_ << "\nCartesian damping:\n");
+    //ROS_INFO_STREAM_THROTTLE(0.1, "\nParameters:\nCartesian Stiffness:\n" << cartesian_stiffness_ << "\nCartesian damping:\n");
 
     if (traj_running_)
     {
@@ -256,15 +253,11 @@ namespace cartesian_impedance_controller
     }
     else
     {
-      for (int i = 0; i < 7; i++)
-      {
-        tau_wrench(i) = 0;
-        cartesian_wrench << 0,0,0,0,0,0;
-      }
+      tau_wrench << 0, 0, 0, 0, 0, 0, 0;
+      cartesian_wrench << 0, 0, 0, 0, 0, 0;
     }
- 
 
-    base_tools.update_control(q, dq, position, orientation,position_d_,orientation_d_, jacobian, tau_d, tau_task, tau_nullspace);
+    base_tools.update_control(q, dq, position, orientation, position_d_, orientation_d_, jacobian, tau_d, tau_task, tau_nullspace);
     // necessary for applying virtual wrenches at TCP
     tau_d << tau_d + tau_wrench;
 
@@ -281,7 +274,7 @@ namespace cartesian_impedance_controller
     }
 
     //for exporting data, uncomment if the package "ros_logger" is not available
-    log_stuff(position, orientation, v, cartesian_wrench, q);
+    log_stuff(position, orientation,q,dq, tau_d);
 
     if (verbose_)
     {
@@ -308,31 +301,40 @@ namespace cartesian_impedance_controller
                                  position_d_target_, orientation_d_target_);
   }
 
-  void CartesianImpedanceController::log_stuff(Eigen::Vector3d position, Eigen::Quaterniond orientation, double v, Eigen::Matrix<double, 6, 1> cartesian_wrench, Eigen::Matrix<double, 7, 1> joints)
+  void CartesianImpedanceController::log_stuff(Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::VectorXd q, Eigen::VectorXd dq,Eigen::VectorXd tau_d)
   {
     //SIMULATION
     //--------------------------------------------------------------------------------------------------------
     //--------------------------------------------------------------------------------------------------------
-/*
+    
     if (begin_log_simulation)
     {
       if (time_now_simulation - time_start_simulation < simulation_time_total && !stop_simulation)
       {
         //push data
-        time_now_simulation = (ros::Time::now()).toSec();
-        time_VECTOR.push_back(time_now_simulation);
-        position_VECTOR.push_back(position);
-        orientation_VECTOR.push_back(orientation.coeffs());
-        position_d_VECTOR.push_back(position_d_);
-        orientation_d_VECTOR.push_back(orientation_d_.coeffs());
+        std::string separator = ",";
+        Eigen::IOFormat fmt(Eigen::StreamPrecision, Eigen::DontAlignCols, separator, separator, "", "");
+        std::cout.precision(5);
+        std::stringstream data;
+        Eigen::Vector3d orientation_euler;
+        Eigen::Vector3d orientation_d_euler;
+        quaternion_to_rpy(orientation,  orientation_euler);
+        quaternion_to_rpy(orientation_d_,  orientation_d_euler);
 
-        translational_stiffness_VECTOR.push_back(translational_stiffness);
-        rotational_stiffness_VECTOR.push_back(rotational_stiffness);
-        nullspace_stiffness_VECTOR.push_back(nullspace_stiffness);
-        v_VECTOR.push_back(v);
-        cartesian_wrench_VECTOR.push_back(cartesian_wrench);
-        joints_VECTOR.push_back(joints);
-        //wrench
+        data << std::to_string(ros::Time::now().toSec()) << separator << 
+        position.transpose().format(fmt) << separator <<
+        position_d_.transpose().format(fmt) << separator <<
+        orientation.coeffs().transpose().format(fmt) << separator << 
+        orientation_d_.coeffs().format(fmt) << separator << 
+        orientation_euler.transpose().format(fmt) << separator <<  
+        orientation_d_euler.format(fmt) << separator << 
+        tau_d.transpose().format(fmt) <<separator <<
+        q.transpose().format(fmt) << separator << 
+        dq.transpose().format(fmt);
+       
+        // save the next data point
+        data_VECTOR.push_back(data.str());
+
       }
       else
       {
@@ -340,27 +342,13 @@ namespace cartesian_impedance_controller
 
         logger.set_preferences(",", print_title_simulation, over_write_simulation); //separator, print first line, overwrite
         logger.log_to(path, file_name_simulation);
-        logger.log_push_all(time_VECTOR, position_VECTOR,
-                            orientation_VECTOR, position_d_VECTOR,
-                            orientation_d_VECTOR, translational_stiffness_VECTOR,
-                            rotational_stiffness_VECTOR, nullspace_stiffness_VECTOR, v_VECTOR, cartesian_wrench_VECTOR, joints_VECTOR);
+        logger.log_push_all(data_VECTOR);
         ROS_INFO("LOG: Simulation saved.");
-        time_VECTOR.clear();
-        position_VECTOR.clear();
-        orientation_VECTOR.clear();
-        position_d_VECTOR.clear();
-        orientation_d_VECTOR.clear();
-        translational_stiffness_VECTOR.clear();
-        rotational_stiffness_VECTOR.clear();
-        nullspace_stiffness_VECTOR.clear();
-        v_VECTOR.clear();
-        cartesian_wrench_VECTOR.clear();
-        joints_VECTOR.clear();
         begin_log_simulation = false;
         stop_simulation = false;
       }
     }
-*/
+
     if (start_simulation)
     {
       start_simulation = false;
@@ -450,7 +438,7 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceController::complianceParamCallback()
   {
-    base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_,cartesian_stiffness_target_, cartesian_damping_target_);
+    base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_);
   }
 
   void CartesianImpedanceController::goalCallback()
@@ -475,9 +463,9 @@ namespace cartesian_impedance_controller
   void CartesianImpedanceController::dynamicConfigCallback(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level)
   {
     translational_stiffness_ << config.translation_x, config.translation_y, config.translation_z;
-    rotational_stiffness_ << config.rotation_x,config.rotation_y,config.rotation_z;
+    rotational_stiffness_ << config.rotation_x, config.rotation_y, config.rotation_z;
     nullspace_stiffness_target_ = config.nullspace_stiffness;
-    base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_,cartesian_stiffness_target_, cartesian_damping_target_);
+    base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_);
   }
 
   void CartesianImpedanceController::dynamicWrenchCallback(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level)

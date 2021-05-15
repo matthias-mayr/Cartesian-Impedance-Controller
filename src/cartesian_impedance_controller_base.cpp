@@ -113,3 +113,18 @@ void CartesianImpedanceController_base::update_compliance(Eigen::Vector3d transl
     nullspace_stiffness_target_ = nullspace_stiffness;
 
 }
+
+void CartesianImpedanceController_base::rpy_to_quaternion(Eigen::Vector3d &rpy,Eigen::Quaterniond &q)
+{
+    q.normalize();
+    q=
+    Eigen::AngleAxisd(rpy(0),Eigen::Vector3d::UnitX())
+    *Eigen::AngleAxisd(rpy(1),Eigen::Vector3d::UnitY())
+    *Eigen::AngleAxisd(rpy(2),Eigen::Vector3d::UnitZ());
+}
+
+void CartesianImpedanceController_base::quaternion_to_rpy(Eigen::Quaterniond &q, Eigen::Vector3d &rpy)
+{
+    q.normalize();
+    rpy = q.toRotationMatrix().eulerAngles(0,1,2);
+}

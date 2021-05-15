@@ -25,6 +25,9 @@ public:
         Eigen::Matrix<double, 7, 1> &tau_J_d, double delta_tau_max_);
 
     void update_compliance(Eigen::Vector3d translational_stiffness, Eigen::Vector3d rotational_stiffness, double nullspace_stiffness, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_damping_target_);
+    void rpy_to_quaternion(Eigen::Vector3d &rpy,Eigen::Quaterniond &q);
+    void quaternion_to_rpy(Eigen::Quaterniond &q, Eigen::Vector3d &rpy);
+
 private:
     // Saturation
  // NOLINT (readability-identifier-naming)
