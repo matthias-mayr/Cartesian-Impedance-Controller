@@ -153,7 +153,7 @@ namespace cartesian_impedance_controller
     cartesian_stiffness_.setZero();
     cartesian_damping_.setZero();
 
-    base_tools.update_compliance(translational_stiffness, rotational_stiffness, nullspace_stiffness, cartesian_stiffness_target_, cartesian_damping_target_, nullspace_stiffness_target_);
+    base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_,cartesian_stiffness_target_, cartesian_damping_target_);
     return true;
   }
 
@@ -189,7 +189,10 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceController::update(const ros::Time & /*time*/,
                                             const ros::Duration & /*period*/)
+  
   {
+//ROS_INFO_STREAM_THROTTLE(0.1, "\nParameters:\nCartesian Stiffness:\n" << cartesian_stiffness_ << "\nCartesian damping:\n");
+
     if (traj_running_)
     {
       trajectoryUpdate();
@@ -310,7 +313,7 @@ namespace cartesian_impedance_controller
     //SIMULATION
     //--------------------------------------------------------------------------------------------------------
     //--------------------------------------------------------------------------------------------------------
-
+/*
     if (begin_log_simulation)
     {
       if (time_now_simulation - time_start_simulation < simulation_time_total && !stop_simulation)
@@ -357,7 +360,7 @@ namespace cartesian_impedance_controller
         stop_simulation = false;
       }
     }
-
+*/
     if (start_simulation)
     {
       start_simulation = false;
@@ -447,7 +450,7 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceController::complianceParamCallback()
   {
-    base_tools.update_compliance(translational_stiffness, rotational_stiffness, nullspace_stiffness, cartesian_stiffness_target_, cartesian_damping_target_, nullspace_stiffness_target_);
+    base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_,cartesian_stiffness_target_, cartesian_damping_target_);
   }
 
   void CartesianImpedanceController::goalCallback()
@@ -471,10 +474,10 @@ namespace cartesian_impedance_controller
   //--------------------------------------------------------------------------------------------------------------------------------------
   void CartesianImpedanceController::dynamicConfigCallback(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level)
   {
-    translational_stiffness = config.translational_stiffness;
-    rotational_stiffness = config.rotational_stiffness;
-    nullspace_stiffness = config.nullspace_stiffness;
-    base_tools.update_compliance(translational_stiffness, rotational_stiffness, nullspace_stiffness, cartesian_stiffness_target_, cartesian_damping_target_, nullspace_stiffness_target_);
+    translational_stiffness_ << config.translation_x, config.translation_y, config.translation_z;
+    rotational_stiffness_ << config.rotation_x,config.rotation_y,config.rotation_z;
+    nullspace_stiffness_target_ = config.nullspace_stiffness;
+    base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_,cartesian_stiffness_target_, cartesian_damping_target_);
   }
 
   void CartesianImpedanceController::dynamicWrenchCallback(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level)
@@ -484,7 +487,6 @@ namespace cartesian_impedance_controller
     f.resizeLike(temp);
     f << temp;
     apply_wrench = config.apply_wrench;
-
   }
   //--------------------------------------------------------------------------------------------------------------------------------------
   void CartesianImpedanceController::equilibriumPoseCallback(

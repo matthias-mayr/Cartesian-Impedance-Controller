@@ -24,8 +24,7 @@ public:
         const Eigen::Matrix<double, 7, 1> &tau_d_calculated,
         Eigen::Matrix<double, 7, 1> &tau_J_d, double delta_tau_max_);
 
-    void update_compliance(double &translational_stiffness, double &rotational_stiffness, double &nullspace_stiffness, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_damping_target_,double &nullspace_stiffness_target_);
-
+    void update_compliance(Eigen::Vector3d translational_stiffness, Eigen::Vector3d rotational_stiffness, double nullspace_stiffness, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_damping_target_);
 private:
     // Saturation
  // NOLINT (readability-identifier-naming)

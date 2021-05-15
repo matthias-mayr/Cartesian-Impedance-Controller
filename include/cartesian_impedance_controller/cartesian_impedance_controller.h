@@ -54,9 +54,7 @@ namespace cartesian_impedance_controller
   
     std::vector<hardware_interface::JointHandle> joint_handles_;
 
-    double filter_params_{1};
-    double nullspace_stiffness_{20.0};
-    double nullspace_stiffness_target_{5.0};
+
 
     const double delta_tau_max_{1.0};
 
@@ -146,11 +144,12 @@ namespace cartesian_impedance_controller
     //compliance parameters
     void complianceParamCallback();
 
-        // Default values of the panda parameters
-    double translational_stiffness = 200;
-    double rotational_stiffness = 100;
-    double nullspace_stiffness = 0;
-
+     // Default values of the panda parameters
+  Eigen::Vector3d translational_stiffness_=Eigen::Vector3d::Constant(200.);
+  Eigen::Vector3d rotational_stiffness_=Eigen::Vector3d::Constant(100.);
+  double nullspace_stiffness_{0};
+  double nullspace_stiffness_target_{5.0};
+  double filter_params_{1};
     // Trajectory handling
     std::unique_ptr<actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>> as_;
     void goalCallback();
