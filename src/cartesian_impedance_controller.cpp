@@ -274,7 +274,7 @@ namespace cartesian_impedance_controller
     }
 
     //for exporting data, uncomment if the package "ros_logger" is not available
-    log_stuff(position, orientation,q,dq, tau_d);
+    log_stuff(position, orientation, q, dq, tau_d);
 
     if (verbose_)
     {
@@ -301,15 +301,15 @@ namespace cartesian_impedance_controller
                                  position_d_target_, orientation_d_target_);
   }
 
-  void CartesianImpedanceController::log_stuff(Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::VectorXd q, Eigen::VectorXd dq,Eigen::VectorXd tau_d)
+  void CartesianImpedanceController::log_stuff(Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::VectorXd q, Eigen::VectorXd dq, Eigen::VectorXd tau_d)
   {
     //SIMULATION
     //--------------------------------------------------------------------------------------------------------
     //--------------------------------------------------------------------------------------------------------
-    
+
     if (begin_log_simulation)
     {
-      if (time_now_simulation - time_start_simulation < simulation_time_total && !stop_simulation)
+      if (ros::Time::now().toSec() - time_start_simulation < simulation_time_total && !stop_simulation)
       {
         //push data
         std::string separator = ",";
@@ -318,23 +318,12 @@ namespace cartesian_impedance_controller
         std::stringstream data;
         Eigen::Vector3d orientation_euler;
         Eigen::Vector3d orientation_d_euler;
-        quaternion_to_rpy(orientation,  orientation_euler);
-        quaternion_to_rpy(orientation_d_,  orientation_d_euler);
+        base_tools.quaternion_to_rpy(orientation, orientation_euler);
+        base_tools.quaternion_to_rpy(orientation_d_, orientation_d_euler);
 
-        data << std::to_string(ros::Time::now().toSec()) << separator << 
-        position.transpose().format(fmt) << separator <<
-        position_d_.transpose().format(fmt) << separator <<
-        orientation.coeffs().transpose().format(fmt) << separator << 
-        orientation_d_.coeffs().format(fmt) << separator << 
-        orientation_euler.transpose().format(fmt) << separator <<  
-        orientation_d_euler.format(fmt) << separator << 
-        tau_d.transpose().format(fmt) <<separator <<
-        q.transpose().format(fmt) << separator << 
-        dq.transpose().format(fmt);
-       
+        data << std::to_string(ros::Time::now().toSec() - time_start_simulation) << separator << position.transpose().format(fmt) << separator << position_d_.transpose().format(fmt) << separator << orientation.coeffs().transpose().format(fmt) << separator << orientation_d_.coeffs().format(fmt) << separator << orientation_euler.transpose().format(fmt) << separator << orientation_d_euler.format(fmt) << separator << tau_d.transpose().format(fmt) << separator << q.transpose().format(fmt) << separator << dq.transpose().format(fmt);
         // save the next data point
         data_VECTOR.push_back(data.str());
-
       }
       else
       {
