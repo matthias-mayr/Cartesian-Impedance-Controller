@@ -23,7 +23,6 @@ find_package(catkin REQUIRED COMPONENTS
   eigen_conversions
   std_msgs
   controller_manager
-  urdf
   tf
   tf_conversions
   actionlib
@@ -53,7 +52,7 @@ generate_dynamic_reconfigure_options(
 
 catkin_package(
      INCLUDE_DIRS include
-     #CATKIN_DEPENDS rospy actionlib roscpp pluginlib controller_interface hardware_interface iiwa_tools eigen_conversions std_msgs controller_manager urdf tf tf_conversions actionlib actionlib_msgs trajectory_msgs control_msgs
+     CATKIN_DEPENDS actionlib roscpp pluginlib controller_interface hardware_interface iiwa_tools eigen_conversions std_msgs controller_manager tf tf_conversions actionlib actionlib_msgs trajectory_msgs control_msgs ros_logger
      DEPENDS Boost tinyxml2 SpaceVecAlg RBDyn mc_rbdyn_urdf Eigen3
      LIBRARIES ${CMAKE_PROJECT_NAME}
 )
@@ -68,11 +67,6 @@ add_dependencies(
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
   ${PROJECT_NAME}_gencfg
-)
-
-target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Eigen3_LIBRARIES}
 )
 
 # Yes, this is necessary. Otherwise the control plugin crashes.

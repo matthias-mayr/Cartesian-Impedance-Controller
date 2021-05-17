@@ -11,26 +11,42 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>controller_interface</build_depend>
+  <build_depend>controller_manager</build_depend>
   <build_depend>hardware_interface</build_depend>
   <build_depend>pluginlib</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>eigen</build_depend>
   <build_depend>iiwa_tools</build_depend>
   <build_depend>eigen_conversions</build_depend>
+  <build_depend>tf</build_depend>
   <build_depend>tf_conversions</build_depend>
   <build_depend>message_generation</build_depend>
+  <build_depend>actionlib</build_depend>
+  <build_depend>actionlib_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>trajectory_msgs</build_depend>
+  <build_depend>control_msgs</build_depend>
+  <build_depend>ros_logger</build_depend>
  <!--
   <build_depend>dynamic_reconfigure</build_depend>
   <run_depend>dynamic_reconfigure</run_depend> 
   -->
   <run_depend>message_runtime</run_depend>
   <run_depend>controller_interface</run_depend>
+  <run_depend>controller_manager</run_depend>
   <run_depend>hardware_interface</run_depend>
   <run_depend>pluginlib</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>iiwa_tools</run_depend>
   <run_depend>eigen_conversions</run_depend>
+  <run_depend>tf</run_depend>
   <run_depend>tf_conversions</run_depend>
+  <run_depend>actionlib</run_depend>
+  <run_depend>actionlib_msgs</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>trajectory_msgs</run_depend>
+  <run_depend>control_msgs</run_depend>
+  <run_depend>ros_logger</run_depend>
 
    <export>
     <!-- Other tools can request additional information be placed here -->
