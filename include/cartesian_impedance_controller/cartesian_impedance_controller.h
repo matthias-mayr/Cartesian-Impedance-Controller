@@ -54,7 +54,7 @@ namespace cartesian_impedance_controller
   
     std::vector<hardware_interface::JointHandle> joint_handles_;
 
-    const double delta_tau_max_{1.0};
+    const double delta_tau_max_{1};
 
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_;
@@ -85,7 +85,6 @@ namespace cartesian_impedance_controller
     //simulation
     double simulation_time_total{0};
     double time_start_simulation{0};
-    double time_now_simulation{0};
     bool start_simulation{false};
     bool stop_simulation{false};
     bool begin_log_simulation{false};
