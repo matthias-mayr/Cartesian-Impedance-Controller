@@ -62,11 +62,6 @@ namespace cartesian_impedance_controller
     //the other traj generator
     sub_pose = node_handle.subscribe("target_pose", 1, &CartesianImpedanceController::ee_poseCallback, this);
 
-    //for logging data
-    //-----------------------------------------------------------------------------------------------------------------------------
-    //latest_request_subscriber = node_handle.subscribe("latest_request", 1, &CartesianImpedanceController::latest_requestCallback, this);
-    //-----------------------------------------------------------------------------------------------------------------------------
-
     sub_trajectory_ = node_handle.subscribe("command", 1, &CartesianImpedanceController::trajectoryCallback, this);
     sub_equilibrium_pose_ = node_handle.subscribe(
         "equilibrium_pose", 20, &CartesianImpedanceController::equilibriumPoseCallback, this,
@@ -328,10 +323,7 @@ namespace cartesian_impedance_controller
       else
       {
         //log data
-
-        logger.set_preferences(",", print_title_simulation, over_write_simulation); //separator, print first line, overwrite
-        logger.log_to(path, file_name_simulation);
-        logger.log_push_all(data_VECTOR);
+        logger.log_push_all(path,file_name_simulation,data_VECTOR);
         ROS_INFO("LOG: Simulation saved.");
         begin_log_simulation = false;
         stop_simulation = false;
