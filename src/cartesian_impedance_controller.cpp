@@ -490,6 +490,8 @@ namespace cartesian_impedance_controller
       }
       pub_torques_.unlockAndPublish();
     }
+    
+    
 
     // Publish tf to the equilibrium pose
     tf::vectorEigenToTF(position_d_, tf_pos_);
@@ -498,4 +500,6 @@ namespace cartesian_impedance_controller
     tf_br_transform_.setRotation(tf_rot_);
     tf_br_.sendTransform(tf::StampedTransform(tf_br_transform_, ros::Time::now(), "world", "eq_pose"));
   }
+
+  
 }
