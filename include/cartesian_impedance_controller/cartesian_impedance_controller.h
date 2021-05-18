@@ -54,7 +54,7 @@ namespace cartesian_impedance_controller
   
     std::vector<hardware_interface::JointHandle> joint_handles_;
 
-    const double delta_tau_max_{1};
+    const double delta_tau_max_{5};
 
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_;
