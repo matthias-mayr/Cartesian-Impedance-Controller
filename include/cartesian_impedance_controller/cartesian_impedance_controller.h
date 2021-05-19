@@ -29,32 +29,30 @@
 #include "cartesian_impedance_controller/log_configConfig.h"
 #include "ros_logger/ros_logger.h"
 
+#include "cartesian_impedance_controller/CartesianImpedanceControlMode.h"
+
 namespace cartesian_impedance_controller
 {
 
   class CartesianImpedanceController : public controller_interface::Controller<hardware_interface::EffortJointInterface>, public CartesianImpedanceController_base
   {
 
-
   public:
     bool init(hardware_interface::EffortJointInterface *hw, ros::NodeHandle &node_handle) override;
     void starting(const ros::Time &) override;
     void update(const ros::Time &, const ros::Duration &period) override;
 
-
   private:
-    
-     //cartesian_impedance_controller base tools
+    //cartesian_impedance_controller base tools
     CartesianImpedanceController_base base_tools;
-    
 
     void update_parameters();
     bool get_fk(const Eigen::Matrix<double, 7, 1> &q, Eigen::Vector3d &translation, Eigen::Quaterniond &rotation);
     bool get_jacobian(const Eigen::Matrix<double, 7, 1> &q, const Eigen::Matrix<double, 7, 1> &dq, Eigen::Matrix<double, 6, 7> &jacobian);
-  
+
     std::vector<hardware_interface::JointHandle> joint_handles_;
 
-    const double delta_tau_max_{5};
+    double delta_tau_max_{5};
 
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_;
@@ -69,43 +67,39 @@ namespace cartesian_impedance_controller
     Eigen::Vector3d position_d_target_;
     Eigen::Quaterniond orientation_d_target_;
 
+    //
+    ros::Subscriber sub_CartesianImpedanceParams;
+    void cartesian_impedance_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
+
     // the  trajectory generator
     ros::Subscriber sub_pose;
-    const geometry_msgs::PoseStampedConstPtr pose_msg;
     void ee_poseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
 
-    //for logging data
-    //-----------------------------------------------------------------------------------------------
-    
-    //ros::Subscriber latest_request_subscriber;
-    //void latest_requestCallback(const geometry_msgs::PoseStampedConstPtr &msg);
-    
     DataExporter logger;
-    const char* path{"/home/oussama/catkin_overlay_ws/generated_logs"};
-    const char* path_robot{"/home/chouman/catkin_overlay_ws/generated_data_roslogger"};
+    const char *path{"/home/oussama/catkin_overlay_ws/generated_logs"};
+    const char *path_robot{"/home/chouman/catkin_overlay_ws/generated_data_roslogger"};
     //simulation
     double simulation_time_total{0};
     double time_start_simulation{0};
     bool start_simulation{false};
     bool stop_simulation{false};
     bool begin_log_simulation{false};
-    std::string file_name_simulation{"simulation.txt"}; 
+    std::string file_name_simulation{"simulation.txt"};
     bool print_title_simulation{true};
     bool over_write_simulation{true};
     //--
-       std::vector<std::string> data_VECTOR;
-    void log_stuff(Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::VectorXd q, Eigen::VectorXd dq,Eigen::VectorXd tau_d);
-  
+    std::vector<std::string> data_VECTOR;
+    void log_stuff(Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::VectorXd q, Eigen::VectorXd dq, Eigen::VectorXd tau_d);
+
     void logCallback(cartesian_impedance_controller::log_configConfig &config, uint32_t level);
-     ros::NodeHandle dynamic_log_node_;
-   std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::log_configConfig>> 
-    dynamic_server_log_; 
+    ros::NodeHandle dynamic_log_node_;
+    std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::log_configConfig>>
+        dynamic_server_log_;
     //------------------------------------------------------------------------------------------------
 
     //simulating a wrench
     bool apply_wrench{false};
     Eigen::MatrixXd f;
-      
 
     // IIWA Tools - this is GPLv3
     iiwa_tools::IiwaTools _tools;
@@ -118,26 +112,22 @@ namespace cartesian_impedance_controller
 
     // Dynamic reconfigure
     ros::NodeHandle dynamic_reconfigure_compliance_param_node_;
-    std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>> 
-    dynamic_server_compliance_param_;
-  void dynamicConfigCallback(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level);
-   
-   
-   ros::NodeHandle dynamic_reconfigure_wrench_param_node_;
-   std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::wrench_configConfig>> 
-    dynamic_server_wrench_param_;
-   void dynamicWrenchCallback(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level);
-    
+    std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>>
+        dynamic_server_compliance_param_;
+    void dynamicConfigCallback(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level);
 
-    //compliance parameters
-    void complianceParamCallback();
+    ros::NodeHandle dynamic_reconfigure_wrench_param_node_;
+    std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::wrench_configConfig>>
+        dynamic_server_wrench_param_;
+    void dynamicWrenchCallback(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level);
 
-     // Default values of the panda parameters
-  Eigen::Vector3d translational_stiffness_=Eigen::Vector3d::Constant(200.);
-  Eigen::Vector3d rotational_stiffness_=Eigen::Vector3d::Constant(100.);
-  double nullspace_stiffness_{0};
-  double nullspace_stiffness_target_{5.0};
-  double filter_params_{1};
+
+    // Default values of the panda parameters
+    Eigen::Vector3d translational_stiffness_ = Eigen::Vector3d::Constant(200.);
+    Eigen::Vector3d rotational_stiffness_ = Eigen::Vector3d::Constant(100.);
+    double nullspace_stiffness_{0};
+    double nullspace_stiffness_target_{5.0};
+    double filter_params_{1};
     // Trajectory handling
     std::unique_ptr<actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>> as_;
     void goalCallback();
@@ -167,7 +157,6 @@ namespace cartesian_impedance_controller
     tf::Transform tf_br_transform_;
     tf::Vector3 tf_pos_;
     tf::Quaternion tf_rot_;
-
   };
   PLUGINLIB_EXPORT_CLASS(cartesian_impedance_controller::CartesianImpedanceController, controller_interface::ControllerBase);
 

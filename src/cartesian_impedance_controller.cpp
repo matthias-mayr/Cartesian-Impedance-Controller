@@ -49,7 +49,6 @@ namespace cartesian_impedance_controller
 
     ROS_INFO("CartesianImpedanceController namespace: %s", node_handle.getNamespace().c_str());
     node_handle.param<bool>("verbose", verbose_, false);
-
     perm_indices_ = Eigen::VectorXi(6);
     perm_indices_ << 3, 4, 5, 0, 1, 2;
     jacobian_perm_ = Eigen::PermutationMatrix<Eigen::Dynamic, 6>(perm_indices_);
@@ -61,7 +60,7 @@ namespace cartesian_impedance_controller
 
     //the other traj generator
     sub_pose = node_handle.subscribe("target_pose", 1, &CartesianImpedanceController::ee_poseCallback, this);
-
+    sub_CartesianImpedanceParams = node_handle.subscribe("cartesian_impedance_parameters", 1, &CartesianImpedanceController::cartesian_impedance_Callback, this);
     sub_trajectory_ = node_handle.subscribe("command", 1, &CartesianImpedanceController::trajectoryCallback, this);
     sub_equilibrium_pose_ = node_handle.subscribe(
         "equilibrium_pose", 20, &CartesianImpedanceController::equilibriumPoseCallback, this,
@@ -135,8 +134,7 @@ namespace cartesian_impedance_controller
     dynamic_server_log_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::log_configConfig>>(dynamic_log_node_);
     dynamic_server_log_->setCallback(
         boost::bind(&CartesianImpedanceController::logCallback, this, _1, _2));
-  
-  
+
     //-------------------------------------------------------------------------------------------------------------------------------------
 
     // Initialize variables
@@ -185,8 +183,8 @@ namespace cartesian_impedance_controller
                                             const ros::Duration & /*period*/)
 
   {
-    //ROS_INFO_STREAM_THROTTLE(0.1, "\nParameters:\nCartesian Stiffness:\n" << cartesian_stiffness_ << "\nCartesian damping:\n");
-
+    ROS_INFO_STREAM_THROTTLE(1, "\nParameters:\nCartesian Stiffness:\n"
+                                    << cartesian_stiffness_);
     if (traj_running_)
     {
       trajectoryUpdate();
@@ -212,14 +210,16 @@ namespace cartesian_impedance_controller
     Eigen::Quaterniond orientation;
     get_fk(q, position, orientation);
 
-     if (verbose_){
-       tf::vectorEigenToTF(position, tf_pos_);
-       ROS_INFO_STREAM_THROTTLE(0.1, "\nCARTESIAN POSITION:\n" << position);
-       tf_br_transform_.setOrigin(tf_pos_);
-       tf::quaternionEigenToTF(orientation, tf_rot_);
-       tf_br_transform_.setRotation(tf_rot_);
-       tf_br_.sendTransform(tf::StampedTransform(tf_br_transform_, ros::Time::now(), "world", "fk_ee"));
-     }
+    if (verbose_)
+    {
+      tf::vectorEigenToTF(position, tf_pos_);
+      ROS_INFO_STREAM_THROTTLE(0.1, "\nCARTESIAN POSITION:\n"
+                                        << position);
+      tf_br_transform_.setOrigin(tf_pos_);
+      tf::quaternionEigenToTF(orientation, tf_rot_);
+      tf_br_transform_.setRotation(tf_rot_);
+      tf_br_.sendTransform(tf::StampedTransform(tf_br_transform_, ros::Time::now(), "world", "fk_ee"));
+    }
 
     // compute error to desired pose
     // position error
@@ -325,8 +325,8 @@ namespace cartesian_impedance_controller
       else
       {
         //log data
-        logger.log_push_all(path,file_name_simulation,data_VECTOR);
-        logger.log_push_all(path_robot,file_name_simulation,data_VECTOR);
+        logger.log_push_all(path, file_name_simulation, data_VECTOR);
+        logger.log_push_all(path_robot, file_name_simulation, data_VECTOR);
         ROS_INFO("LOG: Simulation saved.");
         begin_log_simulation = false;
         stop_simulation = false;
@@ -420,9 +420,11 @@ namespace cartesian_impedance_controller
       return;
     }
   }
-
-  void CartesianImpedanceController::complianceParamCallback()
+  void CartesianImpedanceController::cartesian_impedance_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg)
   {
+    translational_stiffness_ << msg.cartesian_stiffness.x, msg.cartesian_stiffness.y, msg.cartesian_stiffness.z;
+    rotational_stiffness_ << msg.cartesian_stiffness.a, msg.cartesian_stiffness.b, msg.cartesian_stiffness.c;
+    nullspace_stiffness_target_ = msg.nullspace_stiffness;
     base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_);
   }
 
@@ -447,10 +449,13 @@ namespace cartesian_impedance_controller
   //--------------------------------------------------------------------------------------------------------------------------------------
   void CartesianImpedanceController::dynamicConfigCallback(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level)
   {
-    translational_stiffness_ << config.translation_x, config.translation_y, config.translation_z;
-    rotational_stiffness_ << config.rotation_x, config.rotation_y, config.rotation_z;
-    nullspace_stiffness_target_ = config.nullspace_stiffness;
-    base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_);
+    if (config.apply_stiffness)
+    {
+      translational_stiffness_ << config.translation_x, config.translation_y, config.translation_z;
+      rotational_stiffness_ << config.rotation_x, config.rotation_y, config.rotation_z;
+      nullspace_stiffness_target_ = config.nullspace_stiffness;
+      base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_);
+    }
   }
 
   void CartesianImpedanceController::dynamicWrenchCallback(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level)
@@ -486,9 +491,6 @@ namespace cartesian_impedance_controller
       }
       pub_torques_.unlockAndPublish();
     }
-    
-    
-
     // Publish tf to the equilibrium pose
     tf::vectorEigenToTF(position_d_, tf_pos_);
     tf_br_transform_.setOrigin(tf_pos_);
@@ -497,5 +499,4 @@ namespace cartesian_impedance_controller
     tf_br_.sendTransform(tf::StampedTransform(tf_br_transform_, ros::Time::now(), "world", "eq_pose"));
   }
 
-  
 }
