@@ -183,8 +183,7 @@ namespace cartesian_impedance_controller
                                             const ros::Duration & /*period*/)
 
   {
-    ROS_INFO_STREAM_THROTTLE(1, "\nParameters:\nCartesian Stiffness:\n"
-                                    << cartesian_stiffness_);
+    //ROS_INFO_STREAM_THROTTLE(1, "\nParameters:\nCartesian Stiffness:\n"<< cartesian_stiffness_);
     if (traj_running_)
     {
       trajectoryUpdate();
