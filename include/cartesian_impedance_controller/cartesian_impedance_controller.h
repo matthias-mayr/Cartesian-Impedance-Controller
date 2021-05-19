@@ -81,7 +81,8 @@ namespace cartesian_impedance_controller
     //void latest_requestCallback(const geometry_msgs::PoseStampedConstPtr &msg);
     
     DataExporter logger;
-    const char* path{"/home/oussama/catkin_ws/generated_logs"};
+    const char* path{"/home/oussama/catkin_overlay_ws/generated_logs"};
+    const char* path_robot{"/home/chouman/catkin_overlay_ws/generated_data_roslogger"};
     //simulation
     double simulation_time_total{0};
     double time_start_simulation{0};
@@ -104,7 +105,7 @@ namespace cartesian_impedance_controller
     //simulating a wrench
     bool apply_wrench{false};
     Eigen::MatrixXd f;
-    
+      
 
     // IIWA Tools - this is GPLv3
     iiwa_tools::IiwaTools _tools;

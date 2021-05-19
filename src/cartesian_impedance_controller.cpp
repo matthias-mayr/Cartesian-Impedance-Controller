@@ -59,7 +59,7 @@ namespace cartesian_impedance_controller
     as_->registerPreemptCallback(boost::bind(&CartesianImpedanceController::preemptCallback, this));
     as_->start();
 
-    // Trajectory generator
+    //the other traj generator
     sub_pose = node_handle.subscribe("target_pose", 1, &CartesianImpedanceController::ee_poseCallback, this);
 
     sub_trajectory_ = node_handle.subscribe("command", 1, &CartesianImpedanceController::trajectoryCallback, this);
@@ -135,6 +135,8 @@ namespace cartesian_impedance_controller
     dynamic_server_log_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::log_configConfig>>(dynamic_log_node_);
     dynamic_server_log_->setCallback(
         boost::bind(&CartesianImpedanceController::logCallback, this, _1, _2));
+  
+  
     //-------------------------------------------------------------------------------------------------------------------------------------
 
     // Initialize variables
@@ -210,15 +212,14 @@ namespace cartesian_impedance_controller
     Eigen::Quaterniond orientation;
     get_fk(q, position, orientation);
 
-    if (verbose_){
-       tf::vectorEigenToTF(position, tf_pos_);
-      ROS_INFO_STREAM_THROTTLE(0.1, "\nCARTESIAN POSITION:\n" << position);
-    
-       tf_br_transform_.setOrigin(tf_pos_);
-       tf::quaternionEigenToTF(orientation, tf_rot_);
-       tf_br_transform_.setRotation(tf_rot_);
-       tf_br_.sendTransform(tf::StampedTransform(tf_br_transform_, ros::Time::now(), "world", "fk_ee"));
-     }
+    // if (verbose_){
+    //   tf::vectorEigenToTF(position, tf_pos_);
+    //   ROS_INFO_STREAM_THROTTLE(0.1, "\nCARTESIAN POSITION:\n" << position);
+    //   tf_br_transform_.setOrigin(tf_pos_);
+    //   tf::quaternionEigenToTF(orientation, tf_rot_);
+    //   tf_br_transform_.setRotation(tf_rot_);
+    //   tf_br_.sendTransform(tf::StampedTransform(tf_br_transform_, ros::Time::now(), "world", "fk_ee"));
+    // }
 
     // compute error to desired pose
     // position error
@@ -297,8 +298,6 @@ namespace cartesian_impedance_controller
                                  position_d_target_, orientation_d_target_);
   }
 
-//for logging data
-  //------------------------------------------------------------------------------------------------------
   void CartesianImpedanceController::log_stuff(Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::VectorXd q, Eigen::VectorXd dq, Eigen::VectorXd tau_d)
   {
     //SIMULATION
@@ -327,6 +326,7 @@ namespace cartesian_impedance_controller
       {
         //log data
         logger.log_push_all(path,file_name_simulation,data_VECTOR);
+        logger.log_push_all(path_robot,file_name_simulation,data_VECTOR);
         ROS_INFO("LOG: Simulation saved.");
         begin_log_simulation = false;
         stop_simulation = false;
@@ -345,6 +345,22 @@ namespace cartesian_impedance_controller
     //--------------------------------------------------------------------------------------------------------
   }
 
+  void CartesianImpedanceController::ee_poseCallback(const geometry_msgs::PoseStampedConstPtr &msg)
+  {
+    position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
+    Eigen::Quaterniond last_orientation_d_target(orientation_d_target_);
+    orientation_d_target_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y,
+        msg->pose.orientation.z, msg->pose.orientation.w;
+    if (last_orientation_d_target.coeffs().dot(orientation_d_target_.coeffs()) < 0.0)
+    {
+      orientation_d_target_.coeffs() << -orientation_d_target_.coeffs();
+    }
+  }
+
+  //-----------------------------------------------------------------------------------
+  //for logging data
+  //------------------------------------------------------------------------------------------------------
+
   void CartesianImpedanceController::logCallback(cartesian_impedance_controller::log_configConfig &config, uint32_t level)
   {
     file_name_simulation = config.file_name_simulation;
@@ -362,21 +378,8 @@ namespace cartesian_impedance_controller
     config.start_simulation = false;
     config.stop_simulation = false;
   }
-//------------------------------------------------------------------------------------------------------
 
-  void CartesianImpedanceController::ee_poseCallback(const geometry_msgs::PoseStampedConstPtr &msg)
-  {
-    position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
-    Eigen::Quaterniond last_orientation_d_target(orientation_d_target_);
-    orientation_d_target_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y,
-        msg->pose.orientation.z, msg->pose.orientation.w;
-    if (last_orientation_d_target.coeffs().dot(orientation_d_target_.coeffs()) < 0.0)
-    {
-      orientation_d_target_.coeffs() << -orientation_d_target_.coeffs();
-    }
-  }
-
-  
+  //------------------------------------------------------------------------------------------------------
   void CartesianImpedanceController::trajectoryStart(const trajectory_msgs::JointTrajectory &trajectory)
   {
     traj_duration_ = trajectory.points[trajectory.points.size() - 1].time_from_start;
