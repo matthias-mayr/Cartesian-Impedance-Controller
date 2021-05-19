@@ -212,14 +212,14 @@ namespace cartesian_impedance_controller
     Eigen::Quaterniond orientation;
     get_fk(q, position, orientation);
 
-    // if (verbose_){
-    //   tf::vectorEigenToTF(position, tf_pos_);
-    //   ROS_INFO_STREAM_THROTTLE(0.1, "\nCARTESIAN POSITION:\n" << position);
-    //   tf_br_transform_.setOrigin(tf_pos_);
-    //   tf::quaternionEigenToTF(orientation, tf_rot_);
-    //   tf_br_transform_.setRotation(tf_rot_);
-    //   tf_br_.sendTransform(tf::StampedTransform(tf_br_transform_, ros::Time::now(), "world", "fk_ee"));
-    // }
+     if (verbose_){
+       tf::vectorEigenToTF(position, tf_pos_);
+       ROS_INFO_STREAM_THROTTLE(0.1, "\nCARTESIAN POSITION:\n" << position);
+       tf_br_transform_.setOrigin(tf_pos_);
+       tf::quaternionEigenToTF(orientation, tf_rot_);
+       tf_br_transform_.setRotation(tf_rot_);
+       tf_br_.sendTransform(tf::StampedTransform(tf_br_transform_, ros::Time::now(), "world", "fk_ee"));
+     }
 
     // compute error to desired pose
     // position error
