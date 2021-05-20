@@ -425,6 +425,8 @@ namespace cartesian_impedance_controller
     rotational_stiffness_ << msg.cartesian_stiffness.a, msg.cartesian_stiffness.b, msg.cartesian_stiffness.c;
     nullspace_stiffness_target_ = msg.nullspace_stiffness;
     base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_);
+
+    q_d_nullspace_target_ << msg.q_d_nullspace.q1,msg.q_d_nullspace.q2,msg.q_d_nullspace.q3,msg.q_d_nullspace.q4,msg.q_d_nullspace.q5,msg.q_d_nullspace.q6,msg.q_d_nullspace.q7;
   }
 
   void CartesianImpedanceController::goalCallback()

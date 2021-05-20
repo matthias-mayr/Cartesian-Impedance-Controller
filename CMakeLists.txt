@@ -37,6 +37,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(FILES
 CartesianImpedanceControlMode.msg
 CartesianQuantity.msg
+JointsQuantity.msg
 )
 
 generate_messages(

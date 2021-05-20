@@ -14,3 +14,7 @@ float64 nullspace_stiffness
 # The damping parameter for null space [Nm*s/rad]. 
 # Precondition: value >= 0.3 and value <= 1.0. - A good damping value is 0.7. 
 float64 nullspace_damping
+
+# The desired nullspace configuration.
+# Precondition: values must be within the limits of the robot!
+JointsQuantity q_d_nullspace
