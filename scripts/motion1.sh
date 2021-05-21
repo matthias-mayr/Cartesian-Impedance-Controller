@@ -6,16 +6,16 @@ echo "This experimental motion consists of some trajectories with intermidiate p
 
 echo "Press any key to start"
 read step1
-./change_goal.sh -0.5 0.0 0.8 1.0 0.0 0.0 0.0
+./change_goal.sh -0.5 0.0 1 1.0 0.0 0.0 0.0
 
 
 echo "Press any key to continue to the next trajectory"
 read step2
-./change_goal.sh -0.5 0.0 0.8 0.707 0.0 0.0 -0.707
+./change_goal.sh -0.5 0.0 1 0.707 0.0 0.0 -0.707
 
 echo "Press any key to continue to the next trajectory"
 read step3
-./change_goal.sh -0.5 -0.5 0.8 1.0 0.0 0.0 0.0
+./change_goal.sh -0.45 -0.5 1.1 1.0 0.0 0.0 0.0
 
 
 echo "Press any key to go back to home position"
