@@ -19,6 +19,7 @@
 
 #include "ros_logger/ros_logger.h"
 
+
 namespace cartesian_impedance_controller
 {
 
@@ -147,6 +148,8 @@ namespace cartesian_impedance_controller
     cartesian_damping_.setZero();
 
     base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_);
+    //Initialize publisher of useful data
+    pub_data_export_=node_handle.advertise<cartesian_impedance_controller::RobotImpedanceState>("useful_data_to_analyze",1);
     return true;
   }
 
@@ -295,6 +298,51 @@ namespace cartesian_impedance_controller
                                  cartesian_damping_target_, q_d_nullspace_,
                                  q_d_nullspace_target_, position_d_, orientation_d_,
                                  position_d_target_, orientation_d_target_);
+
+    //Publish data to export and analyze
+//-----------------------------------------------------------------------------------------
+        Eigen::Vector3d orientation_euler;
+        Eigen::Vector3d orientation_euler_d;
+        base_tools.quaternion_to_rpy(orientation, orientation_euler);
+        base_tools.quaternion_to_rpy(orientation_d_, orientation_euler_d);
+
+    cartesian_impedance_controller::RobotImpedanceState data_to_analyze;
+    data_to_analyze.time = ros::Time::now().toSec();
+    data_to_analyze.position.x = position[0];
+    data_to_analyze.position.y = position[1];
+    data_to_analyze.position.z = position[2];
+
+    data_to_analyze.position_d_.x = position_d_[0];
+    data_to_analyze.position_d_.y = position_d_[1];
+    data_to_analyze.position_d_.z = position_d_[2];
+
+    data_to_analyze.orientation.x=orientation.coeffs()[0];
+    data_to_analyze.orientation.y=orientation.coeffs()[1];
+    data_to_analyze.orientation.z=orientation.coeffs()[2];
+    data_to_analyze.tau_d.q5=tau_d(4);
+    data_to_analyze.tau_d.q6=tau_d(5);
+    data_to_analyze.tau_d.q7=tau_d(6);
+
+    data_to_analyze.q.q1=q(0);
+    data_to_analyze.q.q2=q(1);
+    data_to_analyze.q.q3=q(2);
+    data_to_analyze.q.q4=q(3);
+    data_to_analyze.q.q5=q(4);
+    data_to_analyze.q.q6=q(5);
+    data_to_analyze.q.q7=q(6);
+
+    data_to_analyze.cartesian_stiffness.x=cartesian_stiffness_(0);
+    data_to_analyze.cartesian_stiffness.y=cartesian_stiffness_(1,1);
+    data_to_analyze.cartesian_stiffness.z=cartesian_stiffness_(2,2);
+
+    data_to_analyze.cartesian_stiffness.a=cartesian_stiffness_(3,3);
+    data_to_analyze.cartesian_stiffness.b=cartesian_stiffness_(4,4);
+    data_to_analyze.cartesian_stiffness.c=cartesian_stiffness_(5,5);
+
+    data_to_analyze.nullspace_stiffness = nullspace_stiffness_;
+
+    pub_data_export_.publish(data_to_analyze);
+//-----------------------------------------------------------------------------------------
   }
 
   void CartesianImpedanceController::log_stuff(Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::VectorXd q, Eigen::VectorXd dq, Eigen::VectorXd tau_d)

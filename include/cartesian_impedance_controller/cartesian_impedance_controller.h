@@ -30,7 +30,7 @@
 #include "ros_logger/ros_logger.h"
 
 #include "cartesian_impedance_controller/CartesianImpedanceControlMode.h"
-
+#include "cartesian_impedance_controller/RobotImpedanceState.h"
 namespace cartesian_impedance_controller
 {
 
@@ -75,6 +75,7 @@ namespace cartesian_impedance_controller
     ros::Subscriber sub_pose;
     void ee_poseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
 
+    //Exporting data-----------------------------------------------------------------------------------
     DataExporter logger;
     const char *path{"/home/oussama/catkin_overlay_ws/generated_logs"};
     const char *path_robot{"/home/chouman/catkin_overlay_ws/generated_data_roslogger"};
@@ -95,6 +96,10 @@ namespace cartesian_impedance_controller
     ros::NodeHandle dynamic_log_node_;
     std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::log_configConfig>>
         dynamic_server_log_;
+
+    // %%%%%%%%%%%%%%%NEW
+    ros::Publisher pub_data_export_;
+
     //------------------------------------------------------------------------------------------------
 
     //simulating a wrench

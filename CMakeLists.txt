@@ -38,6 +38,9 @@ add_message_files(FILES
 CartesianImpedanceControlMode.msg
 CartesianQuantity.msg
 JointsQuantity.msg
+RobotImpedanceState.msg
+ThreeDimensionalQuantity.msg
+FourDimensionalQuantity.msg
 )
 
 generate_messages(
