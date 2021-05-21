@@ -14,7 +14,7 @@ rostopic pub --once /bh/CartesianImpedance_trajectory_controller/goal geometry_m
 pose:
   position: 
     x: -0.5
-    y: -0.6
+    y: -0.5
     z: 0.9
   orientation: 
     x: 0.464521359639
