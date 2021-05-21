@@ -180,7 +180,7 @@ namespace cartesian_impedance_controller
   }
 
   void CartesianImpedanceController::update(const ros::Time & /*time*/,
-                                            const ros::Duration & /*period*/)
+                                            const ros::Duration & period /*period*/)
 
   {
     //ROS_INFO_STREAM_THROTTLE(1, "\nParameters:\nCartesian Stiffness:\n"<< cartesian_stiffness_);
@@ -288,8 +288,8 @@ namespace cartesian_impedance_controller
     }
 
     publish();
-
-    base_tools.update_parameters(filter_params_, nullspace_stiffness_,
+    double update_frequency =1/period.toSec();
+    base_tools.update_parameters(1000,filter_params_, nullspace_stiffness_,
                                  nullspace_stiffness_target_, cartesian_stiffness_,
                                  cartesian_stiffness_target_, cartesian_damping_,
                                  cartesian_damping_target_, q_d_nullspace_,

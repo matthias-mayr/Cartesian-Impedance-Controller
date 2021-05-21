@@ -69,13 +69,14 @@ bool CartesianImpedanceController_base::update_control(Eigen::Matrix<double, 7, 
     return true;
 }
 
-void CartesianImpedanceController_base::update_parameters(double filter_params_, double &nullspace_stiffness_,
+void CartesianImpedanceController_base::update_parameters(double update_frequency,double filter_params_, double &nullspace_stiffness_,
                                                           double nullspace_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_,
                                                           Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_damping_,
                                                           Eigen::Matrix<double, 6, 6> cartesian_damping_target_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_,
                                                           Eigen::Matrix<double, 7, 1> q_d_nullspace_target_, Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_,
                                                           Eigen::Vector3d position_d_target_, Eigen::Quaterniond orientation_d_target_)
 {
+    filter_params_=filter_params_ * 100 / update_frequency;
     cartesian_stiffness_ =
         filter_params_ * cartesian_stiffness_target_ + (1.0 - filter_params_) * cartesian_stiffness_;
     cartesian_damping_ =

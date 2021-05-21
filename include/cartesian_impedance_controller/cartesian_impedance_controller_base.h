@@ -14,7 +14,7 @@ public:
                                                        Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_,
                                                        Eigen::Matrix<double, 6, 7> &jacobian, Eigen::VectorXd &tau_d, 
                                                        Eigen::VectorXd &tau_task, Eigen::VectorXd &tau_nullspace);
-    void update_parameters(double filter_params_, double &nullspace_stiffness_,
+    void update_parameters(double update_frequency, double filter_params_, double &nullspace_stiffness_,
                            double nullspace_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_,
                            Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_damping_,
                            Eigen::Matrix<double, 6, 6> cartesian_damping_target_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_,
