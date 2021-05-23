@@ -31,7 +31,6 @@ find_package(catkin REQUIRED COMPONENTS
   control_msgs
   message_generation
   dynamic_reconfigure
-  ros_logger
 )
 
 add_message_files(FILES
@@ -51,12 +50,11 @@ generate_messages(
 generate_dynamic_reconfigure_options(
   cfg/impedance_config.cfg
   cfg/wrench_config.cfg
-  cfg/log_config.cfg
 )
 
 catkin_package(
      INCLUDE_DIRS include
-     CATKIN_DEPENDS actionlib roscpp pluginlib controller_interface hardware_interface iiwa_tools eigen_conversions std_msgs controller_manager tf tf_conversions actionlib actionlib_msgs trajectory_msgs control_msgs ros_logger
+     CATKIN_DEPENDS actionlib roscpp pluginlib controller_interface hardware_interface iiwa_tools eigen_conversions std_msgs controller_manager tf tf_conversions actionlib actionlib_msgs trajectory_msgs control_msgs
      DEPENDS Boost tinyxml2 SpaceVecAlg RBDyn mc_rbdyn_urdf Eigen3
      LIBRARIES ${CMAKE_PROJECT_NAME}
 )

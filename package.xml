@@ -26,7 +26,6 @@
   <build_depend>std_msgs</build_depend>
   <build_depend>trajectory_msgs</build_depend>
   <build_depend>control_msgs</build_depend>
-  <build_depend>ros_logger</build_depend>
  <!--
   <build_depend>dynamic_reconfigure</build_depend>
   <run_depend>dynamic_reconfigure</run_depend> 
@@ -46,7 +45,6 @@
   <run_depend>std_msgs</run_depend>
   <run_depend>trajectory_msgs</run_depend>
   <run_depend>control_msgs</run_depend>
-  <run_depend>ros_logger</run_depend>
 
    <export>
     <!-- Other tools can request additional information be placed here -->

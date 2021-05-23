@@ -14,10 +14,8 @@
 #include <Eigen/Dense>
 #include <cartesian_impedance_controller/impedance_configConfig.h>
 #include <cartesian_impedance_controller/wrench_configConfig.h>
-#include "cartesian_impedance_controller/log_configConfig.h"
 #include <dynamic_reconfigure/server.h>
 
-#include "ros_logger/ros_logger.h"
 
 
 namespace cartesian_impedance_controller
@@ -130,11 +128,6 @@ namespace cartesian_impedance_controller
     dynamic_server_wrench_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::wrench_configConfig>>(dynamic_reconfigure_wrench_param_node_);
     dynamic_server_wrench_param_->setCallback(
         boost::bind(&CartesianImpedanceController::dynamicWrenchCallback, this, _1, _2));
-    //log data
-    dynamic_log_node_ = ros::NodeHandle("log_reconfigure");
-    dynamic_server_log_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::log_configConfig>>(dynamic_log_node_);
-    dynamic_server_log_->setCallback(
-        boost::bind(&CartesianImpedanceController::logCallback, this, _1, _2));
 
     //-------------------------------------------------------------------------------------------------------------------------------------
 
@@ -148,8 +141,11 @@ namespace cartesian_impedance_controller
     cartesian_damping_.setZero();
 
     base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_);
+   
     //Initialize publisher of useful data
     pub_data_export_=node_handle.advertise<cartesian_impedance_controller::RobotImpedanceState>("useful_data_to_analyze",1);
+
+
     return true;
   }
 
@@ -180,6 +176,9 @@ namespace cartesian_impedance_controller
     // set nullspace equilibrium configuration to initial q
     q_d_nullspace_ = q_initial;
     q_d_nullspace_target_ = q_d_nullspace_;
+
+    //Save the time at start
+    time_at_start_=ros::Time::now().toSec();
   }
 
   void CartesianImpedanceController::update(const ros::Time & /*time*/,
@@ -272,8 +271,7 @@ namespace cartesian_impedance_controller
       joint_handles_[i].setCommand(tau_d(i));
     }
 
-    //for exporting data, uncomment if the package "ros_logger" is not available
-    log_stuff(position, orientation, q, dq, tau_d);
+
 
     if (verbose_)
     {
@@ -292,22 +290,27 @@ namespace cartesian_impedance_controller
 
     publish();
     double update_frequency =1/period.toSec();
-    base_tools.update_parameters(1000,filter_params_, nullspace_stiffness_,
+    base_tools.update_parameters(update_frequency,filter_params_, nullspace_stiffness_,
                                  nullspace_stiffness_target_, cartesian_stiffness_,
                                  cartesian_stiffness_target_, cartesian_damping_,
                                  cartesian_damping_target_, q_d_nullspace_,
                                  q_d_nullspace_target_, position_d_, orientation_d_,
                                  position_d_target_, orientation_d_target_);
 
+  publish_data(q,dq,position,orientation,position_d_,orientation_d_,tau_d,cartesian_stiffness_,nullspace_stiffness_);
+
+  }
     //Publish data to export and analyze
-//-----------------------------------------------------------------------------------------
+  void CartesianImpedanceController::publish_data(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d, Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_)
+  {
+
         Eigen::Vector3d orientation_euler;
         Eigen::Vector3d orientation_euler_d;
         base_tools.quaternion_to_rpy(orientation, orientation_euler);
         base_tools.quaternion_to_rpy(orientation_d_, orientation_euler_d);
 
     cartesian_impedance_controller::RobotImpedanceState data_to_analyze;
-    data_to_analyze.time = ros::Time::now().toSec();
+    data_to_analyze.time = ros::Time::now().toSec()-time_at_start_;
     data_to_analyze.position.x = position[0];
     data_to_analyze.position.y = position[1];
     data_to_analyze.position.z = position[2];
@@ -319,6 +322,26 @@ namespace cartesian_impedance_controller
     data_to_analyze.orientation.x=orientation.coeffs()[0];
     data_to_analyze.orientation.y=orientation.coeffs()[1];
     data_to_analyze.orientation.z=orientation.coeffs()[2];
+    data_to_analyze.orientation.w=orientation.coeffs()[3];
+    
+    data_to_analyze.orientation_d_.x=orientation_d_.coeffs()[0];
+    data_to_analyze.orientation_d_.y=orientation_d_.coeffs()[1];
+    data_to_analyze.orientation_d_.z=orientation_d_.coeffs()[2];
+    data_to_analyze.orientation_d_.w=orientation_d_.coeffs()[3];
+
+    data_to_analyze.orientation_euler.x=orientation_euler[0];
+    data_to_analyze.orientation_euler.y=orientation_euler[1];
+    data_to_analyze.orientation_euler.z=orientation_euler[2];
+    
+    data_to_analyze.orientation_euler_d.x=orientation_euler_d[0];
+    data_to_analyze.orientation_euler_d.y=orientation_euler_d[1];
+    data_to_analyze.orientation_euler_d.z=orientation_euler_d[2];
+
+
+    data_to_analyze.tau_d.q1=tau_d(0);
+    data_to_analyze.tau_d.q2=tau_d(1);
+    data_to_analyze.tau_d.q3=tau_d(2);
+    data_to_analyze.tau_d.q4=tau_d(3);
     data_to_analyze.tau_d.q5=tau_d(4);
     data_to_analyze.tau_d.q6=tau_d(5);
     data_to_analyze.tau_d.q7=tau_d(6);
@@ -331,66 +354,26 @@ namespace cartesian_impedance_controller
     data_to_analyze.q.q6=q(5);
     data_to_analyze.q.q7=q(6);
 
-    data_to_analyze.cartesian_stiffness.x=cartesian_stiffness_(0);
+    data_to_analyze.cartesian_stiffness.x=cartesian_stiffness_(0,0);
     data_to_analyze.cartesian_stiffness.y=cartesian_stiffness_(1,1);
     data_to_analyze.cartesian_stiffness.z=cartesian_stiffness_(2,2);
-
     data_to_analyze.cartesian_stiffness.a=cartesian_stiffness_(3,3);
     data_to_analyze.cartesian_stiffness.b=cartesian_stiffness_(4,4);
     data_to_analyze.cartesian_stiffness.c=cartesian_stiffness_(5,5);
 
     data_to_analyze.nullspace_stiffness = nullspace_stiffness_;
-
+/*
+    data_to_analyze.q_d_nullspace_.q1=q_d_nullspace_(0);
+    data_to_analyze.q_d_nullspace_.q2=q_d_nullspace_(1);
+    data_to_analyze.q_d_nullspace_.q3=q_d_nullspace_(2);
+    data_to_analyze.q_d_nullspace_.q4=q_d_nullspace_(3);
+    data_to_analyze.q_d_nullspace_.q5=q_d_nullspace_(4);
+    data_to_analyze.q_d_nullspace_.q6=q_d_nullspace_(5);
+    data_to_analyze.q_d_nullspace_.q7=q_d_nullspace_(6);
+*/
     pub_data_export_.publish(data_to_analyze);
-//-----------------------------------------------------------------------------------------
   }
 
-  void CartesianImpedanceController::log_stuff(Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::VectorXd q, Eigen::VectorXd dq, Eigen::VectorXd tau_d)
-  {
-    //SIMULATION
-    //--------------------------------------------------------------------------------------------------------
-    //--------------------------------------------------------------------------------------------------------
-
-    if (begin_log_simulation)
-    {
-      if (ros::Time::now().toSec() - time_start_simulation < simulation_time_total && !stop_simulation)
-      {
-        //push data
-        std::string separator = ",";
-        Eigen::IOFormat fmt(Eigen::StreamPrecision, Eigen::DontAlignCols, separator, separator, "", "");
-        std::cout.precision(5);
-        std::stringstream data;
-        Eigen::Vector3d orientation_euler;
-        Eigen::Vector3d orientation_d_euler;
-        base_tools.quaternion_to_rpy(orientation, orientation_euler);
-        base_tools.quaternion_to_rpy(orientation_d_, orientation_d_euler);
-
-        data << std::to_string(ros::Time::now().toSec() - time_start_simulation) << separator << position.transpose().format(fmt) << separator << position_d_.transpose().format(fmt) << separator << orientation.coeffs().transpose().format(fmt) << separator << orientation_d_.coeffs().format(fmt) << separator << orientation_euler.transpose().format(fmt) << separator << orientation_d_euler.format(fmt) << separator << tau_d.transpose().format(fmt) << separator << q.transpose().format(fmt) << separator << dq.transpose().format(fmt);
-        // save the next data point
-        data_VECTOR.push_back(data.str());
-      }
-      else
-      {
-        //log data
-        logger.log_push_all(path, file_name_simulation, data_VECTOR);
-        logger.log_push_all(path_robot, file_name_simulation, data_VECTOR);
-        ROS_INFO("LOG: Simulation saved.");
-        begin_log_simulation = false;
-        stop_simulation = false;
-      }
-    }
-
-    if (start_simulation)
-    {
-      start_simulation = false;
-      ROS_INFO("Started to log data which will last %f seconds", simulation_time_total);
-      time_start_simulation = (ros::Time::now()).toSec();
-      begin_log_simulation = true;
-    }
-
-    //--------------------------------------------------------------------------------------------------------
-    //--------------------------------------------------------------------------------------------------------
-  }
 
   void CartesianImpedanceController::ee_poseCallback(const geometry_msgs::PoseStampedConstPtr &msg)
   {
@@ -404,27 +387,7 @@ namespace cartesian_impedance_controller
     }
   }
 
-  //-----------------------------------------------------------------------------------
-  //for logging data
-  //------------------------------------------------------------------------------------------------------
-
-  void CartesianImpedanceController::logCallback(cartesian_impedance_controller::log_configConfig &config, uint32_t level)
-  {
-    file_name_simulation = config.file_name_simulation;
-    print_title_simulation = config.print_title_simulation;
-    over_write_simulation = config.overwrite_simulation;
-    stop_simulation = config.stop_simulation;
-    if (!begin_log_simulation)
-    {
-      simulation_time_total = config.simulation_time;
-      if (config.start_simulation)
-      {
-        start_simulation = config.start_simulation;
-      }
-    }
-    config.start_simulation = false;
-    config.stop_simulation = false;
-  }
+ 
 
   //------------------------------------------------------------------------------------------------------
   void CartesianImpedanceController::trajectoryStart(const trajectory_msgs::JointTrajectory &trajectory)

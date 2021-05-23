@@ -26,8 +26,6 @@
 
 #include "cartesian_impedance_controller/impedance_configConfig.h"
 #include "cartesian_impedance_controller/wrench_configConfig.h"
-#include "cartesian_impedance_controller/log_configConfig.h"
-#include "ros_logger/ros_logger.h"
 
 #include "cartesian_impedance_controller/CartesianImpedanceControlMode.h"
 #include "cartesian_impedance_controller/RobotImpedanceState.h"
@@ -75,30 +73,10 @@ namespace cartesian_impedance_controller
     ros::Subscriber sub_pose;
     void ee_poseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
 
-    //Exporting data-----------------------------------------------------------------------------------
-    DataExporter logger;
-    const char *path{"/home/oussama/catkin_overlay_ws/generated_logs"};
-    const char *path_robot{"/home/chouman/catkin_overlay_ws/generated_data_roslogger"};
-    //simulation
-    double simulation_time_total{0};
-    double time_start_simulation{0};
-    bool start_simulation{false};
-    bool stop_simulation{false};
-    bool begin_log_simulation{false};
-    std::string file_name_simulation{"simulation.txt"};
-    bool print_title_simulation{true};
-    bool over_write_simulation{true};
-    //--
-    std::vector<std::string> data_VECTOR;
-    void log_stuff(Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::VectorXd q, Eigen::VectorXd dq, Eigen::VectorXd tau_d);
-
-    void logCallback(cartesian_impedance_controller::log_configConfig &config, uint32_t level);
-    ros::NodeHandle dynamic_log_node_;
-    std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::log_configConfig>>
-        dynamic_server_log_;
-
-    // %%%%%%%%%%%%%%%NEW
+    // publish data to export using another thread;
+    double time_at_start_;
     ros::Publisher pub_data_export_;
+    void publish_data(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d, Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_);
 
     //------------------------------------------------------------------------------------------------
 
