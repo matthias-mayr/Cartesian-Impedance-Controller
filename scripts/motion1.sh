@@ -5,21 +5,22 @@ echo "This experimental motion consists of some trajectories with intermidiate p
 ./home_position.sh
 
 echo "Press any key to start"
+
 read step1
+./change_stiffness.sh 200 200 200 100 100 100 0
+
+sleep 1
 ./change_goal.sh -0.5 0.0 1 1.0 0.0 0.0 0.0
 
+sleep 10
 
-echo "Press any key to continue to the next trajectory"
-read step2
 ./change_goal.sh -0.5 0.0 1 0.707 0.0 0.0 -0.707
 
-echo "Press any key to continue to the next trajectory"
-read step3
+sleep 20
+
 ./change_goal.sh -0.45 -0.5 1.1 1.0 0.0 0.0 0.0
 
-
-echo "Press any key to go back to home position"
-read step4
+sleep 20
 ./home_position.sh
 
 echo "Motion complete"
