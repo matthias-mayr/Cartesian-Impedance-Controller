@@ -20,7 +20,9 @@ bool CartesianImpedanceController_base::initialize()
         position_d_.setZero();
         orientation.coeffs() << 1., 0., 0., 0.;
         orientation_d_.coeffs() << 1., 0., 0., 0.;
-
+        
+        position_d_target_.setZero();
+        orientation_d_target_.coeffs() << 1., 0., 0., 0.;
         //Default stiffness
         set_stiffness(200., 200., 200., 100., 100., 100., 0.);
         cartesian_damping_ << cartesian_damping_target_;
