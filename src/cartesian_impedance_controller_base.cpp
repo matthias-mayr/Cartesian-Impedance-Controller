@@ -223,9 +223,11 @@ void CartesianImpedanceController_base::update_parameters(double update_frequenc
         filter_params_ * cartesian_damping_target_ + (1.0 - filter_params_) * cartesian_damping_;
     nullspace_stiffness_ =
         filter_params_ * nullspace_stiffness_target_ + (1.0 - filter_params_) * nullspace_stiffness_;
+    
+    q_d_nullspace_ = filter_params_ * q_d_nullspace_target_ + (1.0 - filter_params_) * q_d_nullspace_;
+
     filter_params_ = filter_params_ * update_frequency / 100;
     position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
-    q_d_nullspace_ = filter_params_ * q_d_nullspace_target_ + (1.0 - filter_params_) * q_d_nullspace_;
     orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
 
     this->cartesian_stiffness_ = cartesian_stiffness_;
