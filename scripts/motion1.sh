@@ -1,12 +1,7 @@
 #!/bin/bash
 
-echo "This experimental motion consists of some trajectories with intermidiate pauses."
+sleep 10
 
-./home_position.sh
-
-echo "Press any key to start"
-
-read step1
 ./change_stiffness.sh 200 200 200 100 100 100 0
 
 sleep 1
