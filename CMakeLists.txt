@@ -40,6 +40,7 @@ JointsQuantity.msg
 RobotImpedanceState.msg
 ThreeDimensionalQuantity.msg
 FourDimensionalQuantity.msg
+CartesianWrench.msg
 )
 
 generate_messages(
@@ -49,7 +50,6 @@ generate_messages(
 
 generate_dynamic_reconfigure_options(
   cfg/impedance_config.cfg
-  cfg/wrench_config.cfg
 )
 
 catkin_package(

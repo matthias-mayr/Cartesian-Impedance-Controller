@@ -25,3 +25,5 @@ CartesianQuantity cartesian_stiffness
 # The stiffness value for null space [Nm/rad]. 
 # Precondition: 0.0 <= value. 
 float64 nullspace_stiffness
+
+CartesianWrench cartesian_wrench

@@ -29,6 +29,7 @@
 
 #include "cartesian_impedance_controller/CartesianImpedanceControlMode.h"
 #include "cartesian_impedance_controller/RobotImpedanceState.h"
+#include "cartesian_impedance_controller/CartesianWrench.h"
 namespace cartesian_impedance_controller
 {
 
@@ -60,15 +61,20 @@ namespace cartesian_impedance_controller
     Eigen::Matrix<double, 7, 1> q_d_nullspace_target_;
     Eigen::Matrix<double, 7, 1> tau_J_d_;
 
+
     Eigen::Vector3d position_d_;
     Eigen::Quaterniond orientation_d_;
     Eigen::Vector3d position_d_target_;
     Eigen::Quaterniond orientation_d_target_;
 
-    //
+    //Apply stiffness through this topic
     ros::Subscriber sub_CartesianImpedanceParams;
     void cartesian_impedance_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
 
+    //Apply cartesian wrenches through this topic
+    ros::Subscriber sub_CartesianWrench;
+    void cartesian_wrench_Callback(const cartesian_impedance_controller::CartesianWrench &msg);
+    Eigen::VectorXd tau_ext;
     // the  trajectory generator
     ros::Subscriber sub_pose;
     void ee_poseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
@@ -79,10 +85,6 @@ namespace cartesian_impedance_controller
     void publish_data(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d, Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_);
 
     //------------------------------------------------------------------------------------------------
-
-    //simulating a wrench
-    bool apply_wrench{false};
-    Eigen::MatrixXd f;
 
     // IIWA Tools - this is GPLv3
     iiwa_tools::IiwaTools _tools;
@@ -99,12 +101,7 @@ namespace cartesian_impedance_controller
         dynamic_server_compliance_param_;
     void dynamicConfigCallback(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level);
 
-    ros::NodeHandle dynamic_reconfigure_wrench_param_node_;
-    std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::wrench_configConfig>>
-        dynamic_server_wrench_param_;
-    void dynamicWrenchCallback(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level);
-
-
+    
     // Default values of the panda parameters
     Eigen::Vector3d translational_stiffness_ = Eigen::Vector3d::Constant(200.);
     Eigen::Vector3d rotational_stiffness_ = Eigen::Vector3d::Constant(100.);
