@@ -12,7 +12,7 @@ read step1
 sleep 1
 ./change_goal.sh -0.5 0.0 1 1.0 0.0 0.0 0.0
 
-sleep 10
+sleep 20
 
 ./change_goal.sh -0.5 0.0 1 0.707 0.0 0.0 -0.707
 

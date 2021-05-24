@@ -1,18 +1,16 @@
 #!/bin/bash
 
-data=$(rostopic echo -n 1 /bh/CartesianImpedance_trajectory_controller/useful_data_to_analyze/position)
-
-#position
-x=$(echo ${data} | awk '{print $2}')
-echo "x= $x"
-
-y=$(echo ${data} | awk '{print $4}')
-echo "y= $y"
-
-z=$(echo ${data} | awk '{print $6}')
-echo "z= $z"
-
-diff=$((x-y)) 
+while :
+do
 
 
-echo $diff
+read -r -p "Are you sure? [1/0] " response
+case "$response" in
+    [yY][eE][sS]|[yY]) 
+        echo "yes"
+        ;;
+    *)
+      	echo "no"
+        ;;
+esac
+done
