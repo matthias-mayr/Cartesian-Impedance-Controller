@@ -1,3 +1,4 @@
+#!/bin/bash
 echo "This experimental motion consists of some trajectories with intermidiate pauses."
 
 ./home_position.sh
