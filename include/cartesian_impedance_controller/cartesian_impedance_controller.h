@@ -110,7 +110,7 @@ namespace cartesian_impedance_controller
     Eigen::Vector3d rotational_stiffness_ = Eigen::Vector3d::Constant(100.);
     double nullspace_stiffness_{0};
     double nullspace_stiffness_target_{5.0};
-    double filter_params_{0.05};
+    double filter_params_{0.005};
     // Trajectory handling
     std::unique_ptr<actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>> as_;
     void goalCallback();
