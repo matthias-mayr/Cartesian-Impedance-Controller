@@ -239,10 +239,9 @@ namespace cartesian_impedance_controller
     // compute "orientation error"
     error.tail(3) << error_quaternion_angle_axis.axis() * error_quaternion_angle_axis.angle();
 
-
     base_tools.update_control(q, dq, position, orientation, position_d_, orientation_d_, jacobian, tau_d, tau_task, tau_nullspace);
     // necessary for applying virtual wrenches at TCP
-    tau_d << tau_d +tau_ext;
+    tau_d << tau_d + tau_ext;
 
     //tau_d << saturateTorqueRate(tau_d, tau_J_d_);
     base_tools.saturateTorqueRate(tau_d, tau_J_d_, delta_tau_max_);
@@ -271,7 +270,7 @@ namespace cartesian_impedance_controller
                                         << tau_nullspace);
     }
 
-    //    publish();
+    publish();
     double update_frequency = 1 / period.toSec();
     base_tools.update_parameters(update_frequency, filter_params_, nullspace_stiffness_,
                                  nullspace_stiffness_target_, cartesian_stiffness_,
@@ -335,6 +334,14 @@ namespace cartesian_impedance_controller
     data_to_analyze.q.q6 = q(5);
     data_to_analyze.q.q7 = q(6);
 
+    data_to_analyze.dq.q1 = dq(0);
+    data_to_analyze.dq.q2 = dq(1);
+    data_to_analyze.dq.q3 = dq(2);
+    data_to_analyze.dq.q4 = dq(3);
+    data_to_analyze.dq.q5 = dq(4);
+    data_to_analyze.dq.q6 = dq(5);
+    data_to_analyze.dq.q7 = dq(6);
+
     data_to_analyze.cartesian_stiffness.x = cartesian_stiffness_(0, 0);
     data_to_analyze.cartesian_stiffness.y = cartesian_stiffness_(1, 1);
     data_to_analyze.cartesian_stiffness.z = cartesian_stiffness_(2, 2);
@@ -343,15 +350,21 @@ namespace cartesian_impedance_controller
     data_to_analyze.cartesian_stiffness.c = cartesian_stiffness_(5, 5);
 
     data_to_analyze.nullspace_stiffness = nullspace_stiffness_;
-    /*
-    data_to_analyze.q_d_nullspace_.q1=q_d_nullspace_(0);
-    data_to_analyze.q_d_nullspace_.q2=q_d_nullspace_(1);
-    data_to_analyze.q_d_nullspace_.q3=q_d_nullspace_(2);
-    data_to_analyze.q_d_nullspace_.q4=q_d_nullspace_(3);
-    data_to_analyze.q_d_nullspace_.q5=q_d_nullspace_(4);
-    data_to_analyze.q_d_nullspace_.q6=q_d_nullspace_(5);
-    data_to_analyze.q_d_nullspace_.q7=q_d_nullspace_(6);
-*/
+
+    Eigen::Matrix<double, 6, 7> jacobian;
+    get_jacobian(q, dq, jacobian);
+    Eigen::MatrixXd jacobian_transpose_pinv;
+    pseudoInverse(jacobian.transpose(), jacobian_transpose_pinv);
+    Eigen::VectorXd F_x(6);
+    F_x << jacobian_transpose_pinv * tau_ext;
+
+    data_to_analyze.cartesian_wrench.f_x = F_x(0);
+    data_to_analyze.cartesian_wrench.f_y = F_x(1);
+    data_to_analyze.cartesian_wrench.f_z = F_x(2);
+    data_to_analyze.cartesian_wrench.tau_x = F_x(3);
+    data_to_analyze.cartesian_wrench.tau_y = F_x(4);
+    data_to_analyze.cartesian_wrench.tau_z = F_x(5);
+
     pub_data_export_.publish(data_to_analyze);
   }
 
@@ -421,7 +434,7 @@ namespace cartesian_impedance_controller
   void CartesianImpedanceController::cartesian_wrench_Callback(const cartesian_impedance_controller::CartesianWrench &msg)
   {
     Eigen::VectorXd F_x(6);
-    Eigen::Matrix<double, 6, 7> jacobian;  
+    Eigen::Matrix<double, 6, 7> jacobian;
     Eigen::Matrix<double, 7, 1> q;
     Eigen::Matrix<double, 7, 1> dq;
     for (size_t i = 0; i < 7; ++i)
@@ -430,8 +443,8 @@ namespace cartesian_impedance_controller
       dq[i] = joint_handles_[i].getVelocity();
     }
 
-    get_jacobian(q,dq,jacobian);
-   
+    get_jacobian(q, dq, jacobian);
+
     F_x << msg.f_x, msg.f_y, msg.f_z, msg.tau_x, msg.tau_y, msg.tau_z;
     tau_ext = jacobian.transpose() * F_x;
   }

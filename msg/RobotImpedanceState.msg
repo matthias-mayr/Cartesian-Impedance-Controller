@@ -15,8 +15,11 @@ ThreeDimensionalQuantity orientation_euler_d
 #commanded torque
 JointsQuantity tau_d
 
-#joint state
+#joint states
 JointsQuantity q
+
+#velocity states
+JointsQuantity dq
 
 # Stiffness values [x, y, z, a, b, c] for the cartesian impedance, x, y, z in [N/m], a, b, c in [Nm/rad]. 
 # Precondition: 0.0 <= x, y, z <= 5000.0 and 0.0 <= a, b, c <= 300.0. 
