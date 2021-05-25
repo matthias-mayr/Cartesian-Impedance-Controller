@@ -29,4 +29,9 @@ CartesianQuantity cartesian_stiffness
 # Precondition: 0.0 <= value. 
 float64 nullspace_stiffness
 
+# Cartesian wrench
 CartesianWrench cartesian_wrench
+
+ # Cartesian error
+ThreeDimensionalQuantity error_position
+ThreeDimensionalQuantity error_rotation
