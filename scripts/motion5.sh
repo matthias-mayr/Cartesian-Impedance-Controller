@@ -1,7 +1,5 @@
 #!/bin/bash
 
-sleep 10
-
 ./change_stiffness.sh 800 800 800 200 200 200 0
 
 sleep 1
