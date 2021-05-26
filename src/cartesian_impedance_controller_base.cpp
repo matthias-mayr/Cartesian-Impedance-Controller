@@ -238,7 +238,7 @@ void CartesianImpedanceController_base::update_parameters(double update_frequenc
     this->orientation_d_ = orientation_d_;
 }
 
-void CartesianImpedanceController_base::update_compliance(Eigen::Vector3d translational_stiffness_target_, Eigen::Vector3d rotational_stiffness_target_, double nullspace_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_damping_target_)
+void CartesianImpedanceController_base::update_compliance(Eigen::Vector3d translational_stiffness_target_, Eigen::Vector3d rotational_stiffness_target_, double nullspace_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_damping_target_,  Eigen::Matrix<double, 6, 1> &damping_factors_)
 {
     cartesian_stiffness_target_.setIdentity();
     Eigen::Matrix3d K_t = translational_stiffness_target_.asDiagonal();
@@ -247,12 +247,21 @@ void CartesianImpedanceController_base::update_compliance(Eigen::Vector3d transl
         << K_t;
     cartesian_stiffness_target_.bottomRightCorner(3, 3)
         << K_r;
+
     cartesian_damping_target_.setIdentity();
-    // Damping ratio = 1
     cartesian_damping_target_.topLeftCorner(3, 3)
         << 2 * K_t.cwiseSqrt();
     cartesian_damping_target_.bottomRightCorner(3, 3)
         << 2 * K_r.cwiseSqrt();
+
+    for (size_t i = 0; i < 6; i++)
+    {
+        cartesian_damping_target_(i,i) = cartesian_damping_target_(i,i) * damping_factors_(i);
+    }
+  
+    
+
+
     this->nullspace_stiffness_target_ = nullspace_stiffness_target_;
 }
 

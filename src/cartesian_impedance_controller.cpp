@@ -59,6 +59,8 @@ namespace cartesian_impedance_controller
     //set cartesian stiffness values through this topic
     sub_CartesianImpedanceParams = node_handle.subscribe("cartesian_impedance_parameters", 1, &CartesianImpedanceController::cartesian_impedance_Callback, this);
 
+    //set cartesian damping values through this topic
+   sub_DampingParams = node_handle.subscribe("damping_parameters", 1, &CartesianImpedanceController::damping_parameters_Callback, this);
     //set cartesian wrench through this topic
     sub_CartesianWrench = node_handle.subscribe("set_cartesian_wrench", 1, &CartesianImpedanceController::cartesian_wrench_Callback, this);
 
@@ -139,8 +141,9 @@ namespace cartesian_impedance_controller
 
     tau_ext.resize(7);
     tau_ext.setZero();
+    damping_factors_ << 1., 1., 1., 1., 1., 1.;
 
-    base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_);
+    base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_,damping_factors_);
 
     //Initialize publisher of useful data
     pub_data_export_ = node_handle.advertise<cartesian_impedance_controller::RobotImpedanceState>("useful_data_to_analyze", 1);
@@ -184,7 +187,10 @@ namespace cartesian_impedance_controller
                                             const ros::Duration &period /*period*/)
 
   {
-    //ROS_INFO_STREAM_THROTTLE(1, "\nParameters:\nCartesian Stiffness:\n"<< cartesian_stiffness_);
+      // ROS_INFO_STREAM_THROTTLE(1, "\nParameters:\nCartesian Stiffness:\n"<< cartesian_stiffness_target_);
+
+      // ROS_INFO_STREAM_THROTTLE(0.1, "\nParameters:\nCartesian damping:\n"<< cartesian_damping_target_);
+
     if (traj_running_)
     {
       trajectoryUpdate();
@@ -433,10 +439,19 @@ namespace cartesian_impedance_controller
     translational_stiffness_ << msg.cartesian_stiffness.x, msg.cartesian_stiffness.y, msg.cartesian_stiffness.z;
     rotational_stiffness_ << msg.cartesian_stiffness.a, msg.cartesian_stiffness.b, msg.cartesian_stiffness.c;
     nullspace_stiffness_target_ = msg.nullspace_stiffness;
-    base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_);
+    base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_,damping_factors_);
 
     q_d_nullspace_target_ << msg.q_d_nullspace.q1, msg.q_d_nullspace.q2, msg.q_d_nullspace.q3, msg.q_d_nullspace.q4, msg.q_d_nullspace.q5, msg.q_d_nullspace.q6, msg.q_d_nullspace.q7;
   }
+
+void CartesianImpedanceController::damping_parameters_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg)
+{
+    damping_factors_ << msg.cartesian_damping.x, msg.cartesian_damping.y, msg.cartesian_damping.z, 
+    msg.cartesian_damping.a, msg.cartesian_damping.b, msg.cartesian_damping.c; 
+    base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_,damping_factors_);
+    ROS_INFO_STREAM_THROTTLE(0.1, "\ndamping:\n"<< damping_factors_);
+}
+
 
   void CartesianImpedanceController::cartesian_wrench_Callback(const cartesian_impedance_controller::CartesianWrench &msg)
   {
@@ -482,7 +497,7 @@ namespace cartesian_impedance_controller
       translational_stiffness_ << config.translation_x, config.translation_y, config.translation_z;
       rotational_stiffness_ << config.rotation_x, config.rotation_y, config.rotation_z;
       nullspace_stiffness_target_ = config.nullspace_stiffness;
-      base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_);
+      base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_,damping_factors_);
     }
   }
 

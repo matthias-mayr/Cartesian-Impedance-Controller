@@ -25,7 +25,6 @@
 #include <Eigen/Dense>
 
 #include "cartesian_impedance_controller/impedance_configConfig.h"
-#include "cartesian_impedance_controller/wrench_configConfig.h"
 
 #include "cartesian_impedance_controller/CartesianImpedanceControlMode.h"
 #include "cartesian_impedance_controller/RobotImpedanceState.h"
@@ -67,9 +66,16 @@ namespace cartesian_impedance_controller
     Eigen::Vector3d position_d_target_;
     Eigen::Quaterniond orientation_d_target_;
 
+
+    Eigen::Matrix<double, 6, 1> damping_factors_;
+
     //Apply stiffness through this topic
     ros::Subscriber sub_CartesianImpedanceParams;
     void cartesian_impedance_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
+
+    //Damping
+    ros::Subscriber sub_DampingParams;
+     void damping_parameters_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
 
     //Apply cartesian wrenches through this topic
     ros::Subscriber sub_CartesianWrench;

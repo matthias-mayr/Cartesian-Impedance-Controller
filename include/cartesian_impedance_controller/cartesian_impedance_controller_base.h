@@ -41,7 +41,7 @@ public:
         const Eigen::Matrix<double, 7, 1> &tau_d_calculated,
         Eigen::Matrix<double, 7, 1> &tau_J_d, double delta_tau_max_);
 
-    void update_compliance(Eigen::Vector3d translational_stiffness_target_, Eigen::Vector3d rotational_stiffness_target_, double nullspace_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_damping_target_);
+    void update_compliance(Eigen::Vector3d translational_stiffness_target_, Eigen::Vector3d rotational_stiffness_target_, double nullspace_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_damping_target_, Eigen::Matrix<double, 6, 1> &damping_factors_);
 
     void rpy_to_quaternion(Eigen::Vector3d &rpy, Eigen::Quaterniond &q);
     void quaternion_to_rpy(Eigen::Quaterniond &q, Eigen::Vector3d &rpy);
