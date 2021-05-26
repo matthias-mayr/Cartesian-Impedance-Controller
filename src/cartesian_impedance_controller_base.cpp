@@ -277,4 +277,17 @@ void CartesianImpedanceController_base::quaternion_to_rpy(Eigen::Quaterniond &q,
     rpy = q.toRotationMatrix().eulerAngles(0, 1, 2);
 }
 
+double CartesianImpedanceController_base::saturate(double x, double x_min, double x_max)
+{
+   
+    if(x>x_max)
+    {
+        x=x_max;
+    }
+    if(x < x_min)
+    {
+        x=x_min;
+    }
+    return x;
+}
 //----------------------------------------------------

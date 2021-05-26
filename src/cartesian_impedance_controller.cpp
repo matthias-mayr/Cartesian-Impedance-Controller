@@ -436,20 +436,25 @@ namespace cartesian_impedance_controller
   }
   void CartesianImpedanceController::cartesian_impedance_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg)
   {
-    translational_stiffness_ << msg.cartesian_stiffness.x, msg.cartesian_stiffness.y, msg.cartesian_stiffness.z;
-    rotational_stiffness_ << msg.cartesian_stiffness.a, msg.cartesian_stiffness.b, msg.cartesian_stiffness.c;
-    nullspace_stiffness_target_ = msg.nullspace_stiffness;
-    base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_,damping_factors_);
-
+    double trans_stf_max=800;
+    double trans_stf_min=0;
+    double rot_stf_max=300;
+    double rot_stf_min=0;
+    translational_stiffness_ << saturate(msg.cartesian_stiffness.x,trans_stf_min,trans_stf_max),  saturate(msg.cartesian_stiffness.y,trans_stf_min,trans_stf_max), saturate(msg.cartesian_stiffness.z,trans_stf_min,trans_stf_max);
+    rotational_stiffness_ << saturate(msg.cartesian_stiffness.a,trans_stf_min,trans_stf_max), saturate(msg.cartesian_stiffness.b,trans_stf_min,trans_stf_max), saturate(msg.cartesian_stiffness.c,trans_stf_min,trans_stf_max);
+    nullspace_stiffness_target_ = msg.nullspace_stiffness; 
     q_d_nullspace_target_ << msg.q_d_nullspace.q1, msg.q_d_nullspace.q2, msg.q_d_nullspace.q3, msg.q_d_nullspace.q4, msg.q_d_nullspace.q5, msg.q_d_nullspace.q6, msg.q_d_nullspace.q7;
+    base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_,damping_factors_);
   }
 
 void CartesianImpedanceController::damping_parameters_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg)
 {
-    damping_factors_ << msg.cartesian_damping.x, msg.cartesian_damping.y, msg.cartesian_damping.z, 
-    msg.cartesian_damping.a, msg.cartesian_damping.b, msg.cartesian_damping.c; 
+    double dmp_max=1;
+    double dmp_min=0.1;
+    damping_factors_ << saturate(msg.cartesian_damping.x,dmp_min,dmp_max),saturate(msg.cartesian_damping.y,dmp_min,dmp_max),
+    saturate(msg.cartesian_damping.z,dmp_min,dmp_max),saturate(msg.cartesian_damping.a,dmp_min,dmp_max),
+    saturate(msg.cartesian_damping.b,dmp_min,dmp_max), saturate(msg.cartesian_damping.c,dmp_min,dmp_max);
     base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_,damping_factors_);
-    ROS_INFO_STREAM_THROTTLE(0.1, "\ndamping:\n"<< damping_factors_);
 }
 
 

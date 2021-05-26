@@ -46,6 +46,8 @@ public:
     void rpy_to_quaternion(Eigen::Vector3d &rpy, Eigen::Quaterniond &q);
     void quaternion_to_rpy(Eigen::Quaterniond &q, Eigen::Vector3d &rpy);
 
+    double saturate(double x, double x_min, double x_max);
+
 private:
     // Robot pose and state variables
     Eigen::Vector3d position;
