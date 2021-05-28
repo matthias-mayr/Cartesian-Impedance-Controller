@@ -26,6 +26,8 @@ fi
 
 done #end while
  
+time_simulation=400
+
 read -r -p "Do you want to save the experiment in a bag-file? [y/N] " response
 case "$response" in
     [yY][eE][sS]|[yY]) 
@@ -37,7 +39,9 @@ case "$in_" in
 echo "Press any key to start"
 read step1
 	./home_position.sh
-      ./log_data.sh 120 motion${nr}_simulation & ./motion${nr}.sh
+       ./log_data.sh $time_simulation motion${nr}_simulation & ./motion${nr}.sh
+	sleep 5
+	rosnode kill $( rosnode list | grep '/record_')
         ;;
     *)
 
@@ -46,7 +50,9 @@ echo "Press any key to start"
 read step1
 echo "Starting motion ..."
 	./home_position.sh
-      	./log_data.sh 120 motion${nr}_robot &./motion${nr}.sh
+      	./log_data.sh $time_simulation motion${nr}_robot &./motion${nr}.sh
+	sleep 5
+	rosnode kill $( rosnode list | grep '/record_')
         ;;
 esac
         ;;
