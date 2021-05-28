@@ -1,6 +1,7 @@
 #!/bin/bash
 
 
+#DONE-------------------
 
 #Check if end effector is reached within allocated time
 #----------------------------------------------------------
@@ -15,57 +16,55 @@
 #done #end while
 #------------------------------------------------------------
 
+#damping
+d=0.7
+./change_damping.sh $d $d $d $d $d $d
+
+
 #increase cartesian stiffness in steps
 
 #step 1
+sleep_time_goal=20
+sleep_stiffness=10
 
-#./change_damping.sh 0.85 0.85 0.85 0.85 0.85 0.85
-./change_damping.sh 0.7 0.7 0.7 0.7 0.7 0.7
-
-./change_stiffness.sh 200 200 200 100 100 100 0
-sleep 4
+sleep 5
+./change_stiffness.sh 250 250 250 100 100 100 0
+sleep $sleep_stiffness
 #go forward
 ./change_goal.sh -0.5 0.0 1 1.0 0.0 0.0 0.0
-sleep 7
+sleep $sleep_time_goal
 #go back
-./change_goal.sh -0.5 -0.5 1 1.0 0.0 0.0 0.0
-sleep 4 
+./change_goal.sh -0.5 -0.5 1 1.0 0.0 0.0 0.0 & ./change_stiffness.sh 250 250 250 100 100 100 5
+sleep 1
+./change_stiffness.sh 250 250 250 100 100 100 0
+sleep $sleep_time_goal 
 
-
-#step 2
-
-./change_stiffness.sh 400 400 400 100 100 100 0
-sleep 4
-#go forward
-./change_goal.sh -0.5 0.0 1 1.0 0.0 0.0 0.0
-sleep 7
-#go back
-./change_goal.sh -0.5 -0.5 1 1.0 0.0 0.0 0.0
-sleep 4
 
 
 #step 3
 
 ./change_stiffness.sh 600 600 600 100 100 100 0
-sleep 4
+sleep $sleep_stiffness
 #go forward
 ./change_goal.sh -0.5 0.0 1 1.0 0.0 0.0 0.0
-sleep 7
+sleep $sleep_time_goal
 #go back
-./change_goal.sh -0.5 -0.5 1 1.0 0.0 0.0 0.0
-sleep 4
+./change_goal.sh -0.5 -0.5 1 1.0 0.0 0.0 0.0 &./change_stiffness.sh 600 600 600 100 100 100 5
+sleep 1
+./change_stiffness.sh 600 600 600 100 100 100 0
+sleep $sleep_time_goal
 
 
-#step 4
-
-./change_stiffness.sh 800 800 800 100 100 100 0
-sleep 4
+./change_stiffness.sh 1000 1000 1000 100 100 100 0
+sleep $sleep_stiffness
 #go forward
-./change_goal.sh -0.5 0.0 1 1.0 0.0 0.0 0.0
-sleep 7
+./change_goal.sh -0.5 0.0 1 1.0 0.0 0.0 0.0 
+sleep $sleep_time_goal
 #go back
-./change_goal.sh -0.5 -0.5 1 1.0 0.0 0.0 0.0
-sleep 4
+./change_goal.sh -0.5 -0.5 1 1.0 0.0 0.0 0.0 &./change_stiffness.sh 1000 1000 1000 100 100 100 5
+sleep 1
+./change_stiffness.sh 1000 1000 1000 100 100 100 0
+sleep $sleep_time_goal
 
 
 sleep 5
