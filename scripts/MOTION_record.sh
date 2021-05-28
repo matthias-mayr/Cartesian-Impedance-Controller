@@ -37,7 +37,7 @@ case "$in_" in
 echo "Press any key to start"
 read step1
 	./home_position.sh
-      ./log_data.sh 100 motion${nr}_simulation & ./motion${nr}.sh
+      ./log_data.sh 120 motion${nr}_simulation & ./motion${nr}.sh
         ;;
     *)
 
@@ -46,7 +46,7 @@ echo "Press any key to start"
 read step1
 echo "Starting motion ..."
 	./home_position.sh
-      	./log_data.sh 100 motion${nr}_robot &./motion${nr}.sh
+      	./log_data.sh 120 motion${nr}_robot &./motion${nr}.sh
         ;;
 esac
         ;;
