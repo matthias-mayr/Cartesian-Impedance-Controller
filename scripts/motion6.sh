@@ -1,52 +1,75 @@
 #!/bin/bash
 
 
-./change_stiffness.sh 200 200 200 100 100 100 0
-./change_goal.sh -0.5 0.0 1 1.0 0.0 0.0 0.0
-sleep 3
+#DONE-------------------
+
 #Check if end effector is reached within allocated time
 #----------------------------------------------------------
-time_start=$SECONDS
-while : ; do 
-out=$(./check_pose.py)
-if (( $out == 1 || $(($SECONDS - $time_start)) > 20)); then
-break 2
-else
-echo $((30-$SECONDS+$time_start))
-fi
-done #end while
+#time_start=$SECONDS
+#while : ; do 
+#out=$(./check_pose.py)
+#if (( $out == 1 || $(($SECONDS - $time_start)) > 4)); then
+#break 2
+#else
+#echo $((10-$SECONDS+$time_start))
+#fi
+#done #end while
 #------------------------------------------------------------
 
-#increase rotational stiffness
-./change_stiffness.sh 200 200 200 200 200 200 0
-sleep 3
-./change_stiffness.sh 200 200 200 300 300 300 0
-sleep 3
-./change_stiffness.sh 200 200 200 400 400 400 0
-#reset rot. stiffness & increase translational stiffness 
-sleep 3
-./change_stiffness.sh 300 300 300 100 100 100 0
-sleep 3
-./change_stiffness.sh 400 400 400 100 100 100 0
-sleep 3
-./change_stiffness.sh 400 400 400 100 100 100 0
-sleep 3
-./change_stiffness.sh 500 500 500 100 100 100 0
+#damping
+d=0.7
+./change_damping.sh $d $d $d $d $d $d
 
-echo "Continue?"
-read r1
-./change_stiffness.sh 550 550 550 100 100 100 0
-echo "Continue?"
-read r1
+
+#increase cartesian stiffness in steps
+
+#step 1
+sleep_time_goal=20
+sleep_stiffness=10
+
+sleep 5
+./change_stiffness.sh 250 250 250 100 100 100 0
+sleep $sleep_stiffness
+#go forward
+./change_goal.sh -0.5 0.0 1 1.0 0.0 0.0 0.0
+sleep $sleep_time_goal
+#go back
+./change_goal.sh -0.5 -0.5 1 1.0 0.0 0.0 0.0 & ./change_stiffness.sh 250 250 250 100 100 100 5
+sleep 1
+./change_stiffness.sh 250 250 250 100 100 100 0
+sleep $sleep_time_goal 
+
+
+
+#step 3
+
 ./change_stiffness.sh 600 600 600 100 100 100 0
+sleep $sleep_stiffness
+#go forward
+./change_goal.sh -0.5 0.0 1 1.0 0.0 0.0 0.0
+sleep $sleep_time_goal
+#go back
+./change_goal.sh -0.5 -0.5 1 1.0 0.0 0.0 0.0 &./change_stiffness.sh 600 600 600 100 100 100 5
+sleep 1
+./change_stiffness.sh 600 600 600 100 100 100 0
+sleep $sleep_time_goal
 
-echo "Continue?"
-read r1
-./change_stiffness.sh 650 650 650 100 100 100 0
 
-echo "Continue?"
-read r1
-./change_stiffness.sh 700 700 700 100 100 100 0
+./change_stiffness.sh 1000 1000 1000 100 100 100 0
+sleep $sleep_stiffness
+#go forward
+./change_goal.sh -0.5 0.0 1 1.0 0.0 0.0 0.0 
+sleep $sleep_time_goal
+#go back
+./change_goal.sh -0.5 -0.5 1 1.0 0.0 0.0 0.0 &./change_stiffness.sh 1000 1000 1000 100 100 100 5
+sleep 1
+./change_stiffness.sh 1000 1000 1000 100 100 100 0
+sleep $sleep_time_goal
 
-echo "Motion complete"
+
+sleep 5
+
+
+
+
 

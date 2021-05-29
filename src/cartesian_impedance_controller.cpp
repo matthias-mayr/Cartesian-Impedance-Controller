@@ -436,7 +436,7 @@ namespace cartesian_impedance_controller
   }
   void CartesianImpedanceController::cartesian_impedance_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg)
   {
-    double trans_stf_max=800;
+    double trans_stf_max=1200;
     double trans_stf_min=0;
     double rot_stf_max=300;
     double rot_stf_min=0;
@@ -458,6 +458,7 @@ void CartesianImpedanceController::damping_parameters_Callback(const cartesian_i
 }
 
 
+
   void CartesianImpedanceController::cartesian_wrench_Callback(const cartesian_impedance_controller::CartesianWrench &msg)
   {
     Eigen::VectorXd F_x(6);
@@ -473,7 +474,9 @@ void CartesianImpedanceController::damping_parameters_Callback(const cartesian_i
     get_jacobian(q, dq, jacobian);
 
     F_x << msg.f_x, msg.f_y, msg.f_z, msg.tau_x, msg.tau_y, msg.tau_z;
+
     tau_ext = jacobian.transpose() * F_x;
+  
   }
 
   void CartesianImpedanceController::goalCallback()
