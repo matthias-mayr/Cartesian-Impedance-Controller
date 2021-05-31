@@ -12,12 +12,13 @@ public:
 
     bool initialize();
     void set_stiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z, double n);
+    void set_damping(double d_x, double d_y, double d_z, double d_a, double d_b, double d_c, double d_n);
     void set_desired_pose(Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_);
     void set_nullspace_config(Eigen::Matrix<double, 7, 1> q_d_nullspace_target_);
     void set_filtering(double update_frequency, double filter_params_);
 
     //Returns the desired commands
-    Eigen::VectorXd get_commanded_torques(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq, Eigen::Vector3d &position, Eigen::Quaterniond &orientation, Eigen::Matrix<double, 6, 7> &jacobian);
+    Eigen::VectorXd get_commanded_torques(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Matrix<double, 6, 7> jacobian);
 
     void get_robot_state(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq, Eigen::Vector3d &position, Eigen::Quaterniond &orientation, Eigen::Vector3d &position_d_, Eigen::Quaterniond orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_);
     void get_robot_state(Eigen::Vector3d &position_d_, Eigen::Quaterniond orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_);
@@ -72,6 +73,7 @@ private:
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_;
     Eigen::Matrix<double, 6, 6> cartesian_damping_;
     Eigen::Matrix<double, 6, 6> cartesian_damping_target_;
+    Eigen::Matrix<double, 6, 1> damping_factors_;
     Eigen::Matrix<double, 7, 1> q_d_nullspace_;
     Eigen::Matrix<double, 7, 1> q_d_nullspace_target_;
 
@@ -81,7 +83,7 @@ private:
     // Private functions-----
 
     // Update the state of the robot
-    void update_states(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq, Eigen::Vector3d &position, Eigen::Quaterniond &orientation,Eigen::Vector3d &position_d_target_, Eigen::Quaterniond &orientation_d_target_)
+    void update_states(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation,Eigen::Vector3d position_d_target_, Eigen::Quaterniond orientation_d_target_)
     {
         this->q = q;
         this->dq = dq;
@@ -105,5 +107,11 @@ private:
         q_d_nullspace_ = filter_params_new_ * q_d_nullspace_target_ + (1.0 - filter_params_new_) * q_d_nullspace_;
         position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
         orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
+
+            for (size_t i = 0; i < 6; i++)
+    {
+        cartesian_damping_target_(i,i) = cartesian_damping_target_(i,i) * damping_factors_(i);
+    }
+
     }
 };

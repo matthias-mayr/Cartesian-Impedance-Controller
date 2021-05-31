@@ -26,6 +26,7 @@ bool CartesianImpedanceController_base::initialize()
         //Default stiffness
         set_stiffness(200., 200., 200., 100., 100., 100., 0.);
         cartesian_damping_ << cartesian_damping_target_;
+        damping_factors_ << 1.,1.,1.,1.,1.,1;
         cartesian_stiffness_<<cartesian_stiffness_target_;
         q_d_nullspace_target_ << q;
         return true;
@@ -46,6 +47,13 @@ void CartesianImpedanceController_base::set_stiffness(double t_x, double t_y, do
     }
     nullspace_stiffness_target_ = n;
 }
+//Set the damping factors >0.1 && < 1. First 6 parameters represent the diagonals of the damping matrix and the last parameter represents the nullspace damping.
+void CartesianImpedanceController_base::set_damping(double d_x, double d_y, double d_z, double d_a, double d_b, double d_c, double d_n)
+{
+    this->damping_factors_<<d_x,d_y,d_z,d_a,d_b,d_c;
+
+}
+
 void CartesianImpedanceController_base::set_desired_pose(Eigen::Vector3d position_d_target_, Eigen::Quaterniond orientation_d_target_)
 {
     this->position_d_target_ << position_d_target_;
@@ -86,7 +94,7 @@ void CartesianImpedanceController_base::get_robot_state(Eigen::Matrix<double, 7,
     }
 
 //returns tau_desired
-Eigen::VectorXd CartesianImpedanceController_base::get_commanded_torques(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq, Eigen::Vector3d &position, Eigen::Quaterniond &orientation, Eigen::Matrix<double, 6, 7> &jacobian)
+Eigen::VectorXd CartesianImpedanceController_base::get_commanded_torques(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Matrix<double, 6, 7> jacobian)
 {
     // Update current robot state
     update_states(q, dq, position, orientation, position_d_target_, orientation_d_target_);
@@ -260,7 +268,6 @@ void CartesianImpedanceController_base::update_compliance(Eigen::Vector3d transl
     }
   
     
-
 
     this->nullspace_stiffness_target_ = nullspace_stiffness_target_;
 }
