@@ -62,7 +62,7 @@ void CartesianImpedanceController_base::set_desired_pose(Eigen::Vector3d positio
 
 void CartesianImpedanceController_base::set_nullspace_config(Eigen::Matrix<double, 7, 1> q_d_nullspace_target_)
 {
-    this->q_d_nullspace_target_ = q_d_nullspace_target_;
+    this->q_d_nullspace_target_ << q_d_nullspace_target_;
 }
 
 void CartesianImpedanceController_base::set_filtering(double update_frequency, double filter_params_)
@@ -71,7 +71,7 @@ void CartesianImpedanceController_base::set_filtering(double update_frequency, d
     this->filter_params_ = filter_params_;
 }
 
-void CartesianImpedanceController_base::get_robot_state(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq, Eigen::Vector3d &position, Eigen::Quaterniond &orientation, Eigen::Vector3d &position_d_, Eigen::Quaterniond orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_,    Eigen::Matrix<double, 7, 1> &q_d_nullspace_)
+void CartesianImpedanceController_base::get_robot_state(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq, Eigen::Vector3d &position, Eigen::Quaterniond &orientation, Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_,    Eigen::Matrix<double, 7, 1> &q_d_nullspace_)
 {
     q << this->q;
     dq << this->dq;
@@ -84,7 +84,7 @@ void CartesianImpedanceController_base::get_robot_state(Eigen::Matrix<double, 7,
     q_d_nullspace_ << this->q_d_nullspace_;
 }
 
-    void CartesianImpedanceController_base::get_robot_state(Eigen::Vector3d &position_d_, Eigen::Quaterniond orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_)
+    void CartesianImpedanceController_base::get_robot_state(Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_)
     {
     position_d_ = this->position_d_;
     orientation_d_.coeffs() << this->orientation_d_.coeffs();
@@ -228,12 +228,6 @@ void CartesianImpedanceController_base::update_parameters(double update_frequenc
     position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
     orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
 
-    this->cartesian_stiffness_ = cartesian_stiffness_;
-    this->cartesian_damping_ = cartesian_damping_;
-    this->nullspace_stiffness_ = nullspace_stiffness_;
-    this->position_d_ = position_d_;
-    this->q_d_nullspace_ = q_d_nullspace_;
-    this->orientation_d_ = orientation_d_;
 }
 
 void CartesianImpedanceController_base::update_compliance(Eigen::Vector3d translational_stiffness_target_, Eigen::Vector3d rotational_stiffness_target_, double nullspace_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_damping_target_,  Eigen::Matrix<double, 6, 1> &damping_factors_)
@@ -257,9 +251,6 @@ void CartesianImpedanceController_base::update_compliance(Eigen::Vector3d transl
         cartesian_damping_target_(i,i) = cartesian_damping_target_(i,i) * damping_factors_(i);
     }
   
-    
-
-    this->nullspace_stiffness_target_ = nullspace_stiffness_target_;
 }
 
 void CartesianImpedanceController_base::rpy_to_quaternion(Eigen::Vector3d &rpy, Eigen::Quaterniond &q)
