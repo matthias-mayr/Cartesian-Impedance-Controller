@@ -60,15 +60,11 @@ namespace cartesian_impedance_controller
     Eigen::Vector3d position_d_;
     Eigen::Quaterniond orientation_d_;
 
-
-
-    Eigen::Matrix<double, 6, 1> damping_factors_;
-
     //Apply stiffness through this topic
     ros::Subscriber sub_CartesianImpedanceParams;
     void cartesian_impedance_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
 
-    //Damping
+    // Apply damping through this topic
     ros::Subscriber sub_DampingParams;
      void damping_parameters_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
 
@@ -78,7 +74,7 @@ namespace cartesian_impedance_controller
     Eigen::VectorXd tau_ext;
     // the  trajectory generator
     ros::Subscriber sub_pose;
-    void ee_poseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
+    void ee_pose_Callback(const geometry_msgs::PoseStampedConstPtr &msg);
 
     // publish data to export using another thread;
     double time_at_start_;

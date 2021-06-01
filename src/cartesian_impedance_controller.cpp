@@ -55,7 +55,7 @@ namespace cartesian_impedance_controller
     as_->start();
 
     //the other traj generator
-    sub_pose = node_handle.subscribe("target_pose", 1, &CartesianImpedanceController::ee_poseCallback, this);
+    sub_pose = node_handle.subscribe("target_pose", 1, &CartesianImpedanceController::ee_pose_Callback, this);
     //set cartesian stiffness values through this topic
     sub_CartesianImpedanceParams = node_handle.subscribe("cartesian_impedance_parameters", 1, &CartesianImpedanceController::cartesian_impedance_Callback, this);
 
@@ -141,7 +141,7 @@ namespace cartesian_impedance_controller
 
     tau_ext.resize(7);
     tau_ext.setZero();
-    damping_factors_ << 1., 1., 1., 1., 1., 1.;
+
 
 
     //Initialize publisher of useful data
@@ -367,7 +367,7 @@ namespace cartesian_impedance_controller
     pub_data_export_.publish(data_to_analyze);
   }
 
-  void CartesianImpedanceController::ee_poseCallback(const geometry_msgs::PoseStampedConstPtr &msg)
+  void CartesianImpedanceController::ee_pose_Callback(const geometry_msgs::PoseStampedConstPtr &msg)
   {
     position_d_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
     Eigen::Quaterniond last_orientation_d_target(orientation_d_);
