@@ -177,10 +177,10 @@ Eigen::Matrix<double, 7, 1> CartesianImpedanceController_base::saturateTorqueRat
 void CartesianImpedanceController_base::apply_wrench(Eigen::Matrix<double, 6, 1> cartesian_wrench)
 {
     tau_ext = jacobian.transpose() * cartesian_wrench;
-    this->cartesian_wrench=cartesian_wrench;
+    this->cartesian_wrench = cartesian_wrench;
 }
 
-Eigen::Matrix<double,6,1> CartesianImpedanceController_base::get_applied_wrench()
+Eigen::Matrix<double, 6, 1> CartesianImpedanceController_base::get_applied_wrench()
 {
     return cartesian_wrench;
 }

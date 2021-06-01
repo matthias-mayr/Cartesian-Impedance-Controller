@@ -66,7 +66,7 @@ namespace cartesian_impedance_controller
 
     // Apply damping through this topic
     ros::Subscriber sub_DampingParams;
-     void damping_parameters_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
+    void damping_parameters_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
 
     //Apply cartesian wrenches through this topic
     ros::Subscriber sub_CartesianWrench;
@@ -78,7 +78,7 @@ namespace cartesian_impedance_controller
     // publish data to export using another thread;
     double time_at_start_;
     ros::Publisher pub_data_export_;
-    void publish_data(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d, Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_,Eigen::Matrix<double, 6, 1> error, Eigen::Matrix<double,6,1> F);
+    void publish_data(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d, Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_, Eigen::Matrix<double, 6, 1> error, Eigen::Matrix<double, 6, 1> F);
 
     //------------------------------------------------------------------------------------------------
 
@@ -96,7 +96,6 @@ namespace cartesian_impedance_controller
     std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>>
         dynamic_server_compliance_param_;
     void dynamicConfigCallback(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level);
-
 
     // Trajectory handling
     std::unique_ptr<actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>> as_;

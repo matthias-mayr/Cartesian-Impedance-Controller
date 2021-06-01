@@ -8,8 +8,6 @@ class CartesianImpedanceController_base
 {
 
 public:
-
-
     bool initialize();
     void set_stiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z, double n);
     void set_damping(double d_x, double d_y, double d_z, double d_a, double d_b, double d_c, double d_n);
@@ -20,18 +18,18 @@ public:
     //Returns the desired commands
     Eigen::VectorXd get_commanded_torques(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Matrix<double, 6, 7> jacobian);
 
-    void get_robot_state(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq, Eigen::Vector3d &position, Eigen::Quaterniond &orientation, Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_,Eigen::Matrix<double, 6, 6> &cartesian_damping_);
+    void get_robot_state(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq, Eigen::Vector3d &position, Eigen::Quaterniond &orientation, Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_, Eigen::Matrix<double, 6, 6> &cartesian_damping_);
     void get_robot_state(Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_, Eigen::Matrix<double, 6, 6> &cartesian_damping_);
 
     void get_stiffness(Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double nullspace_stiffness_);
 
-    void apply_wrench(Eigen::Matrix<double,6,1> F);
+    void apply_wrench(Eigen::Matrix<double, 6, 1> F);
 
-    Eigen::Matrix<double,6,1> get_applied_wrench();
-  
+    Eigen::Matrix<double, 6, 1> get_applied_wrench();
+
     //-------------------------------------------------------------------------------------------------
-        //-------------------------------------------------------------------------------------------------
-            //-------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------------------------
     bool update_control(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq,
                         Eigen::Vector3d &position, Eigen::Quaterniond &orientation,
                         Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_,
@@ -55,11 +53,7 @@ public:
     double saturate(double x, double x_min, double x_max);
 
 private:
-    
-
     // Robot variables
-    
-        
 
     // end effector
     Eigen::Vector3d position;
@@ -96,12 +90,12 @@ private:
 
     //"External" applied forces
     Eigen::VectorXd tau_ext;
-    Eigen::Matrix<double,6,1> cartesian_wrench;
+    Eigen::Matrix<double, 6, 1> cartesian_wrench;
 
     // Private functions-----
 
     // Update the state of the robot
-    void update_states(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Matrix<double, 6, 7> jacobian, Eigen::Vector3d position, Eigen::Quaterniond orientation,Eigen::Vector3d position_d_target_, Eigen::Quaterniond orientation_d_target_)
+    void update_states(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Matrix<double, 6, 7> jacobian, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Vector3d position_d_target_, Eigen::Quaterniond orientation_d_target_)
     {
         this->q = q;
         this->dq = dq;
@@ -124,9 +118,8 @@ private:
             filter_params_new_ * nullspace_stiffness_target_ + (1.0 - filter_params_new_) * nullspace_stiffness_;
         q_d_nullspace_ = filter_params_new_ * q_d_nullspace_target_ + (1.0 - filter_params_new_) * q_d_nullspace_;
         //position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
-       // orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
-          position_d_ << position_d_target_;
-         orientation_d_.coeffs() << orientation_d_target_.coeffs();
-
+        // orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
+        position_d_ << position_d_target_;
+        orientation_d_.coeffs() << orientation_d_target_.coeffs();
     }
 };
