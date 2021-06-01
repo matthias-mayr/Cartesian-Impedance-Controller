@@ -131,10 +131,10 @@ namespace cartesian_impedance_controller
     //-------------------------------------------------------------------------------------------------------------------------------------
 
     // Initialize variables
+
+    base_tools.initialize();
     position_d_.setZero();
-    orientation_d_.coeffs() << 0.0, 0.0, 0.0, 1.0;
-    position_d_target_.setZero();
-    orientation_d_target_.coeffs() << 0.0, 0.0, 0.0, 1.0;
+    orientation_d_.coeffs() << 1.0, 0.0, 0.0, 0.0;
 
     cartesian_stiffness_.setZero();
     cartesian_damping_.setZero();
@@ -143,7 +143,6 @@ namespace cartesian_impedance_controller
     tau_ext.setZero();
     damping_factors_ << 1., 1., 1., 1., 1., 1.;
 
-    base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_,damping_factors_);
 
     //Initialize publisher of useful data
     pub_data_export_ = node_handle.advertise<cartesian_impedance_controller::RobotImpedanceState>("useful_data_to_analyze", 1);
@@ -165,19 +164,13 @@ namespace cartesian_impedance_controller
 
     // get end effector pose
     // set equilibrium point to current state
-    Eigen::Vector3d tmp_pos;
-    Eigen::Quaterniond tmp_quat;
-    get_fk(q_initial, tmp_pos, tmp_quat);
-
-    position_d_ = tmp_pos;
-    orientation_d_ = tmp_quat;
-
-    position_d_target_ = position_d_;
-    orientation_d_target_ = orientation_d_;
+    Eigen::Vector3d initial_pos;
+    Eigen::Quaterniond initial_quat;
+    get_fk(q_initial, initial_pos, initial_quat);
+    base_tools.set_desired_pose(initial_pos,initial_quat);
 
     // set nullspace equilibrium configuration to initial q
-    q_d_nullspace_ = q_initial;
-    q_d_nullspace_target_ = q_d_nullspace_;
+    set_nullspace_config(q_initial);
 
     //Save the time at start
     time_at_start_ = ros::Time::now().toSec();
@@ -187,10 +180,7 @@ namespace cartesian_impedance_controller
                                             const ros::Duration &period /*period*/)
 
   {
-      // ROS_INFO_STREAM_THROTTLE(1, "\nParameters:\nCartesian Stiffness:\n"<< cartesian_stiffness_target_);
-
-      // ROS_INFO_STREAM_THROTTLE(0.1, "\nParameters:\nCartesian damping:\n"<< cartesian_damping_target_);
-
+    
     if (traj_running_)
     {
       trajectoryUpdate();
@@ -205,12 +195,11 @@ namespace cartesian_impedance_controller
       q[i] = joint_handles_[i].getPosition();
       dq[i] = joint_handles_[i].getVelocity();
     }
-
+    // get jacobian
     Eigen::Matrix<double, 6, 7> jacobian;
     get_jacobian(q, dq, jacobian);
-    Eigen::Matrix<double, 6, 1> dx;
-    dx << jacobian * dq;
-    double v = sqrt(dx(0) * dx(0) + dx(1) * dx(1) + dx(2) * dx(2));
+
+
     // get forward kinematics
     Eigen::Vector3d position;
     Eigen::Quaterniond orientation;
@@ -229,7 +218,6 @@ namespace cartesian_impedance_controller
 
     // compute error to desired pose
     // position error
-    Eigen::VectorXd tau_d(7), tau_task(7), tau_nullspace(7);
     Eigen::Matrix<double, 6, 1> error;
     error.head(3) << position - position_d_;
 
@@ -244,12 +232,16 @@ namespace cartesian_impedance_controller
     Eigen::AngleAxisd error_quaternion_angle_axis(error_quaternion);
     // compute "orientation error"
     error.tail(3) << error_quaternion_angle_axis.axis() * error_quaternion_angle_axis.angle();
+    
+    Eigen::VectorXd tau_d = base_tools.get_commanded_torques(q,dq,position,orientation,jacobian);
 
-    base_tools.update_control(q, dq, position, orientation, position_d_, orientation_d_, jacobian, tau_d, tau_task, tau_nullspace);
+    
+    base_tools.get_robot_state(position_d_,orientation_d_,cartesian_stiffness_,nullspace_stiffness_,q_d_nullspace_,cartesian_damping_);
+
+
     // necessary for applying virtual wrenches at TCP
     tau_d << tau_d + tau_ext;
 
-    //tau_d << saturateTorqueRate(tau_d, tau_J_d_);
     base_tools.saturateTorqueRate(tau_d, tau_J_d_, delta_tau_max_);
     // compute error to desired pose
     // position error
@@ -270,20 +262,14 @@ namespace cartesian_impedance_controller
                                         << cartesian_damping_ << "\nNullspace stiffness:\n"
                                         << nullspace_stiffness_ << "\nq_d_nullspace:\n"
                                         << q_d_nullspace_);
-      ROS_INFO_STREAM_THROTTLE(0.1, "\ntau_task:\n"
-                                        << tau_task);
-      ROS_INFO_STREAM_THROTTLE(0.1, "\ntau_nullspace:\n"
-                                        << tau_nullspace);
+      ROS_INFO_STREAM_THROTTLE(0.1, "\ntau_d:\n"
+                                        << tau_d);
     }
 
     publish();
     double update_frequency = 1 / period.toSec();
-    base_tools.update_parameters(update_frequency, filter_params_, nullspace_stiffness_,
-                                 nullspace_stiffness_target_, cartesian_stiffness_,
-                                 cartesian_stiffness_target_, cartesian_damping_,
-                                 cartesian_damping_target_, q_d_nullspace_,
-                                 q_d_nullspace_target_, position_d_, orientation_d_,
-                                 position_d_target_, orientation_d_target_);
+    double filter_params_=0.005;
+    base_tools.set_filtering(update_frequency,filter_params_);
 
     publish_data(q, dq, position, orientation, position_d_, orientation_d_, tau_d, cartesian_stiffness_, nullspace_stiffness_,error);
   }
@@ -383,14 +369,15 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceController::ee_poseCallback(const geometry_msgs::PoseStampedConstPtr &msg)
   {
-    position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
-    Eigen::Quaterniond last_orientation_d_target(orientation_d_target_);
-    orientation_d_target_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y,
+    position_d_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
+    Eigen::Quaterniond last_orientation_d_target(orientation_d_);
+    orientation_d_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y,
         msg->pose.orientation.z, msg->pose.orientation.w;
-    if (last_orientation_d_target.coeffs().dot(orientation_d_target_.coeffs()) < 0.0)
+    if (last_orientation_d_target.coeffs().dot(orientation_d_.coeffs()) < 0.0)
     {
-      orientation_d_target_.coeffs() << -orientation_d_target_.coeffs();
+      orientation_d_.coeffs() << -orientation_d_.coeffs();
     }
+    base_tools.set_desired_pose(position_d_,orientation_d_);
   }
 
   //------------------------------------------------------------------------------------------------------
@@ -416,10 +403,10 @@ namespace cartesian_impedance_controller
       Eigen::Quaterniond orientation;
       get_fk(q, translation, orientation);
       // Update end effector pose
-      position_d_target_ = translation;
-      orientation_d_target_ = orientation;
+      position_d_ = translation;
+      orientation_d_ = orientation;
       // Update nullspace
-      q_d_nullspace_target_ = q;
+     base_tools.set_nullspace_config(q);
       traj_index_++;
     }
 
@@ -440,21 +427,20 @@ namespace cartesian_impedance_controller
     double trans_stf_min=0;
     double rot_stf_max=300;
     double rot_stf_min=0;
-    translational_stiffness_ << saturate(msg.cartesian_stiffness.x,trans_stf_min,trans_stf_max),  saturate(msg.cartesian_stiffness.y,trans_stf_min,trans_stf_max), saturate(msg.cartesian_stiffness.z,trans_stf_min,trans_stf_max);
-    rotational_stiffness_ << saturate(msg.cartesian_stiffness.a,trans_stf_min,trans_stf_max), saturate(msg.cartesian_stiffness.b,trans_stf_min,trans_stf_max), saturate(msg.cartesian_stiffness.c,trans_stf_min,trans_stf_max);
-    nullspace_stiffness_target_ = msg.nullspace_stiffness; 
+    base_tools.set_stiffness(saturate(msg.cartesian_stiffness.x,trans_stf_min,trans_stf_max),  saturate(msg.cartesian_stiffness.y,trans_stf_min,trans_stf_max), saturate(msg.cartesian_stiffness.z,trans_stf_min,trans_stf_max),
+    saturate(msg.cartesian_stiffness.a,trans_stf_min,trans_stf_max), saturate(msg.cartesian_stiffness.b,trans_stf_min,trans_stf_max), saturate(msg.cartesian_stiffness.c,trans_stf_min,trans_stf_max),msg.nullspace_stiffness);
+    Eigen::Matrix<double, 7, 1> q_d_nullspace_target_;
     q_d_nullspace_target_ << msg.q_d_nullspace.q1, msg.q_d_nullspace.q2, msg.q_d_nullspace.q3, msg.q_d_nullspace.q4, msg.q_d_nullspace.q5, msg.q_d_nullspace.q6, msg.q_d_nullspace.q7;
-    base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_,damping_factors_);
+    base_tools.set_nullspace_config(q_d_nullspace_target_);
   }
 
 void CartesianImpedanceController::damping_parameters_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg)
 {
     double dmp_max=1;
     double dmp_min=0.1;
-    damping_factors_ << saturate(msg.cartesian_damping.x,dmp_min,dmp_max),saturate(msg.cartesian_damping.y,dmp_min,dmp_max),
+    base_tools.set_damping(saturate(msg.cartesian_damping.x,dmp_min,dmp_max),saturate(msg.cartesian_damping.y,dmp_min,dmp_max),
     saturate(msg.cartesian_damping.z,dmp_min,dmp_max),saturate(msg.cartesian_damping.a,dmp_min,dmp_max),
-    saturate(msg.cartesian_damping.b,dmp_min,dmp_max), saturate(msg.cartesian_damping.c,dmp_min,dmp_max);
-    base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_,damping_factors_);
+    saturate(msg.cartesian_damping.b,dmp_min,dmp_max), saturate(msg.cartesian_damping.c,dmp_min,dmp_max),1);
 }
 
 
@@ -502,10 +488,12 @@ void CartesianImpedanceController::damping_parameters_Callback(const cartesian_i
   {
     if (config.apply_stiffness)
     {
-      translational_stiffness_ << config.translation_x, config.translation_y, config.translation_z;
-      rotational_stiffness_ << config.rotation_x, config.rotation_y, config.rotation_z;
-      nullspace_stiffness_target_ = config.nullspace_stiffness;
-      base_tools.update_compliance(translational_stiffness_, rotational_stiffness_, nullspace_stiffness_target_, cartesian_stiffness_target_, cartesian_damping_target_,damping_factors_);
+     double trans_stf_max=1200;
+    double trans_stf_min=0;
+    double rot_stf_max=300;
+    double rot_stf_min=0;
+    base_tools.set_stiffness(saturate(config.translation_x,trans_stf_min,trans_stf_max),  saturate(config.translation_y,trans_stf_min,trans_stf_max), saturate(config.translation_z,trans_stf_min,trans_stf_max),
+    saturate(config.rotation_x,trans_stf_min,trans_stf_max), saturate(config.rotation_y,trans_stf_min,trans_stf_max), saturate(config.rotation_z,trans_stf_min,trans_stf_max),config.nullspace_stiffness);
     }
   }
 
@@ -513,14 +501,15 @@ void CartesianImpedanceController::damping_parameters_Callback(const cartesian_i
   void CartesianImpedanceController::equilibriumPoseCallback(
       const geometry_msgs::PoseStampedConstPtr &msg)
   {
-    position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
-    Eigen::Quaterniond last_orientation_d_target(orientation_d_target_);
-    orientation_d_target_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y,
+    position_d_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
+    Eigen::Quaterniond last_orientation_d_target(orientation_d_);
+    orientation_d_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y,
         msg->pose.orientation.z, msg->pose.orientation.w;
-    if (last_orientation_d_target.coeffs().dot(orientation_d_target_.coeffs()) < 0.0)
+    if (last_orientation_d_target.coeffs().dot(orientation_d_.coeffs()) < 0.0)
     {
-      orientation_d_target_.coeffs() << -orientation_d_target_.coeffs();
+      orientation_d_.coeffs() << -orientation_d_.coeffs();
     }
+    base_tools.set_desired_pose(position_d_,orientation_d_);
   }
 
   void CartesianImpedanceController::publish()

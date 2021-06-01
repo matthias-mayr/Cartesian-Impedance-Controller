@@ -53,18 +53,13 @@ namespace cartesian_impedance_controller
     double delta_tau_max_{5};
 
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
-    Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_;
     Eigen::Matrix<double, 6, 6> cartesian_damping_;
-    Eigen::Matrix<double, 6, 6> cartesian_damping_target_;
+    double nullspace_stiffness_;
     Eigen::Matrix<double, 7, 1> q_d_nullspace_;
-    Eigen::Matrix<double, 7, 1> q_d_nullspace_target_;
     Eigen::Matrix<double, 7, 1> tau_J_d_;
-
-
     Eigen::Vector3d position_d_;
     Eigen::Quaterniond orientation_d_;
-    Eigen::Vector3d position_d_target_;
-    Eigen::Quaterniond orientation_d_target_;
+
 
 
     Eigen::Matrix<double, 6, 1> damping_factors_;
@@ -107,13 +102,7 @@ namespace cartesian_impedance_controller
         dynamic_server_compliance_param_;
     void dynamicConfigCallback(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level);
 
-    
-    // Default values of the panda parameters
-    Eigen::Vector3d translational_stiffness_ = Eigen::Vector3d::Constant(200.);
-    Eigen::Vector3d rotational_stiffness_ = Eigen::Vector3d::Constant(100.);
-    double nullspace_stiffness_{0};
-    double nullspace_stiffness_target_{5.0};
-    double filter_params_{0.005};
+
     // Trajectory handling
     std::unique_ptr<actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>> as_;
     void goalCallback();
