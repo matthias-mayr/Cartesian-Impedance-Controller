@@ -72,7 +72,7 @@ namespace cartesian_impedance_controller
     ros::Subscriber sub_CartesianWrench;
     void cartesian_wrench_Callback(const cartesian_impedance_controller::CartesianWrench &msg);
     // the  trajectory generator
-    ros::Subscriber sub_pose;
+    ros::Subscriber sub_desired_pose;
     void ee_pose_Callback(const geometry_msgs::PoseStampedConstPtr &msg);
 
     // publish data to export using another thread;

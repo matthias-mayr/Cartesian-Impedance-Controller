@@ -54,13 +54,15 @@ namespace cartesian_impedance_controller
     as_->registerPreemptCallback(boost::bind(&CartesianImpedanceController::preemptCallback, this));
     as_->start();
 
-    //the other traj generator
-    sub_pose = node_handle.subscribe("target_pose", 1, &CartesianImpedanceController::ee_pose_Callback, this);
+    // Set desired poses through this topic
+    sub_desired_pose = node_handle.subscribe("target_pose", 1, &CartesianImpedanceController::ee_pose_Callback, this);
+
     //set cartesian stiffness values through this topic
     sub_CartesianImpedanceParams = node_handle.subscribe("cartesian_impedance_parameters", 1, &CartesianImpedanceController::cartesian_impedance_Callback, this);
 
     //set cartesian damping values through this topic
-   sub_DampingParams = node_handle.subscribe("damping_parameters", 1, &CartesianImpedanceController::damping_parameters_Callback, this);
+    sub_DampingParams = node_handle.subscribe("damping_parameters", 1, &CartesianImpedanceController::damping_parameters_Callback, this);
+
     //set cartesian wrench through this topic
     sub_CartesianWrench = node_handle.subscribe("set_cartesian_wrench", 1, &CartesianImpedanceController::cartesian_wrench_Callback, this);
 
