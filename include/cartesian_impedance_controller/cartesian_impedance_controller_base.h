@@ -104,13 +104,10 @@ private:
         nullspace_stiffness_ =
             filter_params_new_ * nullspace_stiffness_target_ + (1.0 - filter_params_new_) * nullspace_stiffness_;
         q_d_nullspace_ = filter_params_new_ * q_d_nullspace_target_ + (1.0 - filter_params_new_) * q_d_nullspace_;
-        position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
-        orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
-
-            for (size_t i = 0; i < 6; i++)
-    {
-        cartesian_damping_target_(i,i) = cartesian_damping_target_(i,i) * damping_factors_(i);
-    }
+        //position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
+       // orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
+          position_d_ << position_d_target_;
+         orientation_d_.coeffs() << orientation_d_target_.coeffs();
 
     }
 };
