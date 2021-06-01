@@ -8,10 +8,6 @@ FourDimensionalQuantity orientation
 
 FourDimensionalQuantity orientation_d_
 
-ThreeDimensionalQuantity orientation_euler
-
-ThreeDimensionalQuantity orientation_euler_d
-
 #commanded torque
 JointsQuantity tau_d
 

@@ -302,13 +302,6 @@ namespace cartesian_impedance_controller
     data_to_analyze.orientation_d_.z = orientation_d_.coeffs()[2];
     data_to_analyze.orientation_d_.w = orientation_d_.coeffs()[3];
 
-    data_to_analyze.orientation_euler.x = orientation_euler[0];
-    data_to_analyze.orientation_euler.y = orientation_euler[1];
-    data_to_analyze.orientation_euler.z = orientation_euler[2];
-
-    data_to_analyze.orientation_euler_d.x = orientation_euler_d[0];
-    data_to_analyze.orientation_euler_d.y = orientation_euler_d[1];
-    data_to_analyze.orientation_euler_d.z = orientation_euler_d[2];
 
     data_to_analyze.tau_d.q1 = tau_d(0);
     data_to_analyze.tau_d.q2 = tau_d(1);
