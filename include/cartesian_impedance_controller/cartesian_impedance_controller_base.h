@@ -24,6 +24,11 @@ public:
     void get_robot_state(Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_, Eigen::Matrix<double, 6, 6> &cartesian_damping_);
 
     void get_stiffness(Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double nullspace_stiffness_);
+
+    void apply_wrench(Eigen::Matrix<double,6,1> F);
+
+    Eigen::Matrix<double,6,1> get_applied_wrench();
+  
     //-------------------------------------------------------------------------------------------------
         //-------------------------------------------------------------------------------------------------
             //-------------------------------------------------------------------------------------------------
@@ -50,7 +55,13 @@ public:
     double saturate(double x, double x_min, double x_max);
 
 private:
-    // Robot pose and state variables
+    
+
+    // Robot variables
+    
+        
+
+    // end effector
     Eigen::Vector3d position;
     Eigen::Vector3d position_d_;
     Eigen::Vector3d position_d_target_;
@@ -59,8 +70,11 @@ private:
     Eigen::Quaterniond orientation_d_;
     Eigen::Quaterniond orientation_d_target_;
 
+    // joints &velocities
     Eigen::Matrix<double, 7, 1> q;
     Eigen::Matrix<double, 7, 1> dq;
+    // jacobian
+    Eigen::Matrix<double, 6, 7> jacobian;
 
     // Filtering parameters
     double filter_params_{1};
@@ -80,10 +94,14 @@ private:
     // Rate limiter
     Eigen::Matrix<double, 7, 1> tau_J_d_;
 
+    //"External" applied forces
+    Eigen::VectorXd tau_ext;
+    Eigen::Matrix<double,6,1> cartesian_wrench;
+
     // Private functions-----
 
     // Update the state of the robot
-    void update_states(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation,Eigen::Vector3d position_d_target_, Eigen::Quaterniond orientation_d_target_)
+    void update_states(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Matrix<double, 6, 7> jacobian, Eigen::Vector3d position, Eigen::Quaterniond orientation,Eigen::Vector3d position_d_target_, Eigen::Quaterniond orientation_d_target_)
     {
         this->q = q;
         this->dq = dq;
@@ -91,6 +109,7 @@ private:
         this->orientation.coeffs() << orientation.coeffs();
         this->position_d_target_ << position_d_target_;
         this->orientation_d_target_.coeffs() << orientation_d_target_.coeffs();
+        this->jacobian << jacobian;
     }
 
     // Update impedance with some slope

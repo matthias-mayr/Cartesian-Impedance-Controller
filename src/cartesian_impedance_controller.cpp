@@ -139,11 +139,6 @@ namespace cartesian_impedance_controller
     cartesian_stiffness_.setZero();
     cartesian_damping_.setZero();
 
-    tau_ext.resize(7);
-    tau_ext.setZero();
-
-
-
     //Initialize publisher of useful data
     pub_data_export_ = node_handle.advertise<cartesian_impedance_controller::RobotImpedanceState>("useful_data_to_analyze", 1);
 
@@ -232,17 +227,13 @@ namespace cartesian_impedance_controller
     Eigen::AngleAxisd error_quaternion_angle_axis(error_quaternion);
     // compute "orientation error"
     error.tail(3) << error_quaternion_angle_axis.axis() * error_quaternion_angle_axis.angle();
-    
+    // compute the control law
     Eigen::VectorXd tau_d = base_tools.get_commanded_torques(q,dq,position,orientation,jacobian);
-
-    
+    // saturate to torque rate
+    base_tools.saturateTorqueRate(tau_d, tau_J_d_, delta_tau_max_);
+    // get the robot state
     base_tools.get_robot_state(position_d_,orientation_d_,cartesian_stiffness_,nullspace_stiffness_,q_d_nullspace_,cartesian_damping_);
 
-
-    // necessary for applying virtual wrenches at TCP
-    tau_d << tau_d + tau_ext;
-
-    base_tools.saturateTorqueRate(tau_d, tau_J_d_, delta_tau_max_);
     // compute error to desired pose
     // position error
     tf::vectorEigenToTF(Eigen::Vector3d(error.head(3)), tf_pos_);
@@ -271,10 +262,11 @@ namespace cartesian_impedance_controller
     double filter_params_=0.005;
     base_tools.set_filtering(update_frequency,filter_params_);
 
-    publish_data(q, dq, position, orientation, position_d_, orientation_d_, tau_d, cartesian_stiffness_, nullspace_stiffness_,error);
+
+    publish_data(q, dq, position, orientation, position_d_, orientation_d_, tau_d, cartesian_stiffness_, nullspace_stiffness_,error,base_tools.get_applied_wrench());
   }
   //Publish data to export and analyze
-  void CartesianImpedanceController::publish_data(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d, Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_,Eigen::Matrix<double, 6, 1> error)
+  void CartesianImpedanceController::publish_data(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d, Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_,Eigen::Matrix<double, 6, 1> error, Eigen::Matrix<double,6,1> F)
   {
 
     Eigen::Vector3d orientation_euler;
@@ -336,19 +328,13 @@ namespace cartesian_impedance_controller
 
     data_to_analyze.nullspace_stiffness = nullspace_stiffness_;
 
-    Eigen::Matrix<double, 6, 7> jacobian;
-    get_jacobian(q, dq, jacobian);
-    Eigen::MatrixXd jacobian_transpose_pinv;
-    pseudoInverse(jacobian.transpose(), jacobian_transpose_pinv);
-    Eigen::VectorXd F_x(6);
-    F_x << jacobian_transpose_pinv * tau_ext;
 
-    data_to_analyze.cartesian_wrench.f_x = F_x(0);
-    data_to_analyze.cartesian_wrench.f_y = F_x(1);
-    data_to_analyze.cartesian_wrench.f_z = F_x(2);
-    data_to_analyze.cartesian_wrench.tau_x = F_x(3);
-    data_to_analyze.cartesian_wrench.tau_y = F_x(4);
-    data_to_analyze.cartesian_wrench.tau_z = F_x(5);
+    data_to_analyze.cartesian_wrench.f_x = F(0);
+    data_to_analyze.cartesian_wrench.f_y = F(1);
+    data_to_analyze.cartesian_wrench.f_z = F(2);
+    data_to_analyze.cartesian_wrench.tau_x = F(3);
+    data_to_analyze.cartesian_wrench.tau_y = F(4);
+    data_to_analyze.cartesian_wrench.tau_z = F(5);
 
     data_to_analyze.error_position.x=error(0);
     data_to_analyze.error_position.y=error(1);
@@ -437,25 +423,12 @@ void CartesianImpedanceController::damping_parameters_Callback(const cartesian_i
 }
 
 
-
+  //Adds a wrench at the end-effector, using the world frame
   void CartesianImpedanceController::cartesian_wrench_Callback(const cartesian_impedance_controller::CartesianWrench &msg)
   {
-    Eigen::VectorXd F_x(6);
-    Eigen::Matrix<double, 6, 7> jacobian;
-    Eigen::Matrix<double, 7, 1> q;
-    Eigen::Matrix<double, 7, 1> dq;
-    for (size_t i = 0; i < 7; ++i)
-    {
-      q[i] = joint_handles_[i].getPosition();
-      dq[i] = joint_handles_[i].getVelocity();
-    }
-
-    get_jacobian(q, dq, jacobian);
-
-    F_x << msg.f_x, msg.f_y, msg.f_z, msg.tau_x, msg.tau_y, msg.tau_z;
-
-    tau_ext = jacobian.transpose() * F_x;
-  
+    Eigen::Matrix<double, 6, 1> F;
+    F << msg.f_x, msg.f_y, msg.f_z, msg.tau_x, msg.tau_y, msg.tau_z;
+    base_tools.apply_wrench(F);
   }
 
   void CartesianImpedanceController::goalCallback()

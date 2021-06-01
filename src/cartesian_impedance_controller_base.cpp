@@ -13,24 +13,32 @@ bool CartesianImpedanceController_base::initialize()
     if (c++ == 0)
     {
         //Default: Filter not active
-        filter_params_=1;update_frequency=100;
+        filter_params_ = 1;
+        update_frequency = 100;
 
-        //Initialize pose
+        // initialize pose
         position.setZero();
         position_d_.setZero();
         orientation.coeffs() << 1., 0., 0., 0.;
         orientation_d_.coeffs() << 1., 0., 0., 0.;
-        
+
         position_d_target_.setZero();
         orientation_d_target_.coeffs() << 1., 0., 0., 0.;
-        //Default stiffness
+        // default stiffness
         set_stiffness(200., 200., 200., 100., 100., 100., 0.);
         cartesian_damping_ << cartesian_damping_target_;
-        damping_factors_ << 1.,1.,1.,1.,1.,1;
-        cartesian_stiffness_<<cartesian_stiffness_target_;
+        damping_factors_ << 1., 1., 1., 1., 1., 1;
+        cartesian_stiffness_ << cartesian_stiffness_target_;
         q_d_nullspace_target_ << q;
+
+        // "External" forces
+        tau_ext.resize(7);
+        tau_ext.setZero();
+        cartesian_wrench.setZero();
+
         return true;
-    }return false;
+    }
+    return false;
 }
 
 void CartesianImpedanceController_base::set_stiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z, double n)
@@ -50,11 +58,11 @@ void CartesianImpedanceController_base::set_stiffness(double t_x, double t_y, do
 //Set the damping factors >0.1 && < 1. First 6 parameters represent the diagonals of the damping matrix and the last parameter represents the nullspace damping.
 void CartesianImpedanceController_base::set_damping(double d_x, double d_y, double d_z, double d_a, double d_b, double d_c, double d_n)
 {
-    this->damping_factors_<<d_x,d_y,d_z,d_a,d_b,d_c;
+    this->damping_factors_ << d_x, d_y, d_z, d_a, d_b, d_c;
 
     for (int i = 0; i < 6; i++)
     {
-        cartesian_damping_target_(i, i) = 2 * damping_factors_(i) * sqrt(cartesian_stiffness_target_(i,i));
+        cartesian_damping_target_(i, i) = 2 * damping_factors_(i) * sqrt(cartesian_stiffness_target_(i, i));
     }
 }
 
@@ -75,7 +83,7 @@ void CartesianImpedanceController_base::set_filtering(double update_frequency, d
     this->filter_params_ = filter_params_;
 }
 
-void CartesianImpedanceController_base::get_robot_state(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq, Eigen::Vector3d &position, Eigen::Quaterniond &orientation, Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_,    Eigen::Matrix<double, 7, 1> &q_d_nullspace_, Eigen::Matrix<double, 6, 6> &cartesian_damping_)
+void CartesianImpedanceController_base::get_robot_state(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq, Eigen::Vector3d &position, Eigen::Quaterniond &orientation, Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_, Eigen::Matrix<double, 6, 6> &cartesian_damping_)
 {
     q << this->q;
     dq << this->dq;
@@ -89,26 +97,24 @@ void CartesianImpedanceController_base::get_robot_state(Eigen::Matrix<double, 7,
     cartesian_damping_ << this->cartesian_damping_;
 }
 
-    void CartesianImpedanceController_base::get_robot_state(Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_, Eigen::Matrix<double, 6, 6> &cartesian_damping_)
-    {
+void CartesianImpedanceController_base::get_robot_state(Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_, Eigen::Matrix<double, 6, 6> &cartesian_damping_)
+{
     position_d_ = this->position_d_;
     orientation_d_.coeffs() << this->orientation_d_.coeffs();
     cartesian_stiffness_ = this->cartesian_stiffness_;
     nullspace_stiffness_ = this->nullspace_stiffness_;
-    q_d_nullspace_ = this->q_d_nullspace_;      
-    cartesian_damping_ << this->cartesian_damping_; 
-    }
+    q_d_nullspace_ = this->q_d_nullspace_;
+    cartesian_damping_ << this->cartesian_damping_;
+}
 
 //returns tau_desired
 Eigen::VectorXd CartesianImpedanceController_base::get_commanded_torques(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Matrix<double, 6, 7> jacobian)
 {
-    // Update current robot state
-    update_states(q, dq, position, orientation, position_d_target_, orientation_d_target_);
-
+    // Update controller to the current robot state
+    update_states(q, dq, jacobian, position, orientation, position_d_target_, orientation_d_target_);
 
     //Updates stiffness
     update_filtering();
-
 
     // compute error to desired pose
     // position error
@@ -145,7 +151,7 @@ Eigen::VectorXd CartesianImpedanceController_base::get_commanded_torques(Eigen::
                          (nullspace_stiffness_ * (q_d_nullspace_ - q) -
                           (2.0 * sqrt(nullspace_stiffness_)) * dq);
     // Desired torque. Used to contain coriolis as well
-    tau_d << tau_task + tau_nullspace;
+    tau_d << tau_task + tau_nullspace + tau_ext;
     return tau_d;
 }
 
@@ -166,6 +172,17 @@ Eigen::Matrix<double, 7, 1> CartesianImpedanceController_base::saturateTorqueRat
         tau_J_d[i] = tau_d_saturated[i];
     }
     return tau_d_saturated;
+}
+
+void CartesianImpedanceController_base::apply_wrench(Eigen::Matrix<double, 6, 1> cartesian_wrench)
+{
+    tau_ext = jacobian.transpose() * cartesian_wrench;
+    this->cartesian_wrench=cartesian_wrench;
+}
+
+Eigen::Matrix<double,6,1> CartesianImpedanceController_base::get_applied_wrench()
+{
+    return cartesian_wrench;
 }
 
 bool CartesianImpedanceController_base::update_control(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq,
@@ -227,16 +244,15 @@ void CartesianImpedanceController_base::update_parameters(double update_frequenc
         filter_params_ * cartesian_damping_target_ + (1.0 - filter_params_) * cartesian_damping_;
     nullspace_stiffness_ =
         filter_params_ * nullspace_stiffness_target_ + (1.0 - filter_params_) * nullspace_stiffness_;
-    
+
     q_d_nullspace_ = filter_params_ * q_d_nullspace_target_ + (1.0 - filter_params_) * q_d_nullspace_;
 
     filter_params_ = filter_params_ * update_frequency / 100;
     position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
     orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
-
 }
 
-void CartesianImpedanceController_base::update_compliance(Eigen::Vector3d translational_stiffness_target_, Eigen::Vector3d rotational_stiffness_target_, double nullspace_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_damping_target_,  Eigen::Matrix<double, 6, 1> &damping_factors_)
+void CartesianImpedanceController_base::update_compliance(Eigen::Vector3d translational_stiffness_target_, Eigen::Vector3d rotational_stiffness_target_, double nullspace_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_target_, Eigen::Matrix<double, 6, 6> &cartesian_damping_target_, Eigen::Matrix<double, 6, 1> &damping_factors_)
 {
     cartesian_stiffness_target_.setIdentity();
     Eigen::Matrix3d K_t = translational_stiffness_target_.asDiagonal();
@@ -254,10 +270,8 @@ void CartesianImpedanceController_base::update_compliance(Eigen::Vector3d transl
 
     for (size_t i = 0; i < 6; i++)
     {
-        cartesian_damping_target_(i,i) = cartesian_damping_target_(i,i) * damping_factors_(i);
-        
+        cartesian_damping_target_(i, i) = cartesian_damping_target_(i, i) * damping_factors_(i);
     }
-  
 }
 
 void CartesianImpedanceController_base::rpy_to_quaternion(Eigen::Vector3d &rpy, Eigen::Quaterniond &q)
@@ -274,14 +288,14 @@ void CartesianImpedanceController_base::quaternion_to_rpy(Eigen::Quaterniond &q,
 
 double CartesianImpedanceController_base::saturate(double x, double x_min, double x_max)
 {
-   
-    if(x>x_max)
+
+    if (x > x_max)
     {
-        x=x_max;
+        x = x_max;
     }
-    if(x < x_min)
+    if (x < x_min)
     {
-        x=x_min;
+        x = x_min;
     }
     return x;
 }

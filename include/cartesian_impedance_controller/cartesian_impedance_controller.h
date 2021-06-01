@@ -71,7 +71,6 @@ namespace cartesian_impedance_controller
     //Apply cartesian wrenches through this topic
     ros::Subscriber sub_CartesianWrench;
     void cartesian_wrench_Callback(const cartesian_impedance_controller::CartesianWrench &msg);
-    Eigen::VectorXd tau_ext;
     // the  trajectory generator
     ros::Subscriber sub_pose;
     void ee_pose_Callback(const geometry_msgs::PoseStampedConstPtr &msg);
@@ -79,7 +78,7 @@ namespace cartesian_impedance_controller
     // publish data to export using another thread;
     double time_at_start_;
     ros::Publisher pub_data_export_;
-    void publish_data(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d, Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_,Eigen::Matrix<double, 6, 1> error);
+    void publish_data(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d, Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_,Eigen::Matrix<double, 6, 1> error, Eigen::Matrix<double,6,1> F);
 
     //------------------------------------------------------------------------------------------------
 
