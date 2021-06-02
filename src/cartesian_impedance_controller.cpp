@@ -68,6 +68,10 @@ namespace cartesian_impedance_controller
     //set cartesian wrench through this topic
     sub_CartesianWrench = node_handle.subscribe("set_cartesian_wrench", 1, &CartesianImpedanceController::cartesian_wrench_Callback, this);
 
+    //get params for applying Cartesian wrenches
+    node_handle.param<std::string>("from_frame_wrench", from_frame_wrench_, "bh_link_ee");
+    node_handle.param<std::string>("to_frame_wrench", to_frame_wrench_, "world");
+
     sub_trajectory_ = node_handle.subscribe("command", 1, &CartesianImpedanceController::trajectoryCallback, this);
     sub_equilibrium_pose_ = node_handle.subscribe(
         "equilibrium_pose", 20, &CartesianImpedanceController::equilibriumPoseCallback, this,
@@ -259,13 +263,20 @@ namespace cartesian_impedance_controller
       ROS_INFO_STREAM_THROTTLE(0.1, "\ntau_d:\n"
                                         << tau_d);
     }
-
-    publish();
-    
+    try
+    {
+      // Update transformation of Cartesian Wrench
+      tf_listener_.lookupTransform(from_frame_wrench_, to_frame_wrench_, ros::Time(0), transform_);
+    }
+    catch (tf::TransformException ex)
+    {
+      ROS_ERROR_THROTTLE(1, "%s", ex.what());
+    }
     //filtering
     double update_frequency = 1 / period.toSec();
     base_tools.set_filtering(update_frequency, 0.005, 1., 0.01);
-    
+
+    publish();
     //publish useful data to a topic
     publish_data(q, dq, position, orientation, position_d_, orientation_d_, tau_d, cartesian_stiffness_, nullspace_stiffness_, error, base_tools.get_applied_wrench());
   }
@@ -356,20 +367,21 @@ namespace cartesian_impedance_controller
     base_tools.set_desired_pose(position_d_, orientation_d_);
   }
 
-  void CartesianImpedanceController::convert_wrench_from_frame(Eigen::Matrix<double, 6, 1> &cartesian_wrench,std::string frame_name)
+  // Transform a Cartesian wrench from "from_frame" to "to_frame". E.g. from_frame= "bh_link_ee" , to_frame = "world"
+  void CartesianImpedanceController::transform_wrench(Eigen::Matrix<double, 6, 1> &cartesian_wrench, std::string from_frame, std::string to_frame)
   {
-      tf::StampedTransform transform;
-                try {
-                    tf::Vector3 v_f(cartesian_wrench(0), cartesian_wrench(1), cartesian_wrench(2));
-                    tf::Vector3 v_t(cartesian_wrench(3), cartesian_wrench(4), cartesian_wrench(5));
-                    tf_listener_.lookupTransform(frame_name, "world", ros::Time(0), transform);
-                    tf::Vector3 v_f_rot = tf::quatRotate(transform.getRotation(), v_f);
-                    tf::Vector3 v_t_rot = tf::quatRotate(transform.getRotation(), v_t);
-                    cartesian_wrench << v_f_rot[0], v_f_rot[1],v_f_rot[2], v_t_rot[0],v_t_rot[1],v_t_rot[2];
-                }
-                catch (tf::TransformException ex){
-                    ROS_ERROR_THROTTLE(1,"%s",ex.what());
-                }        
+    try
+    {
+      tf::Vector3 v_f(cartesian_wrench(0), cartesian_wrench(1), cartesian_wrench(2));
+      tf::Vector3 v_t(cartesian_wrench(3), cartesian_wrench(4), cartesian_wrench(5));
+      tf::Vector3 v_f_rot = tf::quatRotate(transform_.getRotation(), v_f);
+      tf::Vector3 v_t_rot = tf::quatRotate(transform_.getRotation(), v_t);
+      cartesian_wrench << v_f_rot[0], v_f_rot[1], v_f_rot[2], v_t_rot[0], v_t_rot[1], v_t_rot[2];
+    }
+    catch (tf::TransformException ex)
+    {
+      ROS_ERROR_THROTTLE(1, "%s", ex.what());
+    }
   }
 
   //------------------------------------------------------------------------------------------------------
@@ -436,11 +448,12 @@ namespace cartesian_impedance_controller
   }
 
   //Adds a wrench at the end-effector, using the world frame
-  void CartesianImpedanceController::cartesian_wrench_Callback(const cartesian_impedance_controller::CartesianWrench &msg)
+  void CartesianImpedanceController::cartesian_wrench_Callback(const geometry_msgs::WrenchStampedConstPtr &msg)
   {
     Eigen::Matrix<double, 6, 1> F;
-    F << msg.f_x, msg.f_y, msg.f_z, msg.tau_x, msg.tau_y, msg.tau_z;
-    convert_wrench_from_frame(F, "bh_link_ee");
+    F << msg->wrench.force.x, msg->wrench.force.y, msg->wrench.force.z,
+        msg->wrench.torque.x, msg->wrench.torque.y, msg->wrench.torque.z;
+    transform_wrench(F, from_frame_wrench_, to_frame_wrench_);
     base_tools.apply_wrench(F);
   }
 

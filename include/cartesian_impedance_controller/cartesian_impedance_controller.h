@@ -10,6 +10,7 @@
 #include <pluginlib/class_list_macros.h>
 #include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/WrenchStamped.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/robot_hw.h>
 #include <ros/node_handle.h>
@@ -30,7 +31,6 @@
 
 #include "cartesian_impedance_controller/CartesianImpedanceControlMode.h"
 #include "cartesian_impedance_controller/RobotImpedanceState.h"
-#include "cartesian_impedance_controller/CartesianWrench.h"
 namespace cartesian_impedance_controller
 {
 
@@ -70,9 +70,12 @@ namespace cartesian_impedance_controller
 
     //Apply cartesian wrenches through this topic
     ros::Subscriber sub_CartesianWrench;
-    void cartesian_wrench_Callback(const cartesian_impedance_controller::CartesianWrench &msg);
+    void cartesian_wrench_Callback(const geometry_msgs::WrenchStampedConstPtr &msg);
     tf::TransformListener tf_listener_;
-    void convert_wrench_from_frame(Eigen::Matrix<double, 6, 1> &cartesian_wrench,std:: string frame_name);
+    tf::StampedTransform transform_;
+    std::string from_frame_wrench_;
+    std::string to_frame_wrench_;
+    void transform_wrench(Eigen::Matrix<double, 6, 1> &cartesian_wrench, std::string from_frame, std::string to_frame);
    
     // the  trajectory generator
     ros::Subscriber sub_desired_pose;
