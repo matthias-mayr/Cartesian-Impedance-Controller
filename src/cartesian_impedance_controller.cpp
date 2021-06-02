@@ -15,6 +15,8 @@
 #include <cartesian_impedance_controller/impedance_configConfig.h>
 #include <dynamic_reconfigure/server.h>
 
+
+
 namespace cartesian_impedance_controller
 {
 
@@ -354,6 +356,22 @@ namespace cartesian_impedance_controller
     base_tools.set_desired_pose(position_d_, orientation_d_);
   }
 
+  void CartesianImpedanceController::convert_wrench_from_frame(Eigen::Matrix<double, 6, 1> &cartesian_wrench,std::string frame_name)
+  {
+      tf::StampedTransform transform;
+                try {
+                    tf::Vector3 v_f(cartesian_wrench(0), cartesian_wrench(1), cartesian_wrench(2));
+                    tf::Vector3 v_t(cartesian_wrench(3), cartesian_wrench(4), cartesian_wrench(5));
+                    tf_listener_.lookupTransform(frame_name, "world", ros::Time(0), transform);
+                    tf::Vector3 v_f_rot = tf::quatRotate(transform.getRotation(), v_f);
+                    tf::Vector3 v_t_rot = tf::quatRotate(transform.getRotation(), v_t);
+                    cartesian_wrench << v_f_rot[0], v_f_rot[1],v_f_rot[2], v_t_rot[0],v_t_rot[1],v_t_rot[2];
+                }
+                catch (tf::TransformException ex){
+                    ROS_ERROR_THROTTLE(1,"%s",ex.what());
+                }        
+  }
+
   //------------------------------------------------------------------------------------------------------
   void CartesianImpedanceController::trajectoryStart(const trajectory_msgs::JointTrajectory &trajectory)
   {
@@ -422,6 +440,7 @@ namespace cartesian_impedance_controller
   {
     Eigen::Matrix<double, 6, 1> F;
     F << msg.f_x, msg.f_y, msg.f_z, msg.tau_x, msg.tau_y, msg.tau_z;
+    convert_wrench_from_frame(F, "bh_link_ee");
     base_tools.apply_wrench(F);
   }
 

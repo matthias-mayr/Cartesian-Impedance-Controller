@@ -22,6 +22,8 @@
 #include <trajectory_msgs/JointTrajectory.h>
 #include <realtime_tools/realtime_publisher.h>
 
+#include <tf/transform_listener.h>
+
 #include <Eigen/Dense>
 
 #include "cartesian_impedance_controller/impedance_configConfig.h"
@@ -41,15 +43,13 @@ namespace cartesian_impedance_controller
     void update(const ros::Time &, const ros::Duration &period) override;
 
   private:
-    //cartesian_impedance_controller base tools
+   
     CartesianImpedanceController_base base_tools;
-
-    void update_parameters();
     bool get_fk(const Eigen::Matrix<double, 7, 1> &q, Eigen::Vector3d &translation, Eigen::Quaterniond &rotation);
     bool get_jacobian(const Eigen::Matrix<double, 7, 1> &q, const Eigen::Matrix<double, 7, 1> &dq, Eigen::Matrix<double, 6, 7> &jacobian);
 
-    std::vector<hardware_interface::JointHandle> joint_handles_;
 
+    std::vector<hardware_interface::JointHandle> joint_handles_;
     double delta_tau_max_{5};
 
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
@@ -71,6 +71,9 @@ namespace cartesian_impedance_controller
     //Apply cartesian wrenches through this topic
     ros::Subscriber sub_CartesianWrench;
     void cartesian_wrench_Callback(const cartesian_impedance_controller::CartesianWrench &msg);
+    tf::TransformListener tf_listener_;
+    void convert_wrench_from_frame(Eigen::Matrix<double, 6, 1> &cartesian_wrench,std:: string frame_name);
+   
     // the  trajectory generator
     ros::Subscriber sub_desired_pose;
     void ee_pose_Callback(const geometry_msgs::PoseStampedConstPtr &msg);
