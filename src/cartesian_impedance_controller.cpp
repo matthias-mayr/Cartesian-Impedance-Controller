@@ -421,7 +421,7 @@ namespace cartesian_impedance_controller
   {
     double trans_stf_max = 1200;
     double trans_stf_min = 0;
-    double rot_stf_max = 300;
+    double rot_stf_max = 500;
     double rot_stf_min = 0;
     base_tools.set_stiffness(saturate(msg.cartesian_stiffness.x, trans_stf_min, trans_stf_max), saturate(msg.cartesian_stiffness.y, trans_stf_min, trans_stf_max), saturate(msg.cartesian_stiffness.z, trans_stf_min, trans_stf_max),
                              saturate(msg.cartesian_stiffness.a, trans_stf_min, trans_stf_max), saturate(msg.cartesian_stiffness.b, trans_stf_min, trans_stf_max), saturate(msg.cartesian_stiffness.c, trans_stf_min, trans_stf_max), msg.nullspace_stiffness);
