@@ -3,71 +3,53 @@
 
 
 
-#Apply TORQUES
+#Apply FORCES
 #------------
 
+waiting_after_wrench=40
+waiting_after_release=8
+waiting_after_stiffness=25
+
+force_applied=-5
 # Stiffness configuration #1
-./change_stiffness.sh 200 200 200 5 50 50 0
+sleep 15
+./change_stiffness.sh 200 200 50 100 100 100 0
 
-sleep 5
+sleep $waiting_after_stiffness
 
-./apply_wrench.sh 0 0 0 7.5 0 0
+./apply_wrench.sh 0 0 $force_applied 0 0 0
 
-sleep 8
+sleep $waiting_after_wrench
 
 ./apply_wrench.sh 0 0 0 0 0 0
 
-sleep 5
+sleep $waiting_after_release
 
 
 
 # Stiffness configuration #2
-./change_stiffness.sh 200 200 200 20 50 50 0
-sleep 2
+./change_stiffness.sh 200 200 100 100 100 100 0
 
-./apply_wrench.sh 0 0 0 7.5 0 0
+sleep $waiting_after_stiffness
 
-sleep 5
+./apply_wrench.sh 0 0 $force_applied 0 0 0
 
-./apply_wrench.sh 0 0 0 0 0 0
-
-sleep 5
-
-
-# Stiffness configuration #3
-./change_stiffness.sh 200 200 200 50 50 50 0
-sleep 5
-
-./apply_wrench.sh 0 0 7.5 0 0 0
-
-sleep 8
+sleep $waiting_after_wrench
 
 ./apply_wrench.sh 0 0 0 0 0 0
 
-sleep 5
+sleep $waiting_after_release
 
 
-# Stiffness configuration #4
-./change_stiffness.sh 200 200 200 100 50 50 0
-sleep 5
+# Stiffness configuration #2
+./change_stiffness.sh 200 200 200 100 100 100 0
 
-./apply_wrench.sh 0 0 0 7.5 0 0
+sleep $waiting_after_stiffness
 
-sleep 8
+./apply_wrench.sh 0 0 $force_applied 0 0 0
 
-./apply_wrench.sh 0 0 0 0 0 0
-
-sleep 5
-
-# Stiffness configuration #5
-./change_stiffness.sh 200 200 200 100 50 50 0
-sleep 5
-
-./apply_wrench.sh 0 0 0 7.5 0 0
-
-sleep 8
+sleep $waiting_after_wrench
 
 ./apply_wrench.sh 0 0 0 0 0 0
 
-sleep 5
-
+sleep $waiting_after_release
