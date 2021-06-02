@@ -36,10 +36,11 @@ bool CartesianImpedanceController_base::initialize()
         cartesian_damping_ << cartesian_damping_target_;
         damping_factors_ << 1., 1., 1., 1., 1., 1;
 
-        // Default filtering parameters
+        // Default filtering parameters 
+        update_frequency=100;
         filter_params_pose=1;
         filter_params_stiffness=1;
-        update_frequency=100;
+        filter_params_wrench=1;
 
         // Applied "External" forces
         tau_ext.resize(7);
@@ -91,11 +92,12 @@ void CartesianImpedanceController_base::set_nullspace_config(Eigen::Matrix<doubl
 }
 
 // Apply filtering on stiffness + end-effector pose. Default inactive && depends on update_frequency
-void CartesianImpedanceController_base::set_filtering(double update_frequency, double filter_params_stiffness, double filter_params_pose)
+void CartesianImpedanceController_base::set_filtering(double update_frequency, double filter_params_stiffness, double filter_params_pose, double filter_params_wrench)
 {
     this->update_frequency = update_frequency;
     this->filter_params_stiffness = filter_params_stiffness;
     this->filter_params_pose=filter_params_pose;
+    this->filter_params_wrench=filter_params_wrench;
 }
 
 // Returns the desired control law
@@ -104,11 +106,14 @@ Eigen::VectorXd CartesianImpedanceController_base::get_commanded_torques(Eigen::
     // Update controller to the current robot state
     update_states(q, dq, jacobian, position, orientation, position_d_target_, orientation_d_target_);
 
-    //Updates stiffness with some filter
+    // Updates stiffness with some filter
     update_filtering_stiffness();
 
-    //Updates desired position with some filter
+    // Updates desired position with some filter
     update_filtering_pose();
+
+    // Updates applied wrench with some filter
+    update_filtering_wrench();
 
     // compute error to desired pose
     // position error
@@ -177,10 +182,9 @@ void CartesianImpedanceController_base::get_robot_state(Eigen::Vector3d &positio
 
 
 // Apply a virtual Cartesian wrench
-void CartesianImpedanceController_base::apply_wrench(Eigen::Matrix<double, 6, 1> cartesian_wrench)
+void CartesianImpedanceController_base::apply_wrench(Eigen::Matrix<double, 6, 1> cartesian_wrench_target_)
 {
-    tau_ext = jacobian.transpose() * cartesian_wrench;
-    this->cartesian_wrench = cartesian_wrench;
+    this->cartesian_wrench_target_ = cartesian_wrench_target_;
 }
 
 // Get the currently applied Cartesian wrench

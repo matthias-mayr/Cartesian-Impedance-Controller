@@ -13,34 +13,34 @@ public:
 
     // Set the desired diagonal stiffnessess + nullspace stiffness
     void set_stiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z, double n);
-   
+
     // Set the desired damping factors + (TODO) nullspace damping
     void set_damping(double d_x, double d_y, double d_z, double d_a, double d_b, double d_c, double d_n);
-   
+
     // Set the desired enf-effector pose
     void set_desired_pose(Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_);
-   
+
     // Set the desired nullspace configuration
     void set_nullspace_config(Eigen::Matrix<double, 7, 1> q_d_nullspace_target_);
-   
+
     // Apply filtering on stiffness + end-effector pose. Default inactive && depends on update_frequency
-    void set_filtering(double update_frequency, double filter_params_stiffness, double filter_params_pose);
-   
+    void set_filtering(double update_frequency, double filter_params_stiffness, double filter_params_pose, double filter_params_wrench);
+
     // Returns the desired control law
     Eigen::VectorXd get_commanded_torques(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Matrix<double, 6, 7> jacobian);
-   
+
     // Get the state of the robot. Updates when "get_commanded_torques" is called
     void get_robot_state(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq, Eigen::Vector3d &position, Eigen::Quaterniond &orientation, Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_, Eigen::Matrix<double, 6, 6> &cartesian_damping_);
-   
+
     // Get the state of the robot. Updates when "get_commanded_torques" is called
     void get_robot_state(Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_, Eigen::Matrix<double, 6, 6> &cartesian_damping_);
 
     // Apply a virtual Cartesian wrench
-    void apply_wrench(Eigen::Matrix<double, 6, 1> F);
+    void apply_wrench(Eigen::Matrix<double, 6, 1> cartesian_wrench);
 
     // Get the currently applied Cartesian wrench
     Eigen::Matrix<double, 6, 1> get_applied_wrench();
-    
+
     // Saturate the torque rate of the control law
     Eigen::Matrix<double, 7, 1> saturateTorqueRate(
         const Eigen::Matrix<double, 7, 1> &tau_d_calculated,
@@ -67,10 +67,6 @@ private:
     // jacobian
     Eigen::Matrix<double, 6, 7> jacobian;
 
-    // Filtering parameters
-    double filter_params_stiffness;
-    double filter_params_pose;
-    double update_frequency;
 
     // Stiffness parameters
     double nullspace_stiffness_;
@@ -86,8 +82,15 @@ private:
     // Rate limiter
     Eigen::Matrix<double, 7, 1> tau_J_d_;
 
+    // Filtering parameters   
+    double update_frequency;
+    double filter_params_stiffness;
+    double filter_params_pose;
+    double filter_params_wrench;
+
     //"External" applied forces
     Eigen::VectorXd tau_ext;
+    Eigen::Matrix<double, 6, 1> cartesian_wrench_target_;
     Eigen::Matrix<double, 6, 1> cartesian_wrench;
 
     // Private functions-----
@@ -117,7 +120,7 @@ private:
         q_d_nullspace_ = filter_params_new_ * q_d_nullspace_target_ + (1.0 - filter_params_new_) * q_d_nullspace_;
     }
 
-    // Adds some filtering effect to end-effector pose
+    // Adds some filtering effect to the end-effector pose
     void update_filtering_pose()
     {
         if (filter_params_pose == 1)
@@ -127,8 +130,16 @@ private:
         }
         else
         {
-            position_d_ = filter_params_pose * position_d_target_ + (1.0 - filter_params_pose) * position_d_;
-            orientation_d_ = orientation_d_.slerp(filter_params_pose, orientation_d_target_);
+            double filter_params_pose_new_ = filter_params_pose * 100 / update_frequency;
+            position_d_ = filter_params_pose_new_ * position_d_target_ + (1.0 - filter_params_pose_new_) * position_d_;
+            orientation_d_ = orientation_d_.slerp(filter_params_pose_new_, orientation_d_target_);
         }
+    }
+    // Adds some filtering effect to the applied Cartesian wrench
+    void update_filtering_wrench()
+    {
+        double filter_params_wrench_new_ = filter_params_wrench * 100 / update_frequency;
+        cartesian_wrench=filter_params_wrench_new_*cartesian_wrench_target_+(1-filter_params_wrench_new_)*cartesian_wrench;
+        tau_ext = jacobian.transpose() * cartesian_wrench;
     }
 };
