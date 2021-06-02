@@ -15,8 +15,6 @@
 #include <cartesian_impedance_controller/impedance_configConfig.h>
 #include <dynamic_reconfigure/server.h>
 
-
-
 namespace cartesian_impedance_controller
 {
 
@@ -139,13 +137,7 @@ namespace cartesian_impedance_controller
     //-------------------------------------------------------------------------------------------------------------------------------------
 
     // Initialize variables
-
     base_tools.initialize();
-    position_d_.setZero();
-    orientation_d_.coeffs() << 1.0, 0.0, 0.0, 0.0;
-
-    cartesian_stiffness_.setZero();
-    cartesian_damping_.setZero();
 
     //Initialize publisher of useful data
     pub_data_export_ = node_handle.advertise<cartesian_impedance_controller::RobotImpedanceState>("useful_data_to_analyze", 1);
