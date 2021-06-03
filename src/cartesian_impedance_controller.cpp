@@ -193,6 +193,9 @@ namespace cartesian_impedance_controller
     // get jacobian
     Eigen::Matrix<double, 6, 7> jacobian;
     get_jacobian(q, dq, jacobian);
+    Eigen::Matrix<double, 6, 1> dx;
+    dx << jacobian * dq;
+    double cartesian_velocity = sqrt(dx(0) * dx(0) + dx(1) * dx(1) + dx(2) * dx(2));
 
     // get forward kinematics
     Eigen::Vector3d position;
@@ -270,10 +273,10 @@ namespace cartesian_impedance_controller
 
     publish();
     //publish useful data to a topic
-    publish_data(q, dq, position, orientation, position_d_, orientation_d_, tau_d, cartesian_stiffness_, nullspace_stiffness_, error, base_tools.get_applied_wrench());
+    publish_data(q, dq, position, orientation, position_d_, orientation_d_, tau_d, cartesian_stiffness_, nullspace_stiffness_, error, base_tools.get_applied_wrench(),cartesian_velocity);
   }
   //Publish data to export and analyze
-  void CartesianImpedanceController::publish_data(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d, Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_, Eigen::Matrix<double, 6, 1> error, Eigen::Matrix<double, 6, 1> F)
+  void CartesianImpedanceController::publish_data(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d, Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_, Eigen::Matrix<double, 6, 1> error, Eigen::Matrix<double, 6, 1> F, double cartesian_velocity)
   {
 
     cartesian_impedance_controller::RobotImpedanceState data_to_analyze;
@@ -342,6 +345,8 @@ namespace cartesian_impedance_controller
     data_to_analyze.error_rotation.x = error(3);
     data_to_analyze.error_rotation.y = error(4);
     data_to_analyze.error_rotation.z = error(5);
+
+    data_to_analyze.cartesian_velocity = cartesian_velocity;
 
     pub_data_export_.publish(data_to_analyze);
   }

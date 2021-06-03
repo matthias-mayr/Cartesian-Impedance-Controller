@@ -84,7 +84,7 @@ namespace cartesian_impedance_controller
     // publish data to export using another thread;
     double time_at_start_;
     ros::Publisher pub_data_export_;
-    void publish_data(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d, Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_, Eigen::Matrix<double, 6, 1> error, Eigen::Matrix<double, 6, 1> F);
+    void publish_data(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d, Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_, Eigen::Matrix<double, 6, 1> error, Eigen::Matrix<double, 6, 1> F, double cartesian_velocity);
 
     //------------------------------------------------------------------------------------------------
 
