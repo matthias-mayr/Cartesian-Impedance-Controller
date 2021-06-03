@@ -63,6 +63,9 @@ namespace cartesian_impedance_controller
     //set cartesian damping values through this topic
     sub_DampingParams = node_handle.subscribe("damping_parameters", 1, &CartesianImpedanceController::damping_parameters_Callback, this);
 
+    //set nullspace configuration through this topic
+    sub_NullspaceConfig = node_handle.subscribe("nullspace_configuration", 1 , &CartesianImpedanceController::nullspace_config_Callback, this);
+    
     //set cartesian wrench through this topic
     sub_CartesianWrench = node_handle.subscribe("set_cartesian_wrench", 1, &CartesianImpedanceController::cartesian_wrench_Callback, this);
 
@@ -428,6 +431,13 @@ namespace cartesian_impedance_controller
     base_tools.set_damping(saturate(msg.cartesian_damping.x, dmp_min, dmp_max), saturate(msg.cartesian_damping.y, dmp_min, dmp_max),
                            saturate(msg.cartesian_damping.z, dmp_min, dmp_max), saturate(msg.cartesian_damping.a, dmp_min, dmp_max),
                            saturate(msg.cartesian_damping.b, dmp_min, dmp_max), saturate(msg.cartesian_damping.c, dmp_min, dmp_max), 1);
+  }
+
+  void CartesianImpedanceController::nullspace_config_Callback(const cartesian_impedance_controller::JointsQuantity &msg)
+  {
+    Eigen::Matrix<double, 7, 1> q_d_nullspace_target_;
+    q_d_nullspace_target_ << msg.q1, msg.q2, msg.q3, msg.q4, msg.q5, msg.q6, msg.q7;
+    base_tools.set_nullspace_config(q_d_nullspace_target_);
   }
 
   //Adds a wrench at the end-effector, using the world frame

@@ -31,6 +31,7 @@
 
 #include "cartesian_impedance_controller/CartesianImpedanceControlMode.h"
 #include "cartesian_impedance_controller/RobotImpedanceState.h"
+#include "cartesian_impedance_controller/JointsQuantity.h"
 namespace cartesian_impedance_controller
 {
 
@@ -67,6 +68,11 @@ namespace cartesian_impedance_controller
     // Apply damping through this topic
     ros::Subscriber sub_DampingParams;
     void damping_parameters_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
+
+    // Set desired null-space configuration through this topic
+    ros::Subscriber sub_NullspaceConfig;
+    void nullspace_config_Callback(const cartesian_impedance_controller::JointsQuantity &msg);
+
 
     //Apply cartesian wrenches through this topic
     ros::Subscriber sub_CartesianWrench;
