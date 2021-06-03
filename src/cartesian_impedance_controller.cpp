@@ -440,7 +440,7 @@ namespace cartesian_impedance_controller
     base_tools.apply_wrench(F);
   }
 
-  // Transform a Cartesian wrench from "from_frame" to "to_frame". E.g. from_frame= "bh_link_ee" , to_frame = "world"
+  // Transform a Cartesian wrench from "from_frame" to "to_frame". E.g. from_frame= "world" , to_frame = "bh_link_ee"
   void CartesianImpedanceController::transform_wrench(Eigen::Matrix<double, 6, 1> &cartesian_wrench, std::string from_frame, std::string to_frame)
   {
 
