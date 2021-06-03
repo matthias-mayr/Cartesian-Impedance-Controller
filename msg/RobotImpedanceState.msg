@@ -31,3 +31,5 @@ CartesianWrench cartesian_wrench
  # Cartesian error
 ThreeDimensionalQuantity error_position
 ThreeDimensionalQuantity error_rotation
+
+float64 cartesian_velocity
