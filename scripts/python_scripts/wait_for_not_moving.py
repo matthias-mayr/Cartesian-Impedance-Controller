@@ -10,7 +10,7 @@ timeout = time.time() + 60   # 60 seconds from now
 while time.time() < timeout:
     cartesian_velocity=get_data.data_array('rostopic echo -n 1 /bh/CartesianImpedance_trajectory_controller/useful_data_to_analyze/cartesian_velocity')
     ready=True
-    if abs(cartesian_velocity[0]) > 0.001:
+    if abs(cartesian_velocity[0]) > 0.0005:
         ready = False
     if ready == True:
         exit("Robot is not moving anymore")
