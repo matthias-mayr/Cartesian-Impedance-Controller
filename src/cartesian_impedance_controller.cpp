@@ -417,11 +417,10 @@ namespace cartesian_impedance_controller
     double trans_stf_min = 0;
     double rot_stf_max = 500;
     double rot_stf_min = 0;
+    double null_max=50;
+    double null_min=0;
     base_tools.set_stiffness(saturate(msg.cartesian_stiffness.x, trans_stf_min, trans_stf_max), saturate(msg.cartesian_stiffness.y, trans_stf_min, trans_stf_max), saturate(msg.cartesian_stiffness.z, trans_stf_min, trans_stf_max),
-                             saturate(msg.cartesian_stiffness.a, trans_stf_min, trans_stf_max), saturate(msg.cartesian_stiffness.b, trans_stf_min, trans_stf_max), saturate(msg.cartesian_stiffness.c, trans_stf_min, trans_stf_max), msg.nullspace_stiffness);
-    Eigen::Matrix<double, 7, 1> q_d_nullspace_target_;
-    q_d_nullspace_target_ << msg.q_d_nullspace.q1, msg.q_d_nullspace.q2, msg.q_d_nullspace.q3, msg.q_d_nullspace.q4, msg.q_d_nullspace.q5, msg.q_d_nullspace.q6, msg.q_d_nullspace.q7;
-    base_tools.set_nullspace_config(q_d_nullspace_target_);
+                             saturate(msg.cartesian_stiffness.a, trans_stf_min, trans_stf_max), saturate(msg.cartesian_stiffness.b, trans_stf_min, trans_stf_max), saturate(msg.cartesian_stiffness.c, trans_stf_min, trans_stf_max), saturate(msg.nullspace_stiffness,null_min,null_max));
   }
 
   void CartesianImpedanceController::damping_parameters_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg)
@@ -433,10 +432,11 @@ namespace cartesian_impedance_controller
                            saturate(msg.cartesian_damping.b, dmp_min, dmp_max), saturate(msg.cartesian_damping.c, dmp_min, dmp_max), 1);
   }
 
-  void CartesianImpedanceController::nullspace_config_Callback(const cartesian_impedance_controller::JointsQuantity &msg)
+  void CartesianImpedanceController::nullspace_config_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg)
   {
     Eigen::Matrix<double, 7, 1> q_d_nullspace_target_;
-    q_d_nullspace_target_ << msg.q1, msg.q2, msg.q3, msg.q4, msg.q5, msg.q6, msg.q7;
+    q_d_nullspace_target_ << msg.q_d_nullspace.q1, msg.q_d_nullspace.q2,msg.q_d_nullspace.q3,
+    msg.q_d_nullspace.q4,msg.q_d_nullspace.q5,msg.q_d_nullspace.q6,msg.q_d_nullspace.q7;
     base_tools.set_nullspace_config(q_d_nullspace_target_);
   }
 

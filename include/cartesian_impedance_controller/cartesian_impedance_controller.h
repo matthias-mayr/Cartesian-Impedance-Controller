@@ -71,7 +71,7 @@ namespace cartesian_impedance_controller
 
     // Set desired null-space configuration through this topic
     ros::Subscriber sub_NullspaceConfig;
-    void nullspace_config_Callback(const cartesian_impedance_controller::JointsQuantity &msg);
+    void nullspace_config_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
 
 
     //Apply cartesian wrenches through this topic
