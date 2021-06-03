@@ -67,8 +67,8 @@ namespace cartesian_impedance_controller
     sub_CartesianWrench = node_handle.subscribe("set_cartesian_wrench", 1, &CartesianImpedanceController::cartesian_wrench_Callback, this);
 
     //get params for applying Cartesian wrenches
-    node_handle.param<std::string>("from_frame_wrench", from_frame_wrench_, "bh_link_ee");
-    node_handle.param<std::string>("to_frame_wrench", to_frame_wrench_, "world");
+    node_handle.param<std::string>("from_frame_wrench", from_frame_wrench_, "world");
+    node_handle.param<std::string>("to_frame_wrench", to_frame_wrench_, "bh_link_ee");
 
     sub_trajectory_ = node_handle.subscribe("command", 1, &CartesianImpedanceController::trajectoryCallback, this);
     sub_equilibrium_pose_ = node_handle.subscribe(
