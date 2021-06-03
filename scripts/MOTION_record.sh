@@ -6,9 +6,9 @@ echo "This experimental motion consists of some trajectories with intermidiate p
 
 
 while : ; do 
-nr_files=$(ls --ignore="*record.sh" -1 | grep "motion" | wc -l)
+nr_files=$(ls * | grep -v "motions:" | grep motion | wc -l)
 echo "Pick a NUMBER(1-$nr_files). Available:"
-ls --ignore="*record.sh" -1 | grep "motion"
+ls * | grep -v "motions:" | grep motion
 
 read nr 
 
@@ -39,7 +39,7 @@ case "$in_" in
 echo "Press any key to start"
 read step1
 	./home_position.sh
-       ./log_data.sh $time_simulation motion${nr}_simulation & ./motion${nr}.sh
+       ./log_data.sh $time_simulation motion${nr}_simulation & motions./motion${nr}.sh
 	sleep 5
 	rosnode kill $( rosnode list | grep '/record_')
         ;;
@@ -50,7 +50,7 @@ echo "Press any key to start"
 read step1
 echo "Starting motion ..."
 	./home_position.sh
-      	./log_data.sh $time_simulation motion${nr}_robot &./motion${nr}.sh
+      	./log_data.sh $time_simulation motion${nr}_robot & motions./motion${nr}.sh
 	sleep 5
 	rosnode kill $( rosnode list | grep '/record_')
         ;;
@@ -63,7 +63,7 @@ echo "Press any key to start"
 read step1
 echo "Starting motion"
 	./home_position.sh
-       ./motion${nr}.sh
+      ./motion${nr}.sh
         ;;
 esac
 
