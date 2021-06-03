@@ -258,6 +258,7 @@ namespace cartesian_impedance_controller
       ROS_INFO_STREAM_THROTTLE(0.1, "\ntau_d:\n"
                                         << tau_d);
     }
+    
     try
     {
       // Update transformation of Cartesian Wrench
@@ -267,6 +268,7 @@ namespace cartesian_impedance_controller
     {
       ROS_ERROR_THROTTLE(1, "%s", ex.what());
     }
+    
     //filtering
     double update_frequency = 1 / period.toSec();
     base_tools.set_filtering(update_frequency, 0.005, 1., 0.01);
@@ -364,22 +366,6 @@ namespace cartesian_impedance_controller
     base_tools.set_desired_pose(position_d_, orientation_d_);
   }
 
-  // Transform a Cartesian wrench from "from_frame" to "to_frame". E.g. from_frame= "bh_link_ee" , to_frame = "world"
-  void CartesianImpedanceController::transform_wrench(Eigen::Matrix<double, 6, 1> &cartesian_wrench, std::string from_frame, std::string to_frame)
-  {
-    try
-    {
-      tf::Vector3 v_f(cartesian_wrench(0), cartesian_wrench(1), cartesian_wrench(2));
-      tf::Vector3 v_t(cartesian_wrench(3), cartesian_wrench(4), cartesian_wrench(5));
-      tf::Vector3 v_f_rot = tf::quatRotate(transform_.getRotation(), v_f);
-      tf::Vector3 v_t_rot = tf::quatRotate(transform_.getRotation(), v_t);
-      cartesian_wrench << v_f_rot[0], v_f_rot[1], v_f_rot[2], v_t_rot[0], v_t_rot[1], v_t_rot[2];
-    }
-    catch (tf::TransformException ex)
-    {
-      ROS_ERROR_THROTTLE(1, "%s", ex.what());
-    }
-  }
 
   //------------------------------------------------------------------------------------------------------
   void CartesianImpedanceController::trajectoryStart(const trajectory_msgs::JointTrajectory &trajectory)
@@ -452,6 +438,25 @@ namespace cartesian_impedance_controller
         msg->wrench.torque.x, msg->wrench.torque.y, msg->wrench.torque.z;
     transform_wrench(F, from_frame_wrench_, to_frame_wrench_);
     base_tools.apply_wrench(F);
+  }
+
+  // Transform a Cartesian wrench from "from_frame" to "to_frame". E.g. from_frame= "bh_link_ee" , to_frame = "world"
+  void CartesianImpedanceController::transform_wrench(Eigen::Matrix<double, 6, 1> &cartesian_wrench, std::string from_frame, std::string to_frame)
+  {
+
+    try
+    {
+      //tf_listener_.lookupTransform(from_frame_wrench_, to_frame_wrench_, ros::Time(0), transform_);
+      tf::Vector3 v_f(cartesian_wrench(0), cartesian_wrench(1), cartesian_wrench(2));
+      tf::Vector3 v_t(cartesian_wrench(3), cartesian_wrench(4), cartesian_wrench(5));
+      tf::Vector3 v_f_rot = tf::quatRotate(transform_.getRotation(), v_f);
+      tf::Vector3 v_t_rot = tf::quatRotate(transform_.getRotation(), v_t);
+      cartesian_wrench << v_f_rot[0], v_f_rot[1], v_f_rot[2], v_t_rot[0], v_t_rot[1], v_t_rot[2];
+    }
+    catch (tf::TransformException ex)
+    {
+      ROS_ERROR_THROTTLE(1, "%s", ex.what());
+    }
   }
 
   void CartesianImpedanceController::goalCallback()
