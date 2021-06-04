@@ -10,6 +10,7 @@
 #include <iiwa_tools/iiwa_tools.h>
 #include <dynamic_reconfigure/server.h>
 #include "pseudo_inversion.h"
+
 #include <Eigen/Dense>
 #include <cartesian_impedance_controller/impedance_configConfig.h>
 #include <dynamic_reconfigure/server.h>
@@ -56,15 +57,9 @@ namespace cartesian_impedance_controller
     // Set desired poses through this topic
     sub_desired_pose = node_handle.subscribe("target_pose", 1, &CartesianImpedanceController::ee_pose_Callback, this);
 
-    //set cartesian stiffness values through this topic
-    sub_CartesianImpedanceParams = node_handle.subscribe("cartesian_impedance_parameters", 1, &CartesianImpedanceController::cartesian_impedance_Callback, this);
-
     //set cartesian damping values through this topic
     sub_DampingParams = node_handle.subscribe("damping_parameters", 1, &CartesianImpedanceController::damping_parameters_Callback, this);
 
-    //set nullspace configuration through this topic
-    sub_NullspaceConfig = node_handle.subscribe("nullspace_configuration", 1 , &CartesianImpedanceController::nullspace_config_Callback, this);
-    
     //set cartesian wrench through this topic
     sub_CartesianWrench = node_handle.subscribe("set_cartesian_wrench", 1, &CartesianImpedanceController::cartesian_wrench_Callback, this);
 
@@ -416,10 +411,11 @@ namespace cartesian_impedance_controller
     double trans_stf_min = 0;
     double rot_stf_max = 500;
     double rot_stf_min = 0;
-    double null_max=50;
-    double null_min=0;
     base_tools.set_stiffness(saturate(msg.cartesian_stiffness.x, trans_stf_min, trans_stf_max), saturate(msg.cartesian_stiffness.y, trans_stf_min, trans_stf_max), saturate(msg.cartesian_stiffness.z, trans_stf_min, trans_stf_max),
-                             saturate(msg.cartesian_stiffness.a, trans_stf_min, trans_stf_max), saturate(msg.cartesian_stiffness.b, trans_stf_min, trans_stf_max), saturate(msg.cartesian_stiffness.c, trans_stf_min, trans_stf_max), saturate(msg.nullspace_stiffness,null_min,null_max));
+                              saturate(msg.cartesian_stiffness.a, trans_stf_min, trans_stf_max), saturate(msg.cartesian_stiffness.b, trans_stf_min, trans_stf_max), saturate(msg.cartesian_stiffness.c, trans_stf_min, trans_stf_max), msg.nullspace_stiffness);
+    Eigen::Matrix<double, 7, 1> q_d_nullspace_target_;
+    q_d_nullspace_target_ << msg.q_d_nullspace.q1, msg.q_d_nullspace.q2, msg.q_d_nullspace.q3, msg.q_d_nullspace.q4, msg.q_d_nullspace.q5, msg.q_d_nullspace.q6, msg.q_d_nullspace.q7;
+    base_tools.set_nullspace_config(q_d_nullspace_target_);
   }
 
   void CartesianImpedanceController::damping_parameters_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg)
@@ -429,14 +425,6 @@ namespace cartesian_impedance_controller
     base_tools.set_damping(saturate(msg.cartesian_damping.x, dmp_min, dmp_max), saturate(msg.cartesian_damping.y, dmp_min, dmp_max),
                            saturate(msg.cartesian_damping.z, dmp_min, dmp_max), saturate(msg.cartesian_damping.a, dmp_min, dmp_max),
                            saturate(msg.cartesian_damping.b, dmp_min, dmp_max), saturate(msg.cartesian_damping.c, dmp_min, dmp_max), 1);
-  }
-
-  void CartesianImpedanceController::nullspace_config_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg)
-  {
-    Eigen::Matrix<double, 7, 1> q_d_nullspace_target_;
-    q_d_nullspace_target_ << msg.q_d_nullspace.q1, msg.q_d_nullspace.q2,msg.q_d_nullspace.q3,
-    msg.q_d_nullspace.q4,msg.q_d_nullspace.q5,msg.q_d_nullspace.q6,msg.q_d_nullspace.q7;
-    base_tools.set_nullspace_config(q_d_nullspace_target_);
   }
 
   //Adds a wrench at the end-effector, using the world frame
