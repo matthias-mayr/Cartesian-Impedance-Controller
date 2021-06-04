@@ -10,7 +10,6 @@
 #include <iiwa_tools/iiwa_tools.h>
 #include <dynamic_reconfigure/server.h>
 #include "pseudo_inversion.h"
-
 #include <Eigen/Dense>
 #include <cartesian_impedance_controller/impedance_configConfig.h>
 #include <dynamic_reconfigure/server.h>
