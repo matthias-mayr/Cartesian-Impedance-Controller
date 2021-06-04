@@ -57,6 +57,9 @@ namespace cartesian_impedance_controller
     // Set desired poses through this topic
     sub_desired_pose = node_handle.subscribe("target_pose", 1, &CartesianImpedanceController::ee_pose_Callback, this);
 
+    //set cartesian stiffness values through this topic
+    sub_CartesianImpedanceParams = node_handle.subscribe("cartesian_impedance_parameters", 1, &CartesianImpedanceController::cartesian_impedance_Callback, this);
+
     //set cartesian damping values through this topic
     sub_DampingParams = node_handle.subscribe("damping_parameters", 1, &CartesianImpedanceController::damping_parameters_Callback, this);
 
@@ -412,7 +415,7 @@ namespace cartesian_impedance_controller
     double rot_stf_max = 500;
     double rot_stf_min = 0;
     base_tools.set_stiffness(saturate(msg.cartesian_stiffness.x, trans_stf_min, trans_stf_max), saturate(msg.cartesian_stiffness.y, trans_stf_min, trans_stf_max), saturate(msg.cartesian_stiffness.z, trans_stf_min, trans_stf_max),
-                              saturate(msg.cartesian_stiffness.a, trans_stf_min, trans_stf_max), saturate(msg.cartesian_stiffness.b, trans_stf_min, trans_stf_max), saturate(msg.cartesian_stiffness.c, trans_stf_min, trans_stf_max), msg.nullspace_stiffness);
+                            saturate(msg.cartesian_stiffness.a, trans_stf_min, trans_stf_max), saturate(msg.cartesian_stiffness.b, trans_stf_min, trans_stf_max), saturate(msg.cartesian_stiffness.c, trans_stf_min, trans_stf_max), msg.nullspace_stiffness);
     Eigen::Matrix<double, 7, 1> q_d_nullspace_target_;
     q_d_nullspace_target_ << msg.q_d_nullspace.q1, msg.q_d_nullspace.q2, msg.q_d_nullspace.q3, msg.q_d_nullspace.q4, msg.q_d_nullspace.q5, msg.q_d_nullspace.q6, msg.q_d_nullspace.q7;
     base_tools.set_nullspace_config(q_d_nullspace_target_);

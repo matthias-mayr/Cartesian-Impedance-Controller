@@ -13,4 +13,3 @@ rosbag record -o ~/catkin_overlay_ws/bags/$2.bag --duration=$1 /bh/CartesianImpe
 
 
 
-
