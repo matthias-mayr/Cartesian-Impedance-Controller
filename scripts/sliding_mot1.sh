@@ -30,3 +30,4 @@ sleep 2
 )
 rosnode kill $( rosnode list | grep '/record_')
 
+
