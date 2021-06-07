@@ -6,7 +6,7 @@ import sys
 import time
 
 
-timeout = time.time() + 60   # 60 seconds from now
+timeout = time.time() + 80   # 60 seconds from now
 while time.time() < timeout:
     cartesian_velocity=get_data.data_array('rostopic echo -n 1 /bh/CartesianImpedance_trajectory_controller/useful_data_to_analyze/cartesian_velocity')
     ready=True
