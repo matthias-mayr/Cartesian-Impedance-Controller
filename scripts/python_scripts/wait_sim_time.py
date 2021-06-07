@@ -7,7 +7,7 @@ import sys,getopt #accept arguments'
 import get_data
 
 if len(sys.argv) != 2:
-    exit("Invalid number of inputs")
+    exit("[wait_sim_time]:Invalid number of inputs")
 
 cmd_="rostopic echo -n 1 /clock"
 times=get_data.data_array(cmd_)
