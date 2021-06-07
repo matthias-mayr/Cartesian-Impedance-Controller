@@ -33,4 +33,3 @@ Sliding motion on the  black board
 ## sliding_mot2
 Sliding motion on the  black board
 
-Pose change + wrench.
