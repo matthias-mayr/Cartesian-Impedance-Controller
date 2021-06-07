@@ -1,21 +1,5 @@
 #!/bin/bash
 
-
-#DONE-------------------
-
-#Check if end effector is reached within allocated time
-#----------------------------------------------------------
-#time_start=$SECONDS
-#while : ; do 
-#out=$(./check_pose.py)
-#if (( $out == 1 || $(($SECONDS - $time_start)) > 4)); then
-#break 2
-#else
-#echo $((10-$SECONDS+$time_start))
-#fi
-#done #end while
-#------------------------------------------------------------
-
 #damping
 d=0.7
 ./change_damping.sh $d $d $d $d $d $d
