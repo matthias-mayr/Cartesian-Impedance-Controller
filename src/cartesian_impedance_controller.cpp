@@ -176,10 +176,6 @@ namespace cartesian_impedance_controller
 
   {
 
-    //Check time of execution
-      auto  t0 =1000 * std::clock()/CLOCKS_PER_SEC;
-      
-
     if (traj_running_)
     {
       trajectoryUpdate();
@@ -276,12 +272,12 @@ namespace cartesian_impedance_controller
     //filtering
     double update_frequency = 1 / period.toSec();
     base_tools.set_filtering(update_frequency, 0.005, 1., 0.01);
-   auto  t1 =1000 * std::clock()/CLOCKS_PER_SEC;
     publish();
     //publish useful data to a topic
     publish_data(q, dq, position, orientation, position_d_, orientation_d_, tau_d, cartesian_stiffness_, nullspace_stiffness_, error, base_tools.get_applied_wrench(),cartesian_velocity);
-    auto  t2 =1000 * std::clock()/CLOCKS_PER_SEC;
-    ROS_INFO_STREAM_THROTTLE(0.5, "\ntime before: (ms)"<<t1-t0<<"\ntime after: (ms) "<<t2-t0);
+
+
+
   }
   //Publish data to export and analyze
   void CartesianImpedanceController::publish_data(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d, Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_, Eigen::Matrix<double, 6, 1> error, Eigen::Matrix<double, 6, 1> F, double cartesian_velocity)
