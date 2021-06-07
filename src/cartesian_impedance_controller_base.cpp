@@ -33,8 +33,10 @@ bool CartesianImpedanceController_base::initialize()
         q_d_nullspace_target_.setZero();
 
         // Default damping factors
+         damping_factors_ << 1., 1., 1., 1., 1., 1;
+         set_damping(1.,1.,1.,1.,1.,1.,1.);
         cartesian_damping_ << cartesian_damping_target_;
-        damping_factors_ << 1., 1., 1., 1., 1., 1;
+       
 
         // Default filtering parameters 
         update_frequency=100;
@@ -51,6 +53,7 @@ bool CartesianImpedanceController_base::initialize()
     }
     return false;
 }
+
 // Set the desired diagonal stiffnessess + nullspace stiffness
 void CartesianImpedanceController_base::set_stiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z, double n)
 {
