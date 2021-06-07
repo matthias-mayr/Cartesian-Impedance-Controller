@@ -48,6 +48,7 @@ bool CartesianImpedanceController_base::initialize()
         tau_ext.resize(7);
         tau_ext.setZero();
         cartesian_wrench.setZero();
+        cartesian_wrench_target_.setZero();
 
         return true;
     }
