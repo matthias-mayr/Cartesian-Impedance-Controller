@@ -1,75 +1,42 @@
 #!/bin/bash
 
-#!/bin/bash
+#testing singularity
 
 
-#DONE-------------------
+x=-1
+y=-0.2
+z=0.9
 
-#Check if end effector is reached within allocated time
-#----------------------------------------------------------
-#time_start=$SECONDS
-#while : ; do 
-#out=$(./check_pose.py)
-#if (( $out == 1 || $(($SECONDS - $time_start)) > 4)); then
-#break 2
-#else
-#echo $((10-$SECONDS+$time_start))
-#fi
-#done #end while
-#------------------------------------------------------------
+wait_time=5
 
-#damping
-d=0.7
-./change_damping.sh $d $d $d $d $d $d
+./change_stiffness.sh 80 80 80 30 30 30 0
+python python_scripts/wait_for_stiffness.py 80 80 80 30 30 30 0
 
+./change_goal.sh $x $y $z 1 0 0 0
+python python_scripts/wait_for_not_moving.py
+#Add some delay
+#python python_scripts/wait_sim_time.py $wait_time
+sleep 5
+./home_position.sh
 
-#increase cartesian stiffness in steps
+./change_stiffness.sh 200 200 200 50 50 50 0
+python python_scripts/wait_for_stiffness.py 200 200 200 100 100 100 0
 
-#step 1
-sleep_time_goal=20
+./change_goal.sh $x $y $z 1 0 0 0
+python python_scripts/wait_for_not_moving.py
+#Add some delay
+#python python_scripts/wait_sim_time.py $wait_time
+sleep 5
 
-
-python python_scripts/wait_sim_time.py 2
-./change_stiffness.sh 250 250 250 100 100 100 0
-python python_scripts/wait_for_stiffness.py 250 250 250 100 100 100 0
-#go forward
-./change_goal.sh -0.5 0.0 1 1.0 0.0 0.0 0.0
-python python_scripts/wait_sim_time.py $sleep_time_goal
-#go back
-./change_goal.sh -0.5 -0.5 1 1.0 0.0 0.0 0.0 & ./change_stiffness.sh 250 250 250 100 100 100 5
-sleep 1
-./change_stiffness.sh 250 250 250 100 100 100 0
-python python_scripts/wait_sim_time.py $sleep_time_goal
+./home_position.sh
 
 
 
-#step 3
+./change_stiffness.sh 500 500 500 100 100 100 0
+python python_scripts/wait_for_stiffness.py 500 500 500 100 100 100 0
 
-./change_stiffness.sh 600 600 600 100 100 100 0
-python python_scripts/wait_for_stiffness.py 600 600 600 100 100 100 0
-#go forward
-./change_goal.sh -0.5 0.0 1 1.0 0.0 0.0 0.0
-python python_scripts/wait_sim_time.py $sleep_time_goal
-#go back
-./change_goal.sh -0.5 -0.5 1 1.0 0.0 0.0 0.0 &./change_stiffness.sh 600 600 600 100 100 100 5
-sleep 1
-./change_stiffness.sh 600 600 600 100 100 100 0
-python python_scripts/wait_sim_time.py $sleep_time_goal
+./change_goal.sh $x $y $z 1 0 0 0
+python python_scripts/wait_for_not_moving.py
 
-
-./change_stiffness.sh 1000 1000 1000 100 100 100 0
-python python_scripts/wait_for_stiffness.py 1000 1000 1000 100 100 100 0
-#go forward
-./change_goal.sh -0.5 0.0 1 1.0 0.0 0.0 0.0 
-python python_scripts/wait_sim_time.py $sleep_time_goal
-#go back
-./change_goal.sh -0.5 -0.5 1 1.0 0.0 0.0 0.0 &./change_stiffness.sh 1000 1000 1000 100 100 100 5
-sleep 1
-./change_stiffness.sh 1000 1000 1000 100 100 100 0
-python python_scripts/wait_sim_time.py $sleep_time_goal
-
-
-
-
-
-
+#python python_scripts/wait_sim_time.py $wait_time
+sleep 5
