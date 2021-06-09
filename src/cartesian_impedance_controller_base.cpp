@@ -33,9 +33,9 @@ bool CartesianImpedanceController_base::initialize()
         q_d_nullspace_target_.setZero();
 
         // Default damping factors
-         damping_factors_ << 1., 1., 1., 1., 1., 1;
-         set_damping(1.,1.,1.,1.,1.,1.,1.);
+        set_damping(1.,1.,1.,1.,1.,1.,1.);
         cartesian_damping_ << cartesian_damping_target_;
+        nullspace_damping_=nullspace_damping_target_;
 
         // Applied "External" forces
         tau_ext.resize(7);
@@ -62,17 +62,18 @@ void CartesianImpedanceController_base::set_stiffness(double t_x, double t_y, do
         cartesian_damping_target_(i, i) = 2 * damping_factors_(i) * sqrt(stiffness_vector_(i));
     }
     nullspace_stiffness_target_ = n;
+    nullspace_damping_target_=damping_factors_(6)*2*sqrt(nullspace_stiffness_target_);
 }
 
 // Set the desired damping factors + (TODO) nullspace damping
 void CartesianImpedanceController_base::set_damping(double d_x, double d_y, double d_z, double d_a, double d_b, double d_c, double d_n)
 {
-    this->damping_factors_ << d_x, d_y, d_z, d_a, d_b, d_c;
-
+    this->damping_factors_ << d_x, d_y, d_z, d_a, d_b, d_c,d_n;
     for (int i = 0; i < 6; i++)
     {
         cartesian_damping_target_(i, i) = 2 * damping_factors_(i) * sqrt(cartesian_stiffness_target_(i, i));
     }
+    nullspace_damping_target_=d_n*2*sqrt(nullspace_stiffness_target_);
 }
 
 // Set the desired enf-effector pose
@@ -146,7 +147,7 @@ Eigen::VectorXd CartesianImpedanceController_base::get_commanded_torques(Eigen::
     tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) -
                       jacobian.transpose() * jacobian_transpose_pinv) *
                          (nullspace_stiffness_ * (q_d_nullspace_ - q) -
-                          (2.0 * sqrt(nullspace_stiffness_)) * dq);
+                          nullspace_damping_ * dq);
     // Desired torque. Used to contain coriolis as well
     tau_d << tau_task + tau_nullspace + tau_ext;
     return tau_d;
@@ -178,6 +179,7 @@ void CartesianImpedanceController_base::get_robot_state(Eigen::Vector3d &positio
     cartesian_damping_ << this->cartesian_damping_;
 }
 
+// Get the currently applied commands
 Eigen::VectorXd CartesianImpedanceController_base::get_commands()
 {
     tau_d.resize(7);

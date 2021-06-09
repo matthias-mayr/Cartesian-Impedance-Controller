@@ -429,7 +429,7 @@ namespace cartesian_impedance_controller
     double dmp_min = 0.1;
     base_tools.set_damping(saturate(msg.cartesian_damping.x, dmp_min, dmp_max), saturate(msg.cartesian_damping.y, dmp_min, dmp_max),
                            saturate(msg.cartesian_damping.z, dmp_min, dmp_max), saturate(msg.cartesian_damping.a, dmp_min, dmp_max),
-                           saturate(msg.cartesian_damping.b, dmp_min, dmp_max), saturate(msg.cartesian_damping.c, dmp_min, dmp_max), 1);
+                           saturate(msg.cartesian_damping.b, dmp_min, dmp_max), saturate(msg.cartesian_damping.c, dmp_min, dmp_max), msg.nullspace_damping);
   }
 
   //Adds a wrench at the end-effector, using the world frame

@@ -34,7 +34,8 @@ public:
 
     // Get the state of the robot. Updates when "get_commanded_torques" is called
     void get_robot_state(Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_, Eigen::Matrix<double, 6, 6> &cartesian_damping_);
-
+    
+    // Get the currently applied commands
     Eigen::VectorXd get_commands();
 
     // Apply a virtual Cartesian wrench
@@ -77,9 +78,12 @@ private:
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_;
     Eigen::Matrix<double, 6, 6> cartesian_damping_;
     Eigen::Matrix<double, 6, 6> cartesian_damping_target_;
-    Eigen::Matrix<double, 6, 1> damping_factors_;
+    Eigen::Matrix<double, 7, 1> damping_factors_;
     Eigen::Matrix<double, 7, 1> q_d_nullspace_;
-    Eigen::Matrix<double, 7, 1> q_d_nullspace_target_;
+    Eigen::Matrix<double, 7, 1> q_d_nullspace_target_; 
+    double nullspace_damping_;
+    double nullspace_damping_target_;
+ 
     Eigen::VectorXd tau_d;
 
     // Rate limiter
@@ -121,6 +125,8 @@ private:
         nullspace_stiffness_ =
             filter_params_new_ * nullspace_stiffness_target_ + (1.0 - filter_params_new_) * nullspace_stiffness_;
         q_d_nullspace_ = filter_params_new_ * q_d_nullspace_target_ + (1.0 - filter_params_new_) * q_d_nullspace_;
+        nullspace_damping_=
+        filter_params_new_*nullspace_damping_target_+(1.0-filter_params_new_)*nullspace_damping_;
     }
 
     // Adds some filtering effect to the end-effector pose
