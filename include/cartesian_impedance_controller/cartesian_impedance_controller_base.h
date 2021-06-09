@@ -35,6 +35,8 @@ public:
     // Get the state of the robot. Updates when "get_commanded_torques" is called
     void get_robot_state(Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_, Eigen::Matrix<double, 6, 6> &cartesian_damping_);
 
+    Eigen::VectorXd get_commands();
+
     // Apply a virtual Cartesian wrench
     void apply_wrench(Eigen::Matrix<double, 6, 1> cartesian_wrench);
 

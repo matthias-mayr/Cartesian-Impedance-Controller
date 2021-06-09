@@ -143,7 +143,8 @@ Eigen::VectorXd CartesianImpedanceController_base::get_commanded_torques(Eigen::
     Eigen::MatrixXd jacobian_transpose_pinv;
     pseudoInverse(jacobian.transpose(), jacobian_transpose_pinv);
 
-    Eigen::VectorXd tau_d(7), tau_task(7), tau_nullspace(7);
+    tau_d.resize(7);
+    Eigen::VectorXd  tau_task(7), tau_nullspace(7);
 
     // Cartesian PD control with damping ratio = 1
     tau_task << jacobian.transpose() *
@@ -184,6 +185,11 @@ void CartesianImpedanceController_base::get_robot_state(Eigen::Vector3d &positio
     cartesian_damping_ << this->cartesian_damping_;
 }
 
+Eigen::VectorXd CartesianImpedanceController_base::get_commands()
+{
+    tau_d.resize(7);
+    return tau_d;
+}
 
 // Apply a virtual Cartesian wrench
 void CartesianImpedanceController_base::apply_wrench(Eigen::Matrix<double, 6, 1> cartesian_wrench_target_)
