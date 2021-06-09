@@ -80,15 +80,16 @@ private:
     Eigen::Matrix<double, 6, 1> damping_factors_;
     Eigen::Matrix<double, 7, 1> q_d_nullspace_;
     Eigen::Matrix<double, 7, 1> q_d_nullspace_target_;
+    Eigen::VectorXd tau_d;
 
     // Rate limiter
     Eigen::Matrix<double, 7, 1> tau_J_d_;
 
     // Filtering parameters   
-    double update_frequency;
-    double filter_params_stiffness;
-    double filter_params_pose;
-    double filter_params_wrench;
+    double update_frequency{100};
+    double filter_params_stiffness{1};
+    double filter_params_pose{1};
+    double filter_params_wrench{1};
 
     //"External" applied forces
     Eigen::VectorXd tau_ext;

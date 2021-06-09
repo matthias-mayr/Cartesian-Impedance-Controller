@@ -36,13 +36,6 @@ bool CartesianImpedanceController_base::initialize()
          damping_factors_ << 1., 1., 1., 1., 1., 1;
          set_damping(1.,1.,1.,1.,1.,1.,1.);
         cartesian_damping_ << cartesian_damping_target_;
-       
-
-        // Default filtering parameters 
-        update_frequency=100;
-        filter_params_pose=1;
-        filter_params_stiffness=1;
-        filter_params_wrench=1;
 
         // Applied "External" forces
         tau_ext.resize(7);
