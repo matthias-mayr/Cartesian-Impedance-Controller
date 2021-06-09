@@ -21,7 +21,7 @@ z=0.804
 
 echo "K_t= ($a1 $a2 $a3), K_r= ($a4 $a5 $a6), K_n= $a7 "
 
-rostopic pub --once /bh/CartesianImpedance_trajectory_controller/cartesian_impedance_parameters cartesian_impedance_controller/CartesianImpedanceControlMode "cartesian_stiffness: {x: $a1, y: $a2, z: $a3, a: $a4, b: $a5, c: $a6}
+rostopic pub --once /bh/CartesianImpedance_trajectory_controller/set_stiffness cartesian_impedance_controller/CartesianImpedanceControlMode "cartesian_stiffness: {x: $a1, y: $a2, z: $a3, a: $a4, b: $a5, c: $a6}
 nullspace_stiffness: $a7
 q_d_nullspace: {q1: 1.598 , q2: 0.329, q3: -0.15, q4: -1.004 , q5: 0.582, q6: 0.887, q7: 0.449}" > /dev/null 2>&1 &./change_goal.sh $x $y $z 1 0 0 0
 
@@ -42,7 +42,7 @@ b6=100
 b7=0
 echo "K_t= ($b1 $b2 $b3), K_r= ($b4 $b5 $b6), K_n= $b7 "
 
-rostopic pub --once /bh/CartesianImpedance_trajectory_controller/cartesian_impedance_parameters cartesian_impedance_controller/CartesianImpedanceControlMode "cartesian_stiffness: {x: $b1, y: $b2, z: $b3, a: $b4, b: $b5, c: $b6}
+rostopic pub --once /bh/CartesianImpedance_trajectory_controller/set_stiffness cartesian_impedance_controller/CartesianImpedanceControlMode "cartesian_stiffness: {x: $b1, y: $b2, z: $b3, a: $b4, b: $b5, c: $b6}
 nullspace_stiffness: $b7
 q_d_nullspace: {q1: 1.598 , q2: 0.329, q3: -0.15, q4: -1.004 , q5: 0.582, q6: 0.887, q7: 0.449}" > /dev/null 2>&1
 
