@@ -15,17 +15,17 @@ Singularity experiment: Free interaction with low stiffness
 ## motion5
 Longer motion. goes back and forth 3 times with different stiffnesses (Simulation)
 
-
 ## motion6
 Longer motion. goes back and forth 3 times with different stiffnesses (Robot)
 
 ## motion7
-Wrenches for different stiffnessess. 
+peg-in-hole experiment
 
 ## motion8
 
-## motion9
 
+## motion9
+Send poses with low stiffness
 
 ## sliding_mot1
 Sliding motion on the  black board
