@@ -38,6 +38,9 @@ public:
     // Get the currently applied commands
     Eigen::VectorXd get_commands();
 
+    // Get the jacobian
+    void get_jacobian(Eigen::Matrix<double, 6, 7> &jacobian);
+
     // Apply a virtual Cartesian wrench
     void apply_wrench(Eigen::Matrix<double, 6, 1> cartesian_wrench);
 

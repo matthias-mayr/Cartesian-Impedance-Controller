@@ -186,6 +186,12 @@ Eigen::VectorXd CartesianImpedanceController_base::get_commands()
     return tau_d;
 }
 
+// Get the jacobian
+void CartesianImpedanceController_base::get_jacobian(Eigen::Matrix<double, 6, 7> &jacobian)
+{
+    jacobian<<this->jacobian;
+}
+
 // Apply a virtual Cartesian wrench
 void CartesianImpedanceController_base::apply_wrench(Eigen::Matrix<double, 6, 1> cartesian_wrench_target_)
 {
