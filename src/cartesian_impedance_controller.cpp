@@ -278,6 +278,9 @@ namespace cartesian_impedance_controller
     publish();
 
     auto  t1 =1000. * std::clock()/CLOCKS_PER_SEC;
+    //Temporarily use rotational error for storage of cpu time
+    auto cpu_time_=t1-t0;
+    error.tail(3) << 0., 0. , cpu_time_;
 
     //publish useful data to a topic
     publish_data(q, dq, position, orientation, position_d_, orientation_d_, tau_d, cartesian_stiffness_, nullspace_stiffness_, error, base_tools.get_applied_wrench(),cartesian_velocity);
