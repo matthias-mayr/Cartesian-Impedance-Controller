@@ -472,7 +472,7 @@ namespace cartesian_impedance_controller
   {
     if (config.apply_stiffness)
     {
-      double trans_stf_max = 1200;
+      double trans_stf_max = 2000;
       double trans_stf_min = 0;
       double rot_stf_max = 300;
       double rot_stf_min = 0;
