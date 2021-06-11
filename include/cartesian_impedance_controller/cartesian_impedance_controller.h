@@ -22,13 +22,9 @@
 #include <std_msgs/Float64MultiArray.h>
 #include <trajectory_msgs/JointTrajectory.h>
 #include <realtime_tools/realtime_publisher.h>
-
 #include <tf/transform_listener.h>
-
 #include <Eigen/Dense>
-
 #include "cartesian_impedance_controller/impedance_configConfig.h"
-
 #include "cartesian_impedance_controller/CartesianImpedanceControlMode.h"
 #include "cartesian_impedance_controller/RobotImpedanceState.h"
 namespace cartesian_impedance_controller

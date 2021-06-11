@@ -1,18 +1,4 @@
 #include "cartesian_impedance_controller/cartesian_impedance_controller.h"
-#include "cartesian_impedance_controller/cartesian_impedance_controller_base.h"
-#include <cmath>
-#include <memory>
-#include <controller_interface/controller_base.h>
-#include <ros/ros.h>
-#include <eigen_conversions/eigen_msg.h>
-#include <tf_conversions/tf_eigen.h>
-#include <iiwa_tools/iiwa_tools.h>
-#include <dynamic_reconfigure/server.h>
-#include "pseudo_inversion.h"
-
-#include <Eigen/Dense>
-#include <cartesian_impedance_controller/impedance_configConfig.h>
-#include <dynamic_reconfigure/server.h>
 
 namespace cartesian_impedance_controller
 {
