@@ -175,6 +175,9 @@ namespace cartesian_impedance_controller
                                             const ros::Duration &period /*period*/)
 
   {
+      //Check time of execution
+      auto  t0 =1000. * std::clock()/CLOCKS_PER_SEC;
+
 
     if (traj_running_)
     {
@@ -273,8 +276,14 @@ namespace cartesian_impedance_controller
     double update_frequency = 1 / period.toSec();
     base_tools.set_filtering(update_frequency, 0.005, 1., 0.01);
     publish();
+
+    auto  t1 =1000. * std::clock()/CLOCKS_PER_SEC;
+
     //publish useful data to a topic
     publish_data(q, dq, position, orientation, position_d_, orientation_d_, tau_d, cartesian_stiffness_, nullspace_stiffness_, error, base_tools.get_applied_wrench(),cartesian_velocity);
+    
+    auto  t2 =1000. * std::clock()/CLOCKS_PER_SEC;
+    ROS_INFO_STREAM_THROTTLE(0.5, "\ntime before: (ms)"<<t1-t0<<"\ntime after: (ms) "<<t2-t0);
 
 
 
