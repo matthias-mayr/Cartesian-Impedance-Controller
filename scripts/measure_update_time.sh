@@ -4,9 +4,9 @@
 
 #Input variables: duration, bag name.
 
-rosbag record -o ~/catkin_overlay_ws/bags/measure_cpu_time.bag --duration=60 /bh/CartesianImpedance_trajectory_controller/useful_data_to_analyze
+rosbag record -o ~/catkin_overlay_ws/bags/measure_cpu_time.bag --duration=60 /bh/CartesianImpedance_trajectory_controller/useful_data_to_analyze &(
 
-
+sleep 5
 
 ./change_stiffness.sh 600 600 600 100 100 1 0
 
@@ -24,4 +24,4 @@ sleep 5
 
 ./apply_wrench.sh 0 0 0 0 0 0 & rosnode kill $( rosnode list | grep '/record_')
 
-
+)
