@@ -412,7 +412,7 @@ namespace cartesian_impedance_controller
   }
   void CartesianImpedanceController::cartesian_impedance_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg)
   {
-    double trans_stf_max = 1200;
+    double trans_stf_max = 2000;
     double trans_stf_min = 0;
     double rot_stf_max = 500;
     double rot_stf_min = 0;
