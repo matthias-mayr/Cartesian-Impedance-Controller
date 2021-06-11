@@ -113,12 +113,17 @@ namespace cartesian_impedance_controller
 
     //DYNAMIC RECONFIGURE
     //-------------------------------------------------------------------------------------------------------------------------------------
-    //change stiffness
+    // Change stiffness
     dynamic_reconfigure_compliance_param_node_ = ros::NodeHandle("cartesian_impedance_controller_reconfigure");
     dynamic_server_compliance_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>>(dynamic_reconfigure_compliance_param_node_);
     dynamic_server_compliance_param_->setCallback(
         boost::bind(&CartesianImpedanceController::dynamicConfigCallback, this, _1, _2));
 
+    // Apply Cartesian wrench
+    dynamic_reconfigure_wrench_param_node_ = ros::NodeHandle("cartesian_wrench_reconfigure");
+    dynamic_server_wrench_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::wrench_configConfig>>(dynamic_reconfigure_wrench_param_node_);
+    dynamic_server_wrench_param_->setCallback(
+        boost::bind(&CartesianImpedanceController::dynamicWrenchCallback, this, _1, _2));
     //-------------------------------------------------------------------------------------------------------------------------------------
 
     // Initialize variables
@@ -474,6 +479,24 @@ namespace cartesian_impedance_controller
       base_tools.set_stiffness(saturate(config.translation_x, trans_stf_min, trans_stf_max), saturate(config.translation_y, trans_stf_min, trans_stf_max), saturate(config.translation_z, trans_stf_min, trans_stf_max),
                                saturate(config.rotation_x, trans_stf_min, trans_stf_max), saturate(config.rotation_y, trans_stf_min, trans_stf_max), saturate(config.rotation_z, trans_stf_min, trans_stf_max), config.nullspace_stiffness);
     }
+  }
+
+  void CartesianImpedanceController::dynamicWrenchCallback(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level)
+  {
+    if(config.apply_wrench)
+    {
+    Eigen::Vector6d F;
+    F << config.f_x, config.f_y, config.f_z, config.tau_x, config.tau_y, config.tau_z;
+    transform_wrench(F, from_frame_wrench_, to_frame_wrench_);
+    base_tools.apply_wrench(F);
+    }
+    else{
+    Eigen::Vector6d F;
+    F << 0., 0., 0., 0., 0., 0.;
+    transform_wrench(F, from_frame_wrench_, to_frame_wrench_);
+    base_tools.apply_wrench(F);
+    }
+   
   }
 
   //--------------------------------------------------------------------------------------------------------------------------------------

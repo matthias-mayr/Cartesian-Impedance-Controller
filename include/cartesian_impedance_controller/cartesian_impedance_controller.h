@@ -25,7 +25,8 @@
 #include <trajectory_msgs/JointTrajectory.h>
 #include <realtime_tools/realtime_publisher.h>
 #include <Eigen/Dense>
-#include "cartesian_impedance_controller/impedance_configConfig.h"
+#include <cartesian_impedance_controller/impedance_configConfig.h>
+#include <cartesian_impedance_controller/wrench_configConfig.h>
 #include "cartesian_impedance_controller/CartesianImpedanceControlMode.h"
 #include "cartesian_impedance_controller/RobotImpedanceState.h"
 namespace cartesian_impedance_controller
@@ -99,6 +100,12 @@ namespace cartesian_impedance_controller
     std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>>
         dynamic_server_compliance_param_;
     void dynamicConfigCallback(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level);
+
+    ros::NodeHandle dynamic_reconfigure_wrench_param_node_;
+    std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::wrench_configConfig>>
+        dynamic_server_wrench_param_;
+    void dynamicWrenchCallback(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level);
+
 
     // Trajectory handling
     std::unique_ptr<actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>> as_;
