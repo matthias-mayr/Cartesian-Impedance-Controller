@@ -114,10 +114,17 @@ namespace cartesian_impedance_controller
     //DYNAMIC RECONFIGURE
     //-------------------------------------------------------------------------------------------------------------------------------------
     // Change stiffness
-    dynamic_reconfigure_compliance_param_node_ = ros::NodeHandle("cartesian_impedance_controller_reconfigure");
+    dynamic_reconfigure_compliance_param_node_ = ros::NodeHandle("stiffness_reconfigure");
     dynamic_server_compliance_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>>(dynamic_reconfigure_compliance_param_node_);
     dynamic_server_compliance_param_->setCallback(
         boost::bind(&CartesianImpedanceController::dynamicConfigCallback, this, _1, _2));
+
+    //Change damping factors
+    dynamic_reconfigure_damping_param_node_ = ros::NodeHandle("damping_factors_reconfigure");
+    dynamic_server_damping_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::damping_configConfig>>(dynamic_reconfigure_damping_param_node_);
+    dynamic_server_damping_param_->setCallback(
+        boost::bind(&CartesianImpedanceController::dynamicDampingCallback, this, _1, _2));
+
 
     // Apply Cartesian wrench
     dynamic_reconfigure_wrench_param_node_ = ros::NodeHandle("cartesian_wrench_reconfigure");
@@ -480,6 +487,17 @@ namespace cartesian_impedance_controller
                                saturate(config.rotation_x, trans_stf_min, trans_stf_max), saturate(config.rotation_y, trans_stf_min, trans_stf_max), saturate(config.rotation_z, trans_stf_min, trans_stf_max), config.nullspace_stiffness);
     }
   }
+
+   void CartesianImpedanceController::dynamicDampingCallback(cartesian_impedance_controller::damping_configConfig &config, uint32_t level)
+   {
+    double dmp_max = 1;
+    double dmp_min = 0.1;
+    if (config.apply_damping_factors)
+    {
+    base_tools.set_damping(saturate(config.translation_x, dmp_min, dmp_max), saturate(config.translation_y, dmp_min, dmp_max), saturate(config.translation_z, dmp_min, dmp_max),
+                               saturate(config.rotation_x, dmp_min, dmp_max), saturate(config.rotation_y, dmp_min, dmp_max), saturate(config.rotation_z, dmp_min, dmp_max), config.nullspace_damping);
+    }
+   }
 
   void CartesianImpedanceController::dynamicWrenchCallback(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level)
   {
