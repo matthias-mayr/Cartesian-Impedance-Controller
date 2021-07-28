@@ -18,10 +18,10 @@ public:
     void set_damping(double d_x, double d_y, double d_z, double d_a, double d_b, double d_c, double d_n);
 
     // Set the desired enf-effector pose
-    void set_desired_pose(Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_);
+    void set_desired_pose(const Eigen::Vector3d& position_d_, const Eigen::Quaterniond& orientation_d_);
 
     // Set the desired nullspace configuration
-    void set_nullspace_config(Eigen::Matrix<double, 7, 1> q_d_nullspace_target_);
+    void set_nullspace_config(const Eigen::Matrix<double, 7, 1>& q_d_nullspace_target_);
 
     // Apply filtering on stiffness + end-effector pose. Default inactive && depends on update_frequency
     void set_filtering(double update_frequency, double filter_params_stiffness, double filter_params_pose, double filter_params_wrench);
@@ -29,32 +29,32 @@ public:
     // Maximum commanded torque change per time step
     void set_delta_tau_max(double d);
 
+    // Apply a virtual Cartesian wrench
+    void apply_wrench(const Eigen::Matrix<double, 6, 1>& cartesian_wrench);
+
     // Returns the desired control law
-    Eigen::VectorXd get_commanded_torques(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Matrix<double, 6, 7> jacobian);
+    Eigen::VectorXd get_commanded_torques(const Eigen::Matrix<double, 7, 1>& q, const Eigen::Matrix<double, 7, 1>& dq, const Eigen::Vector3d& position, Eigen::Quaterniond orientation, const Eigen::Matrix<double, 6, 7>& jacobian);
 
     // Get the state of the robot. Updates when "get_commanded_torques" is called
-    void get_robot_state(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq, Eigen::Vector3d &position, Eigen::Quaterniond &orientation, Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_, Eigen::Matrix<double, 6, 6> &cartesian_damping_);
+    void get_robot_state(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq, Eigen::Vector3d &position, Eigen::Quaterniond &orientation, Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_, Eigen::Matrix<double, 6, 6> &cartesian_damping_) const;
 
     // Get the state of the robot. Updates when "get_commanded_torques" is called
-    void get_robot_state(Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_, Eigen::Matrix<double, 6, 6> &cartesian_damping_);
+    void get_robot_state(Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_, Eigen::Matrix<double, 6, 6> &cartesian_damping_) const;
     
     // Get the currently applied commands
-    Eigen::VectorXd get_commands();
+    Eigen::VectorXd get_commands() const;
 
     // Get the jacobian
-    void get_jacobian(Eigen::Matrix<double, 6, 7> &jacobian);
-
-    // Apply a virtual Cartesian wrench
-    void apply_wrench(Eigen::Matrix<double, 6, 1> cartesian_wrench);
+    void get_jacobian(Eigen::Matrix<double, 6, 7> &jacobian) const;
 
     // Get the currently applied Cartesian wrench
-    Eigen::Matrix<double, 6, 1> get_applied_wrench();
+    Eigen::Matrix<double, 6, 1> get_applied_wrench() const;
 
     // Saturate the torque rate of the control law
-    Eigen::Matrix<double, 7, 1> saturateTorqueRate(const Eigen::Matrix<double, 7, 1> &tau_d_calculated, Eigen::Matrix<double, 7, 1> &tau_J_d, double delta_tau_max_);
+    Eigen::Matrix<double, 7, 1> saturateTorqueRate(const Eigen::Matrix<double, 7, 1> &tau_d_calculated, Eigen::Matrix<double, 7, 1> &tau_J_d, double delta_tau_max_) const;
 
     // Saturate a variable x with the limits x_min and x_max
-    double saturate(double x, double x_min, double x_max);
+    double saturate(double x, double x_min, double x_max) const;
 
 private:
     // Robot variables
