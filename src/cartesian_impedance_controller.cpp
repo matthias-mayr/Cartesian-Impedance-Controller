@@ -98,6 +98,12 @@ void CartesianImpedanceController::set_filtering(double update_frequency, double
     this->filter_params_wrench=filter_params_wrench;
 }
 
+void CartesianImpedanceController::set_delta_tau_max(double d) {
+    if (d >= 0.0) {
+        this->delta_tau_max_ = d;
+    }
+}
+
 // Returns the desired control law
 Eigen::VectorXd CartesianImpedanceController::get_commanded_torques(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Matrix<double, 6, 7> jacobian)
 {
@@ -150,7 +156,8 @@ Eigen::VectorXd CartesianImpedanceController::get_commanded_torques(Eigen::Matri
                           nullspace_damping_ * dq);
     // Desired torque. Used to contain coriolis as well
     tau_d << tau_task + tau_nullspace + tau_ext;
-    return tau_d;
+
+    return this->saturateTorqueRate(tau_d, this->last_tau_, this->delta_tau_max_);
 }
 
 // Get the state of the robot. Updates when "get_commanded_torques" is called
@@ -205,36 +212,21 @@ Eigen::Matrix<double, 6, 1> CartesianImpedanceController::get_applied_wrench()
 }
 
 // Saturate the torque rate of the control law
-Eigen::Matrix<double, 7, 1> CartesianImpedanceController::saturateTorqueRate(
-    const Eigen::Matrix<double, 7, 1> &tau_d_calculated,
-    Eigen::Matrix<double, 7, 1> &tau_J_d, double delta_tau_max_)
-{ // NOLINT (readability-identifier-naming)
+Eigen::Matrix<double, 7, 1> CartesianImpedanceController::saturateTorqueRate(const Eigen::Matrix<double, 7, 1> &tau_d_calculated, Eigen::Matrix<double, 7, 1> &tau_J_d, double delta_tau_max_)
+{
     Eigen::Matrix<double, 7, 1> tau_d_saturated{};
     for (size_t i = 0; i < 7; i++)
     {
         double difference = tau_d_calculated[i] - tau_J_d[i];
-        tau_d_saturated[i] =
-            tau_J_d[i] + std::max(std::min(difference, delta_tau_max_), -delta_tau_max_);
+        tau_d_saturated[i] = tau_J_d[i] + this->saturate(difference, -delta_tau_max_, delta_tau_max_);
     }
     // saves last desired torque.
-    for (size_t i = 0; i < 7; i++)
-    {
-        tau_J_d[i] = tau_d_saturated[i];
-    }
+    tau_J_d = tau_d_saturated;
     return tau_d_saturated;
 }
 
 // Saturate a variable x with the limits x_min and x_max
 double CartesianImpedanceController::saturate(double x, double x_min, double x_max)
 {
-
-    if (x > x_max)
-    {
-        x = x_max;
-    }
-    if (x < x_min)
-    {
-        x = x_min;
-    }
-    return x;
+    return std::min(std::max(x, x_min), x_max);
 }

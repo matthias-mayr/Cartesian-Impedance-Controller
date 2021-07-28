@@ -136,6 +136,8 @@ namespace cartesian_impedance_controller
     // Initialize variables
     base_tools.initialize();
 
+    base_tools.set_delta_tau_max(delta_tau_max_);
+
     //Initialize publisher of useful data
     pub_data_export_ = node_handle.advertise<cartesian_impedance_controller::RobotImpedanceState>("useful_data_to_analyze", 1);
 
@@ -228,8 +230,7 @@ namespace cartesian_impedance_controller
     error.tail(3) << error_quaternion_angle_axis.axis() * error_quaternion_angle_axis.angle();
     // compute the control law
     Eigen::VectorXd tau_d = base_tools.get_commanded_torques(q, dq, position, orientation, jacobian);
-    // saturate to torque rate
-    base_tools.saturateTorqueRate(tau_d, tau_J_d_, delta_tau_max_);
+    this->tau_J_d_ = tau_d;
     // get the robot state
     base_tools.get_robot_state(position_d_, orientation_d_, cartesian_stiffness_, nullspace_stiffness_, q_d_nullspace_, cartesian_damping_);
 

@@ -26,6 +26,9 @@ public:
     // Apply filtering on stiffness + end-effector pose. Default inactive && depends on update_frequency
     void set_filtering(double update_frequency, double filter_params_stiffness, double filter_params_pose, double filter_params_wrench);
 
+    // Maximum commanded torque change per time step
+    void set_delta_tau_max(double d);
+
     // Returns the desired control law
     Eigen::VectorXd get_commanded_torques(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Matrix<double, 6, 7> jacobian);
 
@@ -48,9 +51,7 @@ public:
     Eigen::Matrix<double, 6, 1> get_applied_wrench();
 
     // Saturate the torque rate of the control law
-    Eigen::Matrix<double, 7, 1> saturateTorqueRate(
-        const Eigen::Matrix<double, 7, 1> &tau_d_calculated,
-        Eigen::Matrix<double, 7, 1> &tau_J_d, double delta_tau_max_);
+    Eigen::Matrix<double, 7, 1> saturateTorqueRate(const Eigen::Matrix<double, 7, 1> &tau_d_calculated, Eigen::Matrix<double, 7, 1> &tau_J_d, double delta_tau_max_);
 
     // Saturate a variable x with the limits x_min and x_max
     double saturate(double x, double x_min, double x_max);
@@ -89,8 +90,9 @@ private:
  
     Eigen::VectorXd tau_d;
 
-    // Rate limiter
-    Eigen::Matrix<double, 7, 1> tau_J_d_;
+    // Last commanded torques
+    Eigen::Matrix<double, 7, 1> last_tau_{Eigen::VectorXd::Zero(7)};
+    double delta_tau_max_{1.0};
 
     // Filtering parameters   
     double update_frequency{100};
