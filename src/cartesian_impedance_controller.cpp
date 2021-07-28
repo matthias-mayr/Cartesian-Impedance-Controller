@@ -186,7 +186,7 @@ void CartesianImpedanceController::get_robot_state(Eigen::Vector3d &position_d_,
 // Get the currently applied commands
 Eigen::VectorXd CartesianImpedanceController::get_commands() const
 {
-    return this->tau_d_;
+    return this->last_tau_;
 }
 
 // Get the jacobian
