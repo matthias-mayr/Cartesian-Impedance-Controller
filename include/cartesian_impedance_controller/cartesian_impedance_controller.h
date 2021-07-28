@@ -8,8 +8,8 @@ class CartesianImpedanceController
 {
 
 public:
-    // Initialization
-    bool initialize();
+    CartesianImpedanceController();
+    ~CartesianImpedanceController() = default;
 
     // Set the desired diagonal stiffnessess + nullspace stiffness
     void set_stiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z, double n);

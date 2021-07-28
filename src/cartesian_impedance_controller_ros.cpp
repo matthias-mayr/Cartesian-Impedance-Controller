@@ -132,10 +132,6 @@ namespace cartesian_impedance_controller
     dynamic_server_wrench_param_->setCallback(
         boost::bind(&CartesianImpedanceControllerRos::dynamicWrenchCallback, this, _1, _2));
     //-------------------------------------------------------------------------------------------------------------------------------------
-
-    // Initialize variables
-    base_tools.initialize();
-
     base_tools.set_delta_tau_max(delta_tau_max_);
 
     //Initialize publisher of useful data

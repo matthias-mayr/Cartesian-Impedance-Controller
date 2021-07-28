@@ -5,47 +5,38 @@
 #include <Eigen/LU>
 #include <Eigen/SVD>
 
-// Initialization
-bool CartesianImpedanceController::initialize()
+CartesianImpedanceController::CartesianImpedanceController()
 {
-    //Make sure that the function can only be called once
-    static uint64_t c;
-    if (c++ == 0)
-    {
-        // Robot state
-        q.setZero();
-        dq.setZero();
-        jacobian.setZero();
+    // Robot state
+    q.setZero();
+    dq.setZero();
+    jacobian.setZero();
 
-        // End effector pose
-        position.setZero();
-        position_d_.setZero();
-        orientation.coeffs() << 1., 0., 0., 0.;
-        orientation_d_.coeffs() << 1., 0., 0., 0.;
-        position_d_target_.setZero();
-        orientation_d_target_.coeffs() << 1., 0., 0., 0.;
+    // End effector pose
+    position.setZero();
+    position_d_.setZero();
+    orientation.coeffs() << 1., 0., 0., 0.;
+    orientation_d_.coeffs() << 1., 0., 0., 0.;
+    position_d_target_.setZero();
+    orientation_d_target_.coeffs() << 1., 0., 0., 0.;
 
-        // Default stiffness values
-        set_stiffness(200., 200., 200., 100., 100., 100., 0.);
-        cartesian_stiffness_ << cartesian_stiffness_target_;
-        nullspace_stiffness_target_=0;
-        nullspace_stiffness_=0;
-        q_d_nullspace_target_.setZero();
+    // Default stiffness values
+    set_stiffness(200., 200., 200., 100., 100., 100., 0.);
+    cartesian_stiffness_ << cartesian_stiffness_target_;
+    nullspace_stiffness_target_=0;
+    nullspace_stiffness_=0;
+    q_d_nullspace_target_.setZero();
 
-        // Default damping factors
-        set_damping(1.,1.,1.,1.,1.,1.,1.);
-        cartesian_damping_ << cartesian_damping_target_;
-        nullspace_damping_=nullspace_damping_target_;
+    // Default damping factors
+    set_damping(1.,1.,1.,1.,1.,1.,1.);
+    cartesian_damping_ << cartesian_damping_target_;
+    nullspace_damping_=nullspace_damping_target_;
 
-        // Applied "External" forces
-        tau_ext.resize(7);
-        tau_ext.setZero();
-        cartesian_wrench.setZero();
-        cartesian_wrench_target_.setZero();
-
-        return true;
-    }
-    return false;
+    // Applied "External" forces
+    tau_ext.resize(7);
+    tau_ext.setZero();
+    cartesian_wrench.setZero();
+    cartesian_wrench_target_.setZero();
 }
 
 // Set the desired diagonal stiffnessess + nullspace stiffness
