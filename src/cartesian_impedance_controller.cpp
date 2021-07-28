@@ -140,7 +140,6 @@ Eigen::VectorXd CartesianImpedanceController::get_commanded_torques(const Eigen:
     Eigen::MatrixXd jacobian_transpose_pinv;
     pseudoInverse(jacobian.transpose(), jacobian_transpose_pinv);
 
-    tau_d_.resize(7);
     Eigen::VectorXd  tau_task(7), tau_nullspace(7);
 
     // Cartesian PD control with damping ratio = 1

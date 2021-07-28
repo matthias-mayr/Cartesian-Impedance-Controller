@@ -88,7 +88,7 @@ private:
     double nullspace_damping_;
     double nullspace_damping_target_;
  
-    Eigen::VectorXd tau_d_;
+    Eigen::VectorXd tau_d_{Eigen::VectorXd::Zero(7)};
 
     // Last commanded torques
     Eigen::Matrix<double, 7, 1> last_tau_{Eigen::VectorXd::Zero(7)};
