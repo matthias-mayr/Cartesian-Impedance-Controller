@@ -64,8 +64,8 @@ catkin_package(
 ###########
 ## Build ##
 ###########
-add_library(${PROJECT_NAME} src/cartesian_impedance_controller_base.cpp)
-add_library(${PROJECT_NAME}_ros src/cartesian_impedance_controller.cpp src/cartesian_impedance_controller_base.cpp)
+add_library(${PROJECT_NAME} src/cartesian_impedance_controller.cpp)
+add_library(${PROJECT_NAME}_ros src/cartesian_impedance_controller_ros.cpp src/cartesian_impedance_controller.cpp)
 
 add_dependencies(
   ${PROJECT_NAME}

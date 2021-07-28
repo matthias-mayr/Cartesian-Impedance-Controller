@@ -1,148 +1,157 @@
-// Copyright (c) 2017 Franka Emika GmbH
-// Use of this source code is governed by the Apache-2.0 license, see LICENSE
+
+#include <Eigen/Dense>
+#include <iostream>
+#include <vector>
 
 #pragma once
-#include "cartesian_impedance_controller_base.h"
-#include <memory>
-#include <string>
-#include <vector>
-#include <controller_interface/controller.h>
-#include <pluginlib/class_list_macros.h>
-#include <dynamic_reconfigure/server.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/WrenchStamped.h>
-#include <hardware_interface/joint_command_interface.h>
-#include <hardware_interface/robot_hw.h>
-#include <ros/node_handle.h>
-#include <ros/time.h>
-#include <tf/transform_broadcaster.h>
-#include <tf/transform_listener.h>
-#include <tf_conversions/tf_eigen.h>
-#include <iiwa_tools/iiwa_tools.h>
-#include <actionlib/server/simple_action_server.h>
-#include <control_msgs/FollowJointTrajectoryAction.h>
-#include <std_msgs/Float64MultiArray.h>
-#include <trajectory_msgs/JointTrajectory.h>
-#include <realtime_tools/realtime_publisher.h>
-#include <Eigen/Dense>
-#include <cartesian_impedance_controller/impedance_configConfig.h>
-#include <cartesian_impedance_controller/damping_configConfig.h>
-#include <cartesian_impedance_controller/wrench_configConfig.h>
-#include "cartesian_impedance_controller/CartesianImpedanceControlMode.h"
-#include "cartesian_impedance_controller/RobotImpedanceState.h"
-namespace cartesian_impedance_controller
+class CartesianImpedanceController
 {
 
-  class CartesianImpedanceController : public controller_interface::Controller<hardware_interface::EffortJointInterface>, public CartesianImpedanceController_base
-  {
+public:
+    // Initialization
+    bool initialize();
 
-  public:
-    bool init(hardware_interface::EffortJointInterface *hw, ros::NodeHandle &node_handle) override;
-    void starting(const ros::Time &) override;
-    void update(const ros::Time &, const ros::Duration &period) override;
+    // Set the desired diagonal stiffnessess + nullspace stiffness
+    void set_stiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z, double n);
 
-  private:
-   
-    CartesianImpedanceController_base base_tools;
-    bool get_fk(const Eigen::Matrix<double, 7, 1> &q, Eigen::Vector3d &translation, Eigen::Quaterniond &rotation);
-    bool get_jacobian(const Eigen::Matrix<double, 7, 1> &q, const Eigen::Matrix<double, 7, 1> &dq, Eigen::Matrix<double, 6, 7> &jacobian);
+    // Set the desired damping factors + (TODO) nullspace damping
+    void set_damping(double d_x, double d_y, double d_z, double d_a, double d_b, double d_c, double d_n);
 
+    // Set the desired enf-effector pose
+    void set_desired_pose(Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_);
 
-    std::vector<hardware_interface::JointHandle> joint_handles_;
-    double delta_tau_max_{5};
+    // Set the desired nullspace configuration
+    void set_nullspace_config(Eigen::Matrix<double, 7, 1> q_d_nullspace_target_);
 
-    Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
-    Eigen::Matrix<double, 6, 6> cartesian_damping_;
-    double nullspace_stiffness_;
-    Eigen::Matrix<double, 7, 1> q_d_nullspace_;
-    Eigen::Matrix<double, 7, 1> tau_J_d_;
+    // Apply filtering on stiffness + end-effector pose. Default inactive && depends on update_frequency
+    void set_filtering(double update_frequency, double filter_params_stiffness, double filter_params_pose, double filter_params_wrench);
+
+    // Returns the desired control law
+    Eigen::VectorXd get_commanded_torques(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Matrix<double, 6, 7> jacobian);
+
+    // Get the state of the robot. Updates when "get_commanded_torques" is called
+    void get_robot_state(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq, Eigen::Vector3d &position, Eigen::Quaterniond &orientation, Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_, Eigen::Matrix<double, 6, 6> &cartesian_damping_);
+
+    // Get the state of the robot. Updates when "get_commanded_torques" is called
+    void get_robot_state(Eigen::Vector3d &position_d_, Eigen::Quaterniond &orientation_d_, Eigen::Matrix<double, 6, 6> &cartesian_stiffness_, double &nullspace_stiffness_, Eigen::Matrix<double, 7, 1> &q_d_nullspace_, Eigen::Matrix<double, 6, 6> &cartesian_damping_);
+    
+    // Get the currently applied commands
+    Eigen::VectorXd get_commands();
+
+    // Get the jacobian
+    void get_jacobian(Eigen::Matrix<double, 6, 7> &jacobian);
+
+    // Apply a virtual Cartesian wrench
+    void apply_wrench(Eigen::Matrix<double, 6, 1> cartesian_wrench);
+
+    // Get the currently applied Cartesian wrench
+    Eigen::Matrix<double, 6, 1> get_applied_wrench();
+
+    // Saturate the torque rate of the control law
+    Eigen::Matrix<double, 7, 1> saturateTorqueRate(
+        const Eigen::Matrix<double, 7, 1> &tau_d_calculated,
+        Eigen::Matrix<double, 7, 1> &tau_J_d, double delta_tau_max_);
+
+    // Saturate a variable x with the limits x_min and x_max
+    double saturate(double x, double x_min, double x_max);
+
+private:
+    // Robot variables
+
+    // end effector
+    Eigen::Vector3d position;
     Eigen::Vector3d position_d_;
+    Eigen::Vector3d position_d_target_;
+
+    Eigen::Quaterniond orientation;
     Eigen::Quaterniond orientation_d_;
+    Eigen::Quaterniond orientation_d_target_;
 
-    //Apply stiffness through this topic
-    ros::Subscriber sub_CartesianImpedanceParams;
-    void cartesian_impedance_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
-
-    // Apply damping through this topic
-    ros::Subscriber sub_DampingParams;
-    void damping_parameters_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
-
-    //Apply cartesian wrenches through this topic
-    ros::Subscriber sub_CartesianWrench;
-    void cartesian_wrench_Callback(const geometry_msgs::WrenchStampedConstPtr &msg);
-    tf::TransformListener tf_listener_;
-    tf::StampedTransform transform_;
-    std::string from_frame_wrench_;
-    std::string to_frame_wrench_;
-    void transform_wrench(Eigen::Matrix<double, 6, 1> &cartesian_wrench, std::string from_frame, std::string to_frame);
-   
-    // the  trajectory generator
-    ros::Subscriber sub_desired_pose;
-    void ee_pose_Callback(const geometry_msgs::PoseStampedConstPtr &msg);
-
-    // publish data to export using another thread;
-    double time_at_start_;
-    ros::Publisher pub_data_export_;
-    void publish_data(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d, Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_, Eigen::Matrix<double, 6, 1> error, Eigen::Matrix<double, 6, 1> F, double cartesian_velocity);
-
-    //------------------------------------------------------------------------------------------------
-
-    // IIWA Tools - this is GPLv3
-    iiwa_tools::IiwaTools _tools;
-    std::string end_effector_;
-    std::string robot_description_;
-    unsigned int n_joints_;
-    // The Jacobian of RBDyn comes with orientation in the first three lines. Needs to be interchanged.
-    Eigen::VectorXi perm_indices_;
-    Eigen::PermutationMatrix<Eigen::Dynamic, 6> jacobian_perm_;
-
-    // Dynamic reconfigure
-    ros::NodeHandle dynamic_reconfigure_compliance_param_node_;
-    std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>>
-        dynamic_server_compliance_param_;
-    void dynamicConfigCallback(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level);
-
-    ros::NodeHandle dynamic_reconfigure_damping_param_node_;
-    std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::damping_configConfig>>
-        dynamic_server_damping_param_;
-    void dynamicDampingCallback(cartesian_impedance_controller::damping_configConfig &config, uint32_t level);
-
-    ros::NodeHandle dynamic_reconfigure_wrench_param_node_;
-    std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::wrench_configConfig>>
-        dynamic_server_wrench_param_;
-    void dynamicWrenchCallback(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level);
+    // joints &velocities
+    Eigen::Matrix<double, 7, 1> q;
+    Eigen::Matrix<double, 7, 1> dq;
+    // jacobian
+    Eigen::Matrix<double, 6, 7> jacobian;
 
 
-    // Trajectory handling
-    std::unique_ptr<actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>> as_;
-    void goalCallback();
-    void preemptCallback();
-    boost::shared_ptr<const control_msgs::FollowJointTrajectoryGoal> goal_;
-    trajectory_msgs::JointTrajectory trajectory_;
-    ros::Time traj_start_;
-    ros::Duration traj_duration_;
-    unsigned int traj_index_{0};
-    bool traj_running_{false};
-    void trajectoryStart(const trajectory_msgs::JointTrajectory &trajectory);
-    void trajectoryUpdate();
+    // Stiffness parameters
+    double nullspace_stiffness_;
+    double nullspace_stiffness_target_;
+    Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
+    Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_;
+    Eigen::Matrix<double, 6, 6> cartesian_damping_;
+    Eigen::Matrix<double, 6, 6> cartesian_damping_target_;
+    Eigen::Matrix<double, 7, 1> damping_factors_;
+    Eigen::Matrix<double, 7, 1> q_d_nullspace_;
+    Eigen::Matrix<double, 7, 1> q_d_nullspace_target_; 
+    double nullspace_damping_;
+    double nullspace_damping_target_;
+ 
+    Eigen::VectorXd tau_d;
 
-    ros::Subscriber sub_trajectory_;
-    void trajectoryCallback(const trajectory_msgs::JointTrajectoryConstPtr &msg);
+    // Rate limiter
+    Eigen::Matrix<double, 7, 1> tau_J_d_;
 
-    // Equilibrium pose subscriber
-    ros::Subscriber sub_equilibrium_pose_;
-    void equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
+    // Filtering parameters   
+    double update_frequency{100};
+    double filter_params_stiffness{1};
+    double filter_params_pose{1};
+    double filter_params_wrench{1};
 
-    void publish();
+    //"External" applied forces
+    Eigen::VectorXd tau_ext;
+    Eigen::Matrix<double, 6, 1> cartesian_wrench_target_;
+    Eigen::Matrix<double, 6, 1> cartesian_wrench;
 
-    // for debugging
-    bool verbose_{false};
-    tf::TransformBroadcaster tf_br_;
-    realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray> pub_torques_;
-    tf::Transform tf_br_transform_;
-    tf::Vector3 tf_pos_;
-    tf::Quaternion tf_rot_;
-  };
-  PLUGINLIB_EXPORT_CLASS(cartesian_impedance_controller::CartesianImpedanceController, controller_interface::ControllerBase);
+    // Private functions-----
 
-} // namespace
+    // Update the state of the robot
+    void update_states(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Matrix<double, 6, 7> jacobian, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Vector3d position_d_target_, Eigen::Quaterniond orientation_d_target_)
+    {
+        this->q = q;
+        this->dq = dq;
+        this->position << position;
+        this->orientation.coeffs() << orientation.coeffs();
+        this->position_d_target_ << position_d_target_;
+        this->orientation_d_target_.coeffs() << orientation_d_target_.coeffs();
+        this->jacobian << jacobian;
+    }
+
+    // Adds some filtering effect to stiffness
+    void update_filtering_stiffness()
+    {
+        double filter_params_new_ = filter_params_stiffness * 100 / update_frequency;
+        cartesian_stiffness_ =
+            filter_params_new_ * cartesian_stiffness_target_ + (1.0 - filter_params_new_) * cartesian_stiffness_;
+        cartesian_damping_ =
+            filter_params_new_ * cartesian_damping_target_ + (1.0 - filter_params_new_) * cartesian_damping_;
+        nullspace_stiffness_ =
+            filter_params_new_ * nullspace_stiffness_target_ + (1.0 - filter_params_new_) * nullspace_stiffness_;
+        q_d_nullspace_ = filter_params_new_ * q_d_nullspace_target_ + (1.0 - filter_params_new_) * q_d_nullspace_;
+        nullspace_damping_=
+        filter_params_new_*nullspace_damping_target_+(1.0-filter_params_new_)*nullspace_damping_;
+    }
+
+    // Adds some filtering effect to the end-effector pose
+    void update_filtering_pose()
+    {
+        if (filter_params_pose == 1)
+        {
+            position_d_ << position_d_target_;
+            orientation_d_.coeffs() << orientation_d_target_.coeffs();
+        }
+        else
+        {
+            double filter_params_pose_new_ = filter_params_pose * 100 / update_frequency;
+            position_d_ = filter_params_pose_new_ * position_d_target_ + (1.0 - filter_params_pose_new_) * position_d_;
+            orientation_d_ = orientation_d_.slerp(filter_params_pose_new_, orientation_d_target_);
+        }
+    }
+    // Adds some filtering effect to the applied Cartesian wrench
+    void update_filtering_wrench()
+    {
+        double filter_params_wrench_new_ = filter_params_wrench * 100 / update_frequency;
+        cartesian_wrench=filter_params_wrench_new_*cartesian_wrench_target_+(1-filter_params_wrench_new_)*cartesian_wrench;
+        tau_ext = jacobian.transpose() * cartesian_wrench;
+    }
+};
