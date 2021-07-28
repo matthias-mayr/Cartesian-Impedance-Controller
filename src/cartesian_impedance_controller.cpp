@@ -220,3 +220,53 @@ double CartesianImpedanceController::saturate(double x, double x_min, double x_m
 {
     return std::min(std::max(x, x_min), x_max);
 }
+
+// Update the state of the robot
+void CartesianImpedanceController::update_states(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Matrix<double, 6, 7> jacobian, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Vector3d position_d_target_, Eigen::Quaterniond orientation_d_target_)
+{
+    this->q = q;
+    this->dq = dq;
+    this->position << position;
+    this->orientation.coeffs() << orientation.coeffs();
+    this->position_d_target_ << position_d_target_;
+    this->orientation_d_target_.coeffs() << orientation_d_target_.coeffs();
+    this->jacobian << jacobian;
+}
+
+// Adds some filtering effect to stiffness
+void CartesianImpedanceController::update_filtering_stiffness()
+{
+    double filter_params_new_ = filter_params_stiffness * 100 / update_frequency;
+    cartesian_stiffness_ =
+        filter_params_new_ * cartesian_stiffness_target_ + (1.0 - filter_params_new_) * cartesian_stiffness_;
+    cartesian_damping_ =
+        filter_params_new_ * cartesian_damping_target_ + (1.0 - filter_params_new_) * cartesian_damping_;
+    nullspace_stiffness_ =
+        filter_params_new_ * nullspace_stiffness_target_ + (1.0 - filter_params_new_) * nullspace_stiffness_;
+    q_d_nullspace_ = filter_params_new_ * q_d_nullspace_target_ + (1.0 - filter_params_new_) * q_d_nullspace_;
+    nullspace_damping_=
+    filter_params_new_*nullspace_damping_target_+(1.0-filter_params_new_)*nullspace_damping_;
+}
+
+// Adds some filtering effect to the end-effector pose
+void CartesianImpedanceController::update_filtering_pose()
+{
+    if (filter_params_pose == 1)
+    {
+        position_d_ << position_d_target_;
+        orientation_d_.coeffs() << orientation_d_target_.coeffs();
+    }
+    else
+    {
+        double filter_params_pose_new_ = filter_params_pose * 100 / update_frequency;
+        position_d_ = filter_params_pose_new_ * position_d_target_ + (1.0 - filter_params_pose_new_) * position_d_;
+        orientation_d_ = orientation_d_.slerp(filter_params_pose_new_, orientation_d_target_);
+    }
+}
+// Adds some filtering effect to the applied Cartesian wrench
+void CartesianImpedanceController::update_filtering_wrench()
+{
+    double filter_params_wrench_new_ = filter_params_wrench * 100 / update_frequency;
+    cartesian_wrench=filter_params_wrench_new_*cartesian_wrench_target_+(1-filter_params_wrench_new_)*cartesian_wrench;
+    tau_ext = jacobian.transpose() * cartesian_wrench;
+}
