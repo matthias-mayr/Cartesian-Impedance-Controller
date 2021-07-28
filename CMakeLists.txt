@@ -34,13 +34,13 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 add_message_files(FILES
-CartesianImpedanceControlMode.msg
-CartesianQuantity.msg
-JointsQuantity.msg
-RobotImpedanceState.msg
-ThreeDimensionalQuantity.msg
-FourDimensionalQuantity.msg
-CartesianWrench.msg
+  CartesianImpedanceControlMode.msg
+  CartesianQuantity.msg
+  JointsQuantity.msg
+  RobotImpedanceState.msg
+  ThreeDimensionalQuantity.msg
+  FourDimensionalQuantity.msg
+  CartesianWrench.msg
 )
 
 generate_messages(
@@ -55,10 +55,10 @@ generate_dynamic_reconfigure_options(
 )
 
 catkin_package(
-     INCLUDE_DIRS include
-     CATKIN_DEPENDS actionlib roscpp pluginlib controller_interface hardware_interface iiwa_tools eigen_conversions std_msgs controller_manager tf tf_conversions actionlib actionlib_msgs trajectory_msgs control_msgs
-     DEPENDS Boost tinyxml2 SpaceVecAlg RBDyn mc_rbdyn_urdf Eigen3
-     LIBRARIES ${CMAKE_PROJECT_NAME}
+  INCLUDE_DIRS include
+  CATKIN_DEPENDS actionlib roscpp pluginlib controller_interface hardware_interface iiwa_tools eigen_conversions std_msgs controller_manager tf tf_conversions actionlib actionlib_msgs trajectory_msgs control_msgs
+  DEPENDS Boost tinyxml2 SpaceVecAlg RBDyn mc_rbdyn_urdf Eigen3
+  LIBRARIES ${CMAKE_PROJECT_NAME}
 )
 
 ###########
