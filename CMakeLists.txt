@@ -58,13 +58,20 @@ catkin_package(
   INCLUDE_DIRS include
   CATKIN_DEPENDS actionlib roscpp pluginlib controller_interface hardware_interface iiwa_tools eigen_conversions std_msgs controller_manager tf tf_conversions actionlib actionlib_msgs trajectory_msgs control_msgs
   DEPENDS Boost tinyxml2 SpaceVecAlg RBDyn mc_rbdyn_urdf Eigen3
-  LIBRARIES ${PROJECT_NAME}_ros
+  LIBRARIES ${PROJECT_NAME} ${PROJECT_NAME}_ros
 )
 
 ###########
 ## Build ##
 ###########
+add_library(${PROJECT_NAME} src/cartesian_impedance_controller_base.cpp)
 add_library(${PROJECT_NAME}_ros src/cartesian_impedance_controller.cpp src/cartesian_impedance_controller_base.cpp)
+
+add_dependencies(
+  ${PROJECT_NAME}
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
 
 add_dependencies(
   ${PROJECT_NAME}_ros
@@ -72,6 +79,25 @@ add_dependencies(
   ${catkin_EXPORTED_TARGETS}
   ${PROJECT_NAME}_gencfg
 )
+
+# Yes, this is necessary. Otherwise the control plugin crashes.
+if(ENABLE_SIMD)
+  if(CMAKE_COMPILER_IS_GNUCXX)
+    execute_process(
+      COMMAND ${CMAKE_CXX_COMPILER} -dumpfullversion -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+    set(CXX_COMPILER_VERSION ${GCC_VERSION})
+    target_compile_options(${PROJECT_NAME} PUBLIC -march=native)
+    if(GCC_VERSION VERSION_GREATER 7.0)
+      target_compile_options(${PROJECT_NAME} PUBLIC -faligned-new)
+    endif()
+  elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+    target_compile_options(${PROJECT_NAME} PUBLIC -march=native -faligned-new)
+  endif()
+endif()
+
+target_compile_options(${PROJECT_NAME} PUBLIC -std=c++14)
+target_include_directories(${PROJECT_NAME} PUBLIC include ${catkin_INCLUDE_DIRS} ${Eigen3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${SpaceVecAlg_INCLUDE_DIRS} ${RBDyn_INCLUDE_DIRS} ${mc_rbdyn_urdf_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${SpaceVecAlg_LIBRARIES} ${RBDyn_LIBRARIES} ${mc_rbdyn_urdf_LIBRARIES} ${Eigen3_LIBRARIES})
 
 # Yes, this is necessary. Otherwise the control plugin crashes.
 if(ENABLE_SIMD)
