@@ -140,7 +140,7 @@ Eigen::VectorXd CartesianImpedanceController::get_commanded_torques(const Eigen:
     Eigen::MatrixXd jacobian_transpose_pinv;
     pseudoInverse(jacobian.transpose(), jacobian_transpose_pinv);
 
-    tau_d.resize(7);
+    tau_d_.resize(7);
     Eigen::VectorXd  tau_task(7), tau_nullspace(7);
 
     // Cartesian PD control with damping ratio = 1
@@ -152,9 +152,9 @@ Eigen::VectorXd CartesianImpedanceController::get_commanded_torques(const Eigen:
                          (nullspace_stiffness_ * (q_d_nullspace_ - q) -
                           nullspace_damping_ * dq);
     // Desired torque. Used to contain coriolis as well
-    tau_d << tau_task + tau_nullspace + tau_ext;
+    tau_d_ << tau_task + tau_nullspace + tau_ext;
 
-    return this->saturateTorqueRate(tau_d, this->last_tau_, this->delta_tau_max_);
+    return this->saturateTorqueRate(this->tau_d_, this->last_tau_, this->delta_tau_max_);
 }
 
 // Get the state of the robot. Updates when "get_commanded_torques" is called
@@ -186,7 +186,7 @@ void CartesianImpedanceController::get_robot_state(Eigen::Vector3d &position_d_,
 // Get the currently applied commands
 Eigen::VectorXd CartesianImpedanceController::get_commands() const
 {
-    return tau_d;
+    return this->tau_d_;
 }
 
 // Get the jacobian
