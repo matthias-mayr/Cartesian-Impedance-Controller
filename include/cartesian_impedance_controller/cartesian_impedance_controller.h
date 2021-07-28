@@ -51,7 +51,7 @@ public:
     Eigen::Matrix<double, 6, 1> get_applied_wrench() const;
 
     // Saturate the torque rate of the control law
-    Eigen::Matrix<double, 7, 1> saturateTorqueRate(const Eigen::Matrix<double, 7, 1> &tau_d_calculated, Eigen::Matrix<double, 7, 1> &tau_J_d, double delta_tau_max_) const;
+    Eigen::Matrix<double, 7, 1> saturate_torque_rate(const Eigen::Matrix<double, 7, 1> &tau_d_calculated, Eigen::Matrix<double, 7, 1> &tau_J_d, double delta_tau_max_) const;
 
     // Saturate a variable x with the limits x_min and x_max
     double saturate(double x, double x_min, double x_max) const;

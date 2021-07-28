@@ -154,7 +154,7 @@ Eigen::VectorXd CartesianImpedanceController::get_commanded_torques(const Eigen:
     // Desired torque. Used to contain coriolis as well
     tau_d_ << tau_task + tau_nullspace + tau_ext;
 
-    return this->saturateTorqueRate(this->tau_d_, this->last_tau_, this->delta_tau_max_);
+    return this->saturate_torque_rate(this->tau_d_, this->last_tau_, this->delta_tau_max_);
 }
 
 // Get the state of the robot. Updates when "get_commanded_torques" is called
@@ -202,16 +202,16 @@ Eigen::Matrix<double, 6, 1> CartesianImpedanceController::get_applied_wrench() c
 }
 
 // Saturate the torque rate of the control law
-Eigen::Matrix<double, 7, 1> CartesianImpedanceController::saturateTorqueRate(const Eigen::Matrix<double, 7, 1> &tau_d_calculated, Eigen::Matrix<double, 7, 1> &tau_J_d, double delta_tau_max_) const
+Eigen::Matrix<double, 7, 1> CartesianImpedanceController::saturate_torque_rate(const Eigen::Matrix<double, 7, 1> &tau_d_calculated, Eigen::Matrix<double, 7, 1> &last_tau, double delta_tau_max_) const
 {
     Eigen::Matrix<double, 7, 1> tau_d_saturated{};
     for (size_t i = 0; i < 7; i++)
     {
-        double difference = tau_d_calculated[i] - tau_J_d[i];
-        tau_d_saturated[i] = tau_J_d[i] + this->saturate(difference, -delta_tau_max_, delta_tau_max_);
+        double difference = tau_d_calculated[i] - last_tau[i];
+        tau_d_saturated[i] = last_tau[i] + this->saturate(difference, -delta_tau_max_, delta_tau_max_);
     }
     // saves last desired torque.
-    tau_J_d = tau_d_saturated;
+    last_tau = tau_d_saturated;
     return tau_d_saturated;
 }
 
