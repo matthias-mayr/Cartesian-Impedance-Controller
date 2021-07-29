@@ -37,21 +37,23 @@ CartesianImpedanceController::CartesianImpedanceController()
     cartesian_wrench_target_.setZero();
 }
 
+void CartesianImpedanceController::set_stiffness(const Eigen::Matrix<double, 7,1>& stiffness) {
+    for (int i = 0; i < 6; i++)
+    {
+        cartesian_stiffness_target_(i, i) = stiffness(i);
+        // Damping ratio = 1
+        cartesian_damping_target_(i, i) = 2 * damping_factors_(i) * sqrt(stiffness(i));
+    }
+    nullspace_stiffness_target_ = stiffness[6];
+    nullspace_damping_target_ = damping_factors_(6) * 2 * sqrt(nullspace_stiffness_target_);
+}
+
 // Set the desired diagonal stiffnessess + nullspace stiffness
 void CartesianImpedanceController::set_stiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z, double n)
 {
-    Eigen::VectorXd stiffness_vector_(6);
-    stiffness_vector_ << t_x, t_y, t_z, r_x, r_y, r_z;
-    cartesian_stiffness_target_.setIdentity();
-    cartesian_damping_target_.setIdentity();
-    for (int i = 0; i < 6; i++)
-    {
-        cartesian_stiffness_target_(i, i) = stiffness_vector_(i);
-        // Damping ratio = 1
-        cartesian_damping_target_(i, i) = 2 * damping_factors_(i) * sqrt(stiffness_vector_(i));
-    }
-    nullspace_stiffness_target_ = n;
-    nullspace_damping_target_=damping_factors_(6)*2*sqrt(nullspace_stiffness_target_);
+    Eigen::Matrix<double, 7,1> stiffness_vector(7);
+    stiffness_vector << t_x, t_y, t_z, r_x, r_y, r_z, n;
+    this->set_stiffness(stiffness_vector);
 }
 
 // Set the desired damping factors + (TODO) nullspace damping

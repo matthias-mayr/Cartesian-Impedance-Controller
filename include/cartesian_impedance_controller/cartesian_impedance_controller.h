@@ -12,6 +12,9 @@ public:
     ~CartesianImpedanceController() = default;
 
     // Set the desired diagonal stiffnessess + nullspace stiffness
+    void set_stiffness(const Eigen::Matrix<double, 7,1>& stiffness);
+
+    // Set the desired diagonal stiffnessess + nullspace stiffness
     void set_stiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z, double n);
 
     // Set the desired damping factors + (TODO) nullspace damping
@@ -76,12 +79,12 @@ private:
 
 
     // Stiffness parameters
-    double nullspace_stiffness_;
+    double nullspace_stiffness_ {};
     double nullspace_stiffness_target_;
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
-    Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_;
-    Eigen::Matrix<double, 6, 6> cartesian_damping_;
-    Eigen::Matrix<double, 6, 6> cartesian_damping_target_;
+    Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_ {Eigen::Matrix<double, 6, 6>::Identity()};
+    Eigen::Matrix<double, 6, 6> cartesian_damping_ {Eigen::Matrix<double, 6, 6>::Identity()};
+    Eigen::Matrix<double, 6, 6> cartesian_damping_target_ {Eigen::Matrix<double, 6, 6>::Identity()};
     Eigen::Matrix<double, 7, 1> damping_factors_;
     Eigen::Matrix<double, 7, 1> q_d_nullspace_;
     Eigen::Matrix<double, 7, 1> q_d_nullspace_target_; 
