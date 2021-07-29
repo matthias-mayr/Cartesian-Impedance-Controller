@@ -111,7 +111,7 @@ private:
     // Private functions-----
 
     // Update the state of the robot
-    void update_states(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Matrix<double, 6, 7> jacobian, Eigen::Vector3d position, Eigen::Quaterniond orientation, Eigen::Vector3d position_d_target, Eigen::Quaterniond orientation_d_target);
+    void update_states(const Eigen::Matrix<double, 7, 1>& q, const Eigen::Matrix<double, 7, 1>& dq, const Eigen::Matrix<double, 6, 7>& jacobian, const Eigen::Vector3d& position, const Eigen::Quaterniond& orientation, const Eigen::Vector3d& position_d_target, const Eigen::Quaterniond& orientation_d_target);
 
     // Adds some filtering effect to stiffness
     void update_filtering_stiffness();
