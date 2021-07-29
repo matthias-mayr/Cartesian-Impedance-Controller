@@ -70,14 +70,14 @@ void CartesianImpedanceController::set_damping(double d_x, double d_y, double d_
 // Set the desired enf-effector pose
 void CartesianImpedanceController::set_desired_pose(const Eigen::Vector3d& position_d_target, const Eigen::Quaterniond& orientation_d_target)
 {
-    this->position_d_target_ << position_d_target_;
-    this->orientation_d_target_.coeffs() << orientation_d_target_.coeffs();
+    this->position_d_target_ << position_d_target;
+    this->orientation_d_target_.coeffs() << orientation_d_target.coeffs();
 }
 
 // Set the desired nullspace configuration
 void CartesianImpedanceController::set_nullspace_config(const Eigen::Matrix<double, 7, 1>& q_d_nullspace_target)
 {
-    this->q_d_nullspace_target_ << q_d_nullspace_target_;
+    this->q_d_nullspace_target_ << q_d_nullspace_target;
 }
 
 // Apply filtering on stiffness + end-effector pose. Default inactive && depends on update_frequency
@@ -227,8 +227,8 @@ void CartesianImpedanceController::update_states(Eigen::Matrix<double, 7, 1> q, 
     this->dq_ = dq;
     this->position_ << position;
     this->orientation_.coeffs() << orientation.coeffs();
-    this->position_d_target_ << position_d_target_;
-    this->orientation_d_target_.coeffs() << orientation_d_target_.coeffs();
+    this->position_d_target_ << position_d_target;
+    this->orientation_d_target_.coeffs() << orientation_d_target.coeffs();
     this->jacobian_ << jacobian;
 }
 
@@ -240,7 +240,7 @@ void CartesianImpedanceController::update_filtering_stiffness()
         this->cartesian_damping_ = this->cartesian_damping_target_;
         this->nullspace_stiffness_ = this->nullspace_stiffness_target_;
         this->q_d_nullspace_ = this->q_d_nullspace_target_;
-        this->nullspace_damping_ = this->nullspace_damping_;
+        this->nullspace_damping_ = this->nullspace_damping_target_;
     } else {
         double filter_params_new = this->filter_params_stiffness_ * 100 / this->update_frequency_;
         cartesian_stiffness_ = filter_params_new * cartesian_stiffness_target_ + (1.0 - filter_params_new) * cartesian_stiffness_;
