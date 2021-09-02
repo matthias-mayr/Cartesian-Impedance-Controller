@@ -17,6 +17,9 @@ public:
     // Set the desired diagonal stiffnessess + nullspace stiffness
     void set_stiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z, double n);
 
+    // Set the desired diagonal stiffnessess
+    void set_stiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z);
+
     // Set the desired damping factors + (TODO) nullspace damping
     void set_damping(double d_x, double d_y, double d_z, double d_a, double d_b, double d_c, double d_n);
 

@@ -44,6 +44,7 @@ namespace cartesian_impedance_controller
 
     //set cartesian stiffness values through this topic
     sub_CartesianImpedanceParams = node_handle.subscribe("set_stiffness", 1, &CartesianImpedanceControllerRos::cartesian_impedance_Callback, this);
+    sub_CartesianStiffness = node_handle.subscribe("set_cartesian_stiffness", 1, &CartesianImpedanceControllerRos::cartesian_stiffness_Callback, this);
 
     //set cartesian damping values through this topic
     sub_DampingParams = node_handle.subscribe("set_damping_factors", 1, &CartesianImpedanceControllerRos::damping_parameters_Callback, this);
@@ -415,6 +416,16 @@ namespace cartesian_impedance_controller
     Eigen::Matrix<double, 7, 1> q_d_nullspace_target_;
     q_d_nullspace_target_ << msg.q_d_nullspace.q1, msg.q_d_nullspace.q2, msg.q_d_nullspace.q3, msg.q_d_nullspace.q4, msg.q_d_nullspace.q5, msg.q_d_nullspace.q6, msg.q_d_nullspace.q7;
     base_tools.set_nullspace_config(q_d_nullspace_target_);
+  }
+
+  void CartesianImpedanceControllerRos::cartesian_stiffness_Callback(const geometry_msgs::WrenchStampedConstPtr &msg)
+  {
+    double trans_stf_max = 2000;
+    double trans_stf_min = 0;
+    double rot_stf_max = 500;
+    double rot_stf_min = 0;
+    base_tools.set_stiffness(saturate(msg->wrench.force.x, trans_stf_min, trans_stf_max), saturate(msg->wrench.force.y, trans_stf_min, trans_stf_max), saturate(msg->wrench.force.z, trans_stf_min, trans_stf_max),
+                             saturate(msg->wrench.torque.x, trans_stf_min, trans_stf_max), saturate(msg->wrench.torque.y, trans_stf_min, trans_stf_max), saturate(msg->wrench.torque.z, trans_stf_min, trans_stf_max));
   }
 
   void CartesianImpedanceControllerRos::damping_parameters_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg)

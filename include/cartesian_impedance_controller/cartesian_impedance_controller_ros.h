@@ -59,6 +59,8 @@ namespace cartesian_impedance_controller
     //Apply stiffness through this topic
     ros::Subscriber sub_CartesianImpedanceParams;
     void cartesian_impedance_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
+    ros::Subscriber sub_CartesianStiffness;
+    void cartesian_stiffness_Callback(const geometry_msgs::WrenchStampedConstPtr &msg);
 
     // Apply damping through this topic
     ros::Subscriber sub_DampingParams;

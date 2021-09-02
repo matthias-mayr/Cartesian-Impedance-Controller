@@ -56,6 +56,14 @@ void CartesianImpedanceController::set_stiffness(double t_x, double t_y, double 
     this->set_stiffness(stiffness_vector);
 }
 
+// Set the desired diagonal stiffnessess
+void CartesianImpedanceController::set_stiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z)
+{
+    Eigen::Matrix<double, 7,1> stiffness_vector(7);
+    stiffness_vector << t_x, t_y, t_z, r_x, r_y, r_z, this->nullspace_stiffness_;
+    this->set_stiffness(stiffness_vector);
+}
+
 // Set the desired damping factors + (TODO) nullspace damping
 void CartesianImpedanceController::set_damping(double d_x, double d_y, double d_z, double d_a, double d_b, double d_c, double d_n)
 {
