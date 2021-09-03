@@ -443,7 +443,11 @@ namespace cartesian_impedance_controller
     Eigen::Matrix<double, 6, 1> F;
     F << msg->wrench.force.x, msg->wrench.force.y, msg->wrench.force.z,
         msg->wrench.torque.x, msg->wrench.torque.y, msg->wrench.torque.z;
-    transform_wrench(F, from_frame_wrench_, to_frame_wrench_);
+    if (!msg->header.frame_id.empty()) {
+      transform_wrench(F, msg->header.frame_id, to_frame_wrench_);
+    } else {
+      transform_wrench(F, from_frame_wrench_, to_frame_wrench_);
+    }
     base_tools.apply_wrench(F);
   }
 
