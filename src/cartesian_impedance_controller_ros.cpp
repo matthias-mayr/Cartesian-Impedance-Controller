@@ -268,7 +268,7 @@ namespace cartesian_impedance_controller
 
     //filtering
     double update_frequency = 1 / period.toSec();
-    base_tools.set_filtering(update_frequency, 0.005, 1., 0.01);
+    base_tools.set_filtering(update_frequency, 0.1, 1., 0.1);
 
     //publish useful data to a topic
     publish_data(q, dq, position, orientation, position_d_, orientation_d_, tau_d, cartesian_stiffness_, nullspace_stiffness_, error, base_tools.get_applied_wrench(),cartesian_velocity);
