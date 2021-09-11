@@ -268,7 +268,7 @@ namespace cartesian_impedance_controller
 
     //filtering
     double update_frequency = 1 / period.toSec();
-    base_tools.set_filtering(update_frequency, 0.005, 1., 0.01);
+    base_tools.set_filtering(update_frequency, 0.1, 1., 0.1);
 
     //publish useful data to a topic
     publish_data(q, dq, position, orientation, position_d_, orientation_d_, tau_d, cartesian_stiffness_, nullspace_stiffness_, error, base_tools.get_applied_wrench(),cartesian_velocity);
@@ -443,9 +443,9 @@ namespace cartesian_impedance_controller
     Eigen::Matrix<double, 6, 1> F;
     F << msg->wrench.force.x, msg->wrench.force.y, msg->wrench.force.z,
         msg->wrench.torque.x, msg->wrench.torque.y, msg->wrench.torque.z;
-    if (!msg->header.frame_id.empty()) {
+    if (!msg->header.frame_id.empty() && msg->header.frame_id != "world") {
       transform_wrench(F, msg->header.frame_id, to_frame_wrench_);
-    } else {
+    } else if (msg->header.frame_id.empty()) {
       transform_wrench(F, from_frame_wrench_, to_frame_wrench_);
     }
     base_tools.apply_wrench(F);
