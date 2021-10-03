@@ -1,7 +1,7 @@
 # Cartesian Impedance Controller
 
 ## Description
-This project is an implementation of a Cartesian impedance controller. It is a type of control strategy that sets a dynamic relationship between contact forces and the position of a robot arm, making it suitable for collaborative robots. 
+This project is an implementation of aCartesian impedance controller. It is a type of control strategy that sets a dynamic relationship between contact forces and the position of a robot arm, making it suitable for collaborative robots. 
 
 The controller has been developed using the seven degree-of-freedom (DoF) robot arm called LBR iiwa by KUKA AG. It is, however, universal and should therefore work for other seven DoF robot arms, such as the Panda by Franka Emika.
 
@@ -139,3 +139,24 @@ can be chosen to reasonable values.
 
 ### Changing parameters in run-time (with dynamic_reconfigure)
 
+Open a new terminal and run:
+
+`rosrun rqt_reconfigure rqt_reconfigure`
+
+In the GUI to the left there are multiple tabs to choose from.
+
+#### Stiffness
+
+The stiffness can be configured under the tab 'stiffness_reconfigure'. To update the newly selected stiffness, press the button 'apply_stiffness'.
+
+#### Damping factors
+
+The damping factors can be configured under the tab 'damping_factors_reconfigure'. To update the newly selected damping factors, press the button 'apply_damping_factors'.
+
+#### End-effector pose
+
+The desired end-effector pose can be selected under the tab 'cartesian_trajectory_generator/cartesian_trajectory_generator'. To update the newly selected pose, press the button 'ready_to_send'.
+
+#### Cartesiann wrenches
+
+A Cartesian wrench can be applied under the tab 'cartesian_wrench_reconfigure'. To apply the newly selected wrench press the button 'apply_wrench'.
