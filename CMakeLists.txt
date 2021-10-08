@@ -13,13 +13,13 @@ pkg_check_modules(tinyxml2 REQUIRED tinyxml2)
 pkg_check_modules(SpaceVecAlg REQUIRED SpaceVecAlg)
 pkg_check_modules(RBDyn REQUIRED RBDyn)
 pkg_check_modules(mc_rbdyn_urdf REQUIRED mc_rbdyn_urdf)
+
 find_package(catkin REQUIRED COMPONENTS
   actionlib
   roscpp
   pluginlib
   controller_interface
   hardware_interface
-  iiwa_tools
   eigen_conversions
   std_msgs
   controller_manager
@@ -56,7 +56,7 @@ generate_dynamic_reconfigure_options(
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS actionlib roscpp pluginlib controller_interface hardware_interface iiwa_tools eigen_conversions std_msgs controller_manager tf tf_conversions actionlib actionlib_msgs trajectory_msgs control_msgs
+  CATKIN_DEPENDS actionlib roscpp pluginlib controller_interface hardware_interface eigen_conversions std_msgs controller_manager tf tf_conversions actionlib actionlib_msgs trajectory_msgs control_msgs
   DEPENDS Boost tinyxml2 SpaceVecAlg RBDyn mc_rbdyn_urdf Eigen3
   LIBRARIES ${PROJECT_NAME} ${PROJECT_NAME}_ros
 )

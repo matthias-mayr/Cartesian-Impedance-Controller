@@ -2,12 +2,13 @@
   <name>cartesian_impedance_controller</name>
   <version>1.0.0</version>
   <description>
-    A Cartesian Impedance Controller implementation
+    A Cartesian Impedance controller implementation
   </description>
-  <maintainer email="daw@mp.aau.dk">David Wuthier</maintainer>
+  <maintainer email="matthias.mayr@cs.lth.se">Matthias Mayr</maintainer>
   <license>BSD</license>
 
-  <author>David Wuthier</author>
+  <author>Matthias Mayr</author>
+  <author>Oussama Chouman</author>
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>controller_interface</build_depend>
@@ -16,7 +17,6 @@
   <build_depend>pluginlib</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>eigen</build_depend>
-  <build_depend>iiwa_tools</build_depend>
   <build_depend>eigen_conversions</build_depend>
   <build_depend>tf</build_depend>
   <build_depend>tf_conversions</build_depend>
@@ -26,7 +26,7 @@
   <build_depend>std_msgs</build_depend>
   <build_depend>trajectory_msgs</build_depend>
   <build_depend>control_msgs</build_depend>
- <!--
+  <!--
   <build_depend>dynamic_reconfigure</build_depend>
   <run_depend>dynamic_reconfigure</run_depend> 
   -->
@@ -36,7 +36,6 @@
   <run_depend>hardware_interface</run_depend>
   <run_depend>pluginlib</run_depend>
   <run_depend>roscpp</run_depend>
-  <run_depend>iiwa_tools</run_depend>
   <run_depend>eigen_conversions</run_depend>
   <run_depend>tf</run_depend>
   <run_depend>tf_conversions</run_depend>

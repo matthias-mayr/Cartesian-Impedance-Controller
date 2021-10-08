@@ -5,6 +5,56 @@ This project is an implementation of aCartesian impedance controller. It is a ty
 
 The controller has been developed using the seven degree-of-freedom (DoF) robot arm called LBR iiwa by KUKA AG. It is, however, universal and should therefore work for other seven DoF robot arms, such as the Panda by Franka Emika.
 
+## Installation
+
+### Dependencies
+We use `RBDyn` to calculate forward kinematics and the Jacobian. The below-mentioned installation steps are automated in `scripts/install_dependencies.sh`:
+
+**SpaceVecAlg**
+```bash
+cd /source/directory
+git clone --recursive https://github.com/costashatz/SpaceVecAlg.git
+cd SpaceVecAlg
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_SIMD=ON -DPYTHON_BINDING=OFF ..
+make -j
+sudo make install
+```
+
+**RBDyn**
+```
+cd /source/directory
+git clone --recursive https://github.com/costashatz/RBDyn.git
+cd RBDyn
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_SIMD=ON -DPYTHON_BINDING=OFF ..
+make -j
+sudo make install
+```
+
+
+**mc_rbdyn_urdf**
+```bash
+cd /source/directory
+git clone --recursive https://github.com/costashatz/mc_rbdyn_urdf.git
+cd mc_rbdyn_urdf
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_SIMD=ON -DPYTHON_BINDING=OFF ..
+make -j
+sudo make install
+```
+
+### Controller Usage in ROS
+For using this controller within ROS, a catkin workspace is needed:
+
+```bash
+mkdir -p catkin_ws/src
+cd catkin_ws
+catkin init
+cd src
+git clone git@git.cs.lth.se:robotlab/cartesian-impedance-controller.git
+```
+
 ## Features
 
 - Configurable stiffness values along all Cartesian dimensions

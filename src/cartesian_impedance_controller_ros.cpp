@@ -5,10 +5,7 @@ namespace cartesian_impedance_controller
 
   bool CartesianImpedanceControllerRos::get_fk(const Eigen::Matrix<double, 7, 1> &q, Eigen::Vector3d &translation, Eigen::Quaterniond &orientation)
   {
-    iiwa_tools::RobotState robot_state;
-    robot_state.position = q;
-
-    iiwa_tools::EefState ee_state = _tools.perform_fk(robot_state);
+    rbdyn_wrapper::EefState ee_state = _tools.perform_fk(q);
     translation = ee_state.translation;
     orientation = ee_state.orientation;
     return true;
@@ -16,11 +13,7 @@ namespace cartesian_impedance_controller
 
   bool CartesianImpedanceControllerRos::get_jacobian(const Eigen::Matrix<double, 7, 1> &q, const Eigen::Matrix<double, 7, 1> &dq, Eigen::Matrix<double, 6, 7> &jacobian)
   {
-    iiwa_tools::RobotState robot_state;
-    robot_state.position = q;
-    robot_state.velocity = dq;
-
-    jacobian = _tools.jacobian(robot_state);
+    jacobian = _tools.jacobian(q, dq);
     jacobian = jacobian_perm_ * jacobian;
     return true;
   }
@@ -102,7 +95,7 @@ namespace cartesian_impedance_controller
     // Initialize iiwa tools
     _tools.init_rbdyn(urdf_string, end_effector_);
     // Number of joints
-    n_joints_ = _tools.get_indices().size();
+    n_joints_ = _tools.n_joints();
     ROS_INFO_STREAM_NAMED("CartesianImpedanceControllerRos", "Number of joints found in urdf: " << n_joints_);
 
     pub_torques_.init(node_handle, "commanded_torques", 20);

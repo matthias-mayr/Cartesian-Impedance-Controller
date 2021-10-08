@@ -15,7 +15,7 @@
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include <tf_conversions/tf_eigen.h>
-#include <iiwa_tools/iiwa_tools.h>
+#include <cartesian_impedance_controller/rbdyn_wrapper.h>
 #include <actionlib/server/simple_action_server.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
 #include <std_msgs/Float64MultiArray.h>
@@ -86,8 +86,7 @@ namespace cartesian_impedance_controller
 
     //------------------------------------------------------------------------------------------------
 
-    // IIWA Tools - this is GPLv3
-    iiwa_tools::IiwaTools _tools;
+    rbdyn_wrapper _tools;
     std::string end_effector_;
     std::string robot_description_;
     unsigned int n_joints_;
