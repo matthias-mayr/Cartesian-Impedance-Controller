@@ -21,14 +21,14 @@ CartesianImpedanceController::CartesianImpedanceController(const size_t n_joints
   orientation_d_target_.coeffs() << 1., 0., 0., 0.;
 
   // Default stiffness values
-  set_stiffness(200., 200., 200., 100., 100., 100., 0.);
+  setStiffness(200., 200., 200., 100., 100., 100., 0.);
   cartesian_stiffness_ << cartesian_stiffness_target_;
   nullspace_stiffness_target_ = 0;
   nullspace_stiffness_ = 0;
   q_d_nullspace_target_.setZero();
 
   // Default damping factors
-  set_damping(1., 1., 1., 1., 1., 1., 1.);
+  setDamping(1., 1., 1., 1., 1., 1., 1.);
   cartesian_damping_ << cartesian_damping_target_;
   nullspace_damping_ = nullspace_damping_target_;
 
@@ -37,7 +37,7 @@ CartesianImpedanceController::CartesianImpedanceController(const size_t n_joints
   cartesian_wrench_target_.setZero();
 }
 
-void CartesianImpedanceController::set_stiffness(const Eigen::Matrix<double, 7, 1> &stiffness)
+void CartesianImpedanceController::setStiffness(const Eigen::Matrix<double, 7, 1> &stiffness)
 {
   for (int i = 0; i < 6; i++)
   {
@@ -50,25 +50,25 @@ void CartesianImpedanceController::set_stiffness(const Eigen::Matrix<double, 7, 
 }
 
 // Set the desired diagonal stiffnessess + nullspace stiffness
-void CartesianImpedanceController::set_stiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z,
-                                                 double n)
+void CartesianImpedanceController::setStiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z,
+                                                double n)
 {
   Eigen::Matrix<double, 7, 1> stiffness_vector(7);
   stiffness_vector << t_x, t_y, t_z, r_x, r_y, r_z, n;
-  this->set_stiffness(stiffness_vector);
+  this->setStiffness(stiffness_vector);
 }
 
 // Set the desired diagonal stiffnessess
-void CartesianImpedanceController::set_stiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z)
+void CartesianImpedanceController::setStiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z)
 {
   Eigen::Matrix<double, 7, 1> stiffness_vector(7);
   stiffness_vector << t_x, t_y, t_z, r_x, r_y, r_z, this->nullspace_stiffness_;
-  this->set_stiffness(stiffness_vector);
+  this->setStiffness(stiffness_vector);
 }
 
 // Set the desired damping factors + (TODO) nullspace damping
-void CartesianImpedanceController::set_damping(double d_x, double d_y, double d_z, double d_a, double d_b, double d_c,
-                                               double d_n)
+void CartesianImpedanceController::setDamping(double d_x, double d_y, double d_z, double d_a, double d_b, double d_c,
+                                              double d_n)
 {
   this->damping_factors_ << d_x, d_y, d_z, d_a, d_b, d_c, d_n;
   for (int i = 0; i < 6; i++)
@@ -79,23 +79,23 @@ void CartesianImpedanceController::set_damping(double d_x, double d_y, double d_
 }
 
 // Set the desired enf-effector pose
-void CartesianImpedanceController::set_desired_pose(const Eigen::Vector3d &position_d_target,
-                                                    const Eigen::Quaterniond &orientation_d_target)
+void CartesianImpedanceController::setDesiredPose(const Eigen::Vector3d &position_d_target,
+                                                  const Eigen::Quaterniond &orientation_d_target)
 {
   this->position_d_target_ << position_d_target;
   this->orientation_d_target_.coeffs() << orientation_d_target.coeffs();
 }
 
 // Set the desired nullspace configuration
-void CartesianImpedanceController::set_nullspace_config(const Eigen::VectorXd &q_d_nullspace_target)
+void CartesianImpedanceController::setNullspaceConfig(const Eigen::VectorXd &q_d_nullspace_target)
 {
   assert(q_d_nullspace_target.size() == this->n_joints_ && "Nullspace target needs to same size as n_joints_");
   this->q_d_nullspace_target_ << q_d_nullspace_target;
 }
 
 // Apply filtering on stiffness + end-effector pose. Default inactive && depends on update_frequency
-void CartesianImpedanceController::set_filtering(double update_frequency, double filter_params_stiffness,
-                                                 double filter_params_pose, double filter_params_wrench)
+void CartesianImpedanceController::setFiltering(double update_frequency, double filter_params_stiffness,
+                                                double filter_params_pose, double filter_params_wrench)
 {
   this->update_frequency_ = update_frequency;
   this->filter_params_stiffness_ = filter_params_stiffness;
@@ -103,7 +103,7 @@ void CartesianImpedanceController::set_filtering(double update_frequency, double
   this->filter_params_wrench_ = filter_params_wrench;
 }
 
-void CartesianImpedanceController::set_delta_tau_max(double d)
+void CartesianImpedanceController::setMaxTorqueDelta(double d)
 {
   if (d >= 0.0)
   {
@@ -112,28 +112,29 @@ void CartesianImpedanceController::set_delta_tau_max(double d)
 }
 
 // Apply a virtual Cartesian wrench
-void CartesianImpedanceController::apply_wrench(const Eigen::Matrix<double, 6, 1> &cartesian_wrench_target)
+void CartesianImpedanceController::applyWrench(const Eigen::Matrix<double, 6, 1> &cartesian_wrench_target)
 {
   this->cartesian_wrench_target_ = cartesian_wrench_target;
 }
 
 // Returns the desired control law
-Eigen::VectorXd CartesianImpedanceController::get_commanded_torques(const Eigen::VectorXd &q, const Eigen::VectorXd &dq,
-                                                                    const Eigen::Vector3d &position,
-                                                                    Eigen::Quaterniond orientation,
-                                                                    const Eigen::MatrixXd &jacobian)
+Eigen::VectorXd CartesianImpedanceController::calculateCommandedTorques(const Eigen::VectorXd &q,
+                                                                        const Eigen::VectorXd &dq,
+                                                                        const Eigen::Vector3d &position,
+                                                                        Eigen::Quaterniond orientation,
+                                                                        const Eigen::MatrixXd &jacobian)
 {
   // Update controller to the current robot state
-  update_states(q, dq, jacobian, position, orientation);
+  updateStates(q, dq, jacobian, position, orientation);
 
   // Updates stiffness with some filter
-  update_filtering_stiffness();
+  updateFilteredStiffness();
 
   // Updates desired position with some filter
-  update_filtering_pose();
+  updateFilteredPose();
 
   // Updates applied wrench with some filter
-  update_filtering_wrench();
+  updateFilteredWrench();
 
   // compute error to desired pose
   // position error
@@ -169,10 +170,10 @@ Eigen::VectorXd CartesianImpedanceController::get_commanded_torques(const Eigen:
   // Desired torque. Used to contain coriolis as well
   this->tau_d_ << tau_task + tau_nullspace + this->tau_ext_;
 
-  return this->saturate_torque_rate(this->tau_d_, this->tau_commanded_);
+  return this->saturateTorqueRate(this->tau_d_, this->tau_commanded_);
 }
 
-// Get the state of the robot. Updates when "get_commanded_torques" is called
+// Get the state of the robot. Updates when "calculateCommandedTorques" is called
 // void CartesianImpedanceController::get_robot_state(Eigen::Matrix<double, 7, 1> &q, Eigen::Matrix<double, 7, 1> &dq,
 //                                                    Eigen::Vector3d &position, Eigen::Quaterniond &orientation,
 //                                                    Eigen::Vector3d &position_d, Eigen::Quaterniond &orientation_d,
@@ -193,7 +194,7 @@ Eigen::VectorXd CartesianImpedanceController::get_commanded_torques(const Eigen:
 //   cartesian_damping << this->cartesian_damping_;
 // }
 
-// Get the state of the robot. Updates when "get_commanded_torques" is called
+// Get the state of the robot. Updates when "calculateCommandedTorques" is called
 // void CartesianImpedanceController::get_robot_state(Eigen::Vector3d &position_d, Eigen::Quaterniond &orientation_d,
 //                                                    Eigen::Matrix<double, 6, 6> &cartesian_stiffness,
 //                                                    double &nullspace_stiffness,
@@ -209,39 +210,39 @@ Eigen::VectorXd CartesianImpedanceController::get_commanded_torques(const Eigen:
 // }
 
 // Get the currently applied commands
-Eigen::VectorXd CartesianImpedanceController::get_last_commands() const
+Eigen::VectorXd CartesianImpedanceController::getLastCommands() const
 {
   return this->tau_commanded_;
 }
 
 // Get the currently applied Cartesian wrench
-Eigen::Matrix<double, 6, 1> CartesianImpedanceController::get_applied_wrench() const
+Eigen::Matrix<double, 6, 1> CartesianImpedanceController::getAppliedWrench() const
 {
   return this->cartesian_wrench_;
 }
 
 // Saturate the torque rate to not stress the motors
-Eigen::Matrix<double, 7, 1> CartesianImpedanceController::saturate_torque_rate(const Eigen::VectorXd &tau_d_calculated,
-                                                                               Eigen::VectorXd &tau_d_saturated) const
+Eigen::Matrix<double, 7, 1> CartesianImpedanceController::saturateTorqueRate(const Eigen::VectorXd &tau_d_calculated,
+                                                                             Eigen::VectorXd &tau_d_saturated) const
 {
   for (size_t i = 0; i < this->n_joints_; i++)
   {
     double difference = tau_d_calculated[i] - tau_d_saturated[i];
-    tau_d_saturated[i] += this->saturate(difference, -delta_tau_max_, delta_tau_max_);
+    tau_d_saturated[i] += this->saturateValue(difference, -delta_tau_max_, delta_tau_max_);
   }
   return tau_d_saturated;
 }
 
 // Saturate a variable x with the limits x_min and x_max
-double CartesianImpedanceController::saturate(double x, double x_min, double x_max) const
+double CartesianImpedanceController::saturateValue(double x, double x_min, double x_max) const
 {
   return std::min(std::max(x, x_min), x_max);
 }
 
 // Update the state of the robot
-void CartesianImpedanceController::update_states(const Eigen::VectorXd &q, const Eigen::VectorXd &dq,
-                                                 const Eigen::MatrixXd &jacobian, const Eigen::Vector3d &position,
-                                                 const Eigen::Quaterniond &orientation)
+void CartesianImpedanceController::updateStates(const Eigen::VectorXd &q, const Eigen::VectorXd &dq,
+                                                const Eigen::MatrixXd &jacobian, const Eigen::Vector3d &position,
+                                                const Eigen::Quaterniond &orientation)
 {
   this->q_ = q;
   this->dq_ = dq;
@@ -251,7 +252,7 @@ void CartesianImpedanceController::update_states(const Eigen::VectorXd &q, const
 }
 
 // Adds some filtering effect to stiffness
-void CartesianImpedanceController::update_filtering_stiffness()
+void CartesianImpedanceController::updateFilteredStiffness()
 {
   if (this->filter_params_stiffness_ == 1.0)
   {
@@ -275,7 +276,7 @@ void CartesianImpedanceController::update_filtering_stiffness()
 }
 
 // Adds some filtering effect to the end-effector pose
-void CartesianImpedanceController::update_filtering_pose()
+void CartesianImpedanceController::updateFilteredPose()
 {
   if (filter_params_pose_ == 1)
   {
@@ -290,7 +291,7 @@ void CartesianImpedanceController::update_filtering_pose()
   }
 }
 // Adds some filtering effect to the applied Cartesian wrench
-void CartesianImpedanceController::update_filtering_wrench()
+void CartesianImpedanceController::updateFilteredWrench()
 {
   double filter_params_wrench_new = this->filter_params_wrench_ * 100 / update_frequency_;
   this->cartesian_wrench_ = filter_params_wrench_new * this->cartesian_wrench_target_ +
