@@ -63,13 +63,6 @@ public:
   Eigen::Matrix<double, 6, 1> getAppliedWrench() const;
 
 private:
-  // Saturate the torque rate of the control law
-  Eigen::Matrix<double, 7, 1> saturateTorqueRate(const Eigen::VectorXd &tau_d_calculated,
-                                                 Eigen::VectorXd &tau_J_d) const;
-
-  // Saturate a variable x with the limits x_min and x_max
-  double saturateValue(double x, double x_min, double x_max) const;
-
   // Implements the damping based on a stiffness
   double dampingRule(double stiffness) const;
 

@@ -25,6 +25,22 @@ T filteredUpdate(T target, T current, double filter)
   return (1.0 - filter) * current + filter * target;
 }
 
+// Saturate a variable x with the limits x_min and x_max
+double saturateValue(double x, double x_min, double x_max)
+{
+  return std::min(std::max(x, x_min), x_max);
+}
+
+// Saturate the torque rate to not stress the motors
+void saturateTorqueRate(const Eigen::VectorXd &tau_d_calculated, Eigen::VectorXd *tau_d_saturated, double delta_tau_max)
+{
+  for (size_t i = 0; i < tau_d_calculated.size(); i++)
+  {
+    double difference = tau_d_calculated[i] - tau_d_saturated->operator()(i);
+    tau_d_saturated->operator()(i) += saturateValue(difference, -delta_tau_max, delta_tau_max);
+  }
+}
+
 CartesianImpedanceController::CartesianImpedanceController(const size_t n_joints) : n_joints_{ n_joints }
 {
   this->q_ = Eigen::VectorXd::Zero(this->n_joints_);
@@ -171,7 +187,7 @@ Eigen::VectorXd CartesianImpedanceController::calculateCommandedTorques(const Ei
 
   // Desired torque
   Eigen::VectorXd tau_d = tau_task + tau_nullspace + tau_ext;
-  this->saturateTorqueRate(tau_d, this->tau_commanded_);
+  saturateTorqueRate(tau_d, &this->tau_commanded_, this->delta_tau_max_);
   return this->tau_commanded_;
 }
 
@@ -214,24 +230,6 @@ Eigen::VectorXd CartesianImpedanceController::getLastCommands() const
 Eigen::Matrix<double, 6, 1> CartesianImpedanceController::getAppliedWrench() const
 {
   return this->cartesian_wrench_;
-}
-
-// Saturate the torque rate to not stress the motors
-Eigen::Matrix<double, 7, 1> CartesianImpedanceController::saturateTorqueRate(const Eigen::VectorXd &tau_d_calculated,
-                                                                             Eigen::VectorXd &tau_d_saturated) const
-{
-  for (size_t i = 0; i < this->n_joints_; i++)
-  {
-    double difference = tau_d_calculated[i] - tau_d_saturated[i];
-    tau_d_saturated[i] += this->saturateValue(difference, -delta_tau_max_, delta_tau_max_);
-  }
-  return tau_d_saturated;
-}
-
-// Saturate a variable x with the limits x_min and x_max
-double CartesianImpedanceController::saturateValue(double x, double x_min, double x_max) const
-{
-  return std::min(std::max(x, x_min), x_max);
 }
 
 double CartesianImpedanceController::dampingRule(double stiffness) const
