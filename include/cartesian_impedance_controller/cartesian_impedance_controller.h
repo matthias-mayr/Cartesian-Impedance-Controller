@@ -3,6 +3,8 @@
 #include <Eigen/Dense>
 #include <vector>
 
+namespace cartesian_impedance_controller
+{
 class CartesianImpedanceController
 {
 public:
@@ -132,3 +134,5 @@ private:
   Eigen::Matrix<double, 6, 1> cartesian_wrench_target_{ Eigen::Matrix<double, 6, 1>::Zero() };
   Eigen::Matrix<double, 6, 1> cartesian_wrench_{ Eigen::Matrix<double, 6, 1>::Zero() };
 };
+
+}  // namespace cartesian_impedance_controller

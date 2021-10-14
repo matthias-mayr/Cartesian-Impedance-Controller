@@ -5,6 +5,8 @@
 #include <Eigen/LU>
 #include <Eigen/SVD>
 
+namespace cartesian_impedance_controller
+{
 Eigen::Vector3d calculateOrientationError(const Eigen::Quaterniond &orientation_d, Eigen::Quaterniond *orientation)
 {
   // Orientation error
@@ -304,3 +306,5 @@ void CartesianImpedanceController::updateFilteredWrench()
   double step = this->filter_params_wrench_ / this->update_frequency_;
   this->cartesian_wrench_ = filteredUpdate(this->cartesian_wrench_target_, this->cartesian_wrench_, step);
 }
+
+}  // namespace cartesian_impedance_controller
