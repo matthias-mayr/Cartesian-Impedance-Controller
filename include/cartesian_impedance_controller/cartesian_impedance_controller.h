@@ -104,17 +104,17 @@ private:
   Eigen::MatrixXd jacobian_;
 
   // End effector control parameters
-  Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
+  Eigen::Matrix<double, 6, 6> cartesian_stiffness_{ Eigen::Matrix<double, 6, 6>::Identity() };
   Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_{ Eigen::Matrix<double, 6, 6>::Identity() };
   Eigen::Matrix<double, 6, 6> cartesian_damping_{ Eigen::Matrix<double, 6, 6>::Identity() };
   Eigen::Matrix<double, 6, 6> cartesian_damping_target_{ Eigen::Matrix<double, 6, 6>::Identity() };
   Eigen::Matrix<double, 7, 1> damping_factors_{ Eigen::Matrix<double, 7, 1>::Ones() };
 
   // Nullspace control
-  double nullspace_stiffness_{ 0.0 };
-  double nullspace_stiffness_target_{ 0.0 };
   Eigen::VectorXd q_d_nullspace_;
   Eigen::VectorXd q_d_nullspace_target_;
+  double nullspace_stiffness_{ 0.0 };
+  double nullspace_stiffness_target_{ 0.0 };
   double nullspace_damping_{ 0.0 };
   double nullspace_damping_target_{ 0.0 };
 
