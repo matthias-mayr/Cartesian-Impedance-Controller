@@ -92,31 +92,31 @@ target_include_directories(${PROJECT_NAME} PUBLIC include ${catkin_INCLUDE_DIRS}
 target_link_libraries(${PROJECT_NAME} PUBLIC ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${SpaceVecAlg_LIBRARIES} ${RBDyn_LIBRARIES} ${mc_rbdyn_urdf_LIBRARIES} ${Eigen3_LIBRARIES})
 
 # ROS Integration
-# add_library(${PROJECT_NAME}_ros src/cartesian_impedance_controller_ros.cpp)
-# add_dependencies(
-#   ${PROJECT_NAME}_ros
-#   ${${PROJECT_NAME}_ros_EXPORTED_TARGETS}
-#   ${catkin_EXPORTED_TARGETS}
-#   ${PROJECT_NAME}_gencfg
-# )
-# # Yes, this is necessary. Otherwise the control plugin crashes.
-# if(ENABLE_SIMD)
-#   if(CMAKE_COMPILER_IS_GNUCXX)
-#     execute_process(
-#       COMMAND ${CMAKE_CXX_COMPILER} -dumpfullversion -dumpversion OUTPUT_VARIABLE GCC_VERSION)
-#     set(CXX_COMPILER_VERSION ${GCC_VERSION})
-#     target_compile_options(${PROJECT_NAME}_ros PUBLIC -march=native)
-#     if(GCC_VERSION VERSION_GREATER 7.0)
-#       target_compile_options(${PROJECT_NAME}_ros PUBLIC -faligned-new)
-#     endif()
-#   elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-#     target_compile_options(${PROJECT_NAME}_ros PUBLIC -march=native -faligned-new)
-#   endif()
-# endif()
+add_library(${PROJECT_NAME}_ros src/cartesian_impedance_controller_ros.cpp)
+add_dependencies(
+  ${PROJECT_NAME}_ros
+  ${${PROJECT_NAME}_ros_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+  ${PROJECT_NAME}_gencfg
+)
+# Yes, this is necessary. Otherwise the control plugin crashes.
+if(ENABLE_SIMD)
+  if(CMAKE_COMPILER_IS_GNUCXX)
+    execute_process(
+      COMMAND ${CMAKE_CXX_COMPILER} -dumpfullversion -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+    set(CXX_COMPILER_VERSION ${GCC_VERSION})
+    target_compile_options(${PROJECT_NAME}_ros PUBLIC -march=native)
+    if(GCC_VERSION VERSION_GREATER 7.0)
+      target_compile_options(${PROJECT_NAME}_ros PUBLIC -faligned-new)
+    endif()
+  elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+    target_compile_options(${PROJECT_NAME}_ros PUBLIC -march=native -faligned-new)
+  endif()
+endif()
 
-# target_compile_options(${PROJECT_NAME}_ros PUBLIC -std=c++14)
-# target_include_directories(${PROJECT_NAME}_ros PUBLIC include ${catkin_INCLUDE_DIRS} ${Eigen3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${tinyxml2_INCLUDE_DIRS} ${SpaceVecAlg_INCLUDE_DIRS} ${RBDyn_INCLUDE_DIRS} ${mc_rbdyn_urdf_INCLUDE_DIRS})
-# target_link_libraries(${PROJECT_NAME}_ros PUBLIC ${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${tinyxml2_LIBRARIES} ${SpaceVecAlg_LIBRARIES} ${RBDyn_LIBRARIES} ${mc_rbdyn_urdf_LIBRARIES} ${Eigen3_LIBRARIES})
+target_compile_options(${PROJECT_NAME}_ros PUBLIC -std=c++14)
+target_include_directories(${PROJECT_NAME}_ros PUBLIC include ${catkin_INCLUDE_DIRS} ${Eigen3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${tinyxml2_INCLUDE_DIRS} ${SpaceVecAlg_INCLUDE_DIRS} ${RBDyn_INCLUDE_DIRS} ${mc_rbdyn_urdf_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME}_ros PUBLIC ${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${tinyxml2_LIBRARIES} ${SpaceVecAlg_LIBRARIES} ${RBDyn_LIBRARIES} ${mc_rbdyn_urdf_LIBRARIES} ${Eigen3_LIBRARIES})
 
 
 ## Install project namespaced headers

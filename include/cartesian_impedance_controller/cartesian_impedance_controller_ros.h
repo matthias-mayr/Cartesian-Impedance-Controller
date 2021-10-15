@@ -38,8 +38,7 @@
 namespace cartesian_impedance_controller
 {
 class CartesianImpedanceControllerRos
-  : public controller_interface::Controller<hardware_interface::EffortJointInterface>,
-    public CartesianImpedanceController
+  : public controller_interface::Controller<hardware_interface::EffortJointInterface>
 {
 public:
   bool init(hardware_interface::EffortJointInterface *hw, ros::NodeHandle &node_handle) override;
@@ -48,9 +47,8 @@ public:
 
 private:
   CartesianImpedanceController base_tools;
-  bool get_fk(const Eigen::Matrix<double, 7, 1> &q, Eigen::Vector3d &translation, Eigen::Quaterniond &rotation);
-  bool get_jacobian(const Eigen::Matrix<double, 7, 1> &q, const Eigen::Matrix<double, 7, 1> &dq,
-                    Eigen::Matrix<double, 6, 7> &jacobian);
+  bool get_fk(const Eigen::VectorXd &q, Eigen::Vector3d &translation, Eigen::Quaterniond &rotation);
+  bool get_jacobian(const Eigen::VectorXd &q, const Eigen::VectorXd &dq, Eigen::MatrixXd &jacobian);
 
   std::vector<hardware_interface::JointHandle> joint_handles_;
   double delta_tau_max_{ 5 };
@@ -58,8 +56,8 @@ private:
   Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
   Eigen::Matrix<double, 6, 6> cartesian_damping_;
   double nullspace_stiffness_;
-  Eigen::Matrix<double, 7, 1> q_d_nullspace_;
-  Eigen::Matrix<double, 7, 1> tau_J_d_;
+  Eigen::VectorXd q_d_nullspace_;
+  Eigen::VectorXd tau_J_d_;
   Eigen::Vector3d position_d_;
   Eigen::Quaterniond orientation_d_;
 
@@ -89,11 +87,10 @@ private:
   // publish data to export using another thread;
   double time_at_start_;
   ros::Publisher pub_data_export_;
-  void publish_data(Eigen::Matrix<double, 7, 1> q, Eigen::Matrix<double, 7, 1> dq, Eigen::Vector3d position,
-                    Eigen::Quaterniond orientation, Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_,
-                    Eigen::VectorXd tau_d, Eigen::Matrix<double, 6, 6> cartesian_stiffness_,
-                    double nullspace_stiffness_, Eigen::Matrix<double, 6, 1> error, Eigen::Matrix<double, 6, 1> F,
-                    double cartesian_velocity);
+  void publish_data(Eigen::VectorXd q, Eigen::VectorXd dq, Eigen::Vector3d position, Eigen::Quaterniond orientation,
+                    Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d,
+                    Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_,
+                    Eigen::Matrix<double, 6, 1> error, Eigen::Matrix<double, 6, 1> F, double cartesian_velocity);
 
   //------------------------------------------------------------------------------------------------
 
