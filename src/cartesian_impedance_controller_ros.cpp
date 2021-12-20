@@ -171,8 +171,8 @@ bool CartesianImpedanceControllerRos::get_jacobian(const Eigen::VectorXd &q, con
   {
     // set x_attractor and q_d_nullspace
     ROS_INFO("Starting Cartesian Impedance Controller");
-  Eigen::VectorXd q_initial;
-  Eigen::VectorXd dq_initial;
+  Eigen::VectorXd q_initial(joint_handles_.size());
+  Eigen::VectorXd dq_initial(joint_handles_.size());
   for (size_t i = 0; i < joint_handles_.size(); ++i)
     {
       q_initial[i] = joint_handles_[i].getPosition();
@@ -200,10 +200,8 @@ void CartesianImpedanceControllerRos::update(const ros::Time & /*time*/, const r
     {
       trajectoryUpdate();
     }
-  Eigen::VectorXd q;
-  Eigen::VectorXd dq;
-  Eigen::VectorXd q_interface;
-  Eigen::VectorXd dq_interface;
+  Eigen::VectorXd q(joint_handles_.size());
+  Eigen::VectorXd dq(joint_handles_.size());
 
   for (size_t i = 0; i < joint_handles_.size(); ++i)
     {
