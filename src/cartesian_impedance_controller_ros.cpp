@@ -108,21 +108,17 @@ namespace cartesian_impedance_controller
     //DYNAMIC RECONFIGURE
     //-------------------------------------------------------------------------------------------------------------------------------------
     // Change stiffness
-    dynamic_reconfigure_compliance_param_node_ = ros::NodeHandle("stiffness_reconfigure");
-    dynamic_server_compliance_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>>(dynamic_reconfigure_compliance_param_node_);
+    dynamic_server_compliance_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>>(ros::NodeHandle(std::string(node_handle.getNamespace() + "/stiffness_reconfigure")));
     dynamic_server_compliance_param_->setCallback(
         boost::bind(&CartesianImpedanceControllerRos::dynamicConfigCallback, this, _1, _2));
 
     //Change damping factors
-    dynamic_reconfigure_damping_param_node_ = ros::NodeHandle("damping_factors_reconfigure");
-    dynamic_server_damping_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::damping_configConfig>>(dynamic_reconfigure_damping_param_node_);
+    dynamic_server_damping_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::damping_configConfig>>(ros::NodeHandle(std::string(node_handle.getNamespace() + "/damping_factors_reconfigure")));
     dynamic_server_damping_param_->setCallback(
         boost::bind(&CartesianImpedanceControllerRos::dynamicDampingCallback, this, _1, _2));
 
-
     // Apply Cartesian wrench
-    dynamic_reconfigure_wrench_param_node_ = ros::NodeHandle("cartesian_wrench_reconfigure");
-    dynamic_server_wrench_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::wrench_configConfig>>(dynamic_reconfigure_wrench_param_node_);
+    dynamic_server_wrench_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::wrench_configConfig>>(ros::NodeHandle(std::string(node_handle.getNamespace() + "/cartesian_wrench_reconfigure")));
     dynamic_server_wrench_param_->setCallback(
         boost::bind(&CartesianImpedanceControllerRos::dynamicWrenchCallback, this, _1, _2));
     //-------------------------------------------------------------------------------------------------------------------------------------
