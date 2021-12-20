@@ -45,8 +45,8 @@
 
 namespace cartesian_impedance_controller
 {
-class CartesianImpedanceControllerRos
-  : public controller_interface::Controller<hardware_interface::EffortJointInterface>
+  class CartesianImpedanceControllerRos
+      : public controller_interface::Controller<hardware_interface::EffortJointInterface>
   {
 
   public:
@@ -55,10 +55,9 @@ class CartesianImpedanceControllerRos
     void update(const ros::Time &, const ros::Duration &period) override;
 
   private:
-   
     CartesianImpedanceController base_tools;
-  bool get_fk(const Eigen::VectorXd &q, Eigen::Vector3d &translation, Eigen::Quaterniond &rotation);
-  bool get_jacobian(const Eigen::VectorXd &q, const Eigen::VectorXd &dq, Eigen::MatrixXd &jacobian);
+    bool get_fk(const Eigen::VectorXd &q, Eigen::Vector3d &translation, Eigen::Quaterniond &rotation);
+    bool get_jacobian(const Eigen::VectorXd &q, const Eigen::VectorXd &dq, Eigen::MatrixXd &jacobian);
 
     std::vector<hardware_interface::JointHandle> joint_handles_;
     double delta_tau_max_{5};
@@ -66,8 +65,8 @@ class CartesianImpedanceControllerRos
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
     Eigen::Matrix<double, 6, 6> cartesian_damping_;
     double nullspace_stiffness_;
-  Eigen::VectorXd q_d_nullspace_;
-  Eigen::VectorXd tau_J_d_;
+    Eigen::VectorXd q_d_nullspace_;
+    Eigen::VectorXd tau_J_d_;
     Eigen::Vector3d position_d_;
     Eigen::Quaterniond orientation_d_;
 
@@ -89,7 +88,7 @@ class CartesianImpedanceControllerRos
     std::string from_frame_wrench_;
     std::string to_frame_wrench_;
     void transform_wrench(Eigen::Matrix<double, 6, 1> &cartesian_wrench, std::string from_frame, std::string to_frame);
-   
+
     // the  trajectory generator
     ros::Subscriber sub_desired_pose;
     void ee_pose_Callback(const geometry_msgs::PoseStampedConstPtr &msg);
@@ -97,10 +96,10 @@ class CartesianImpedanceControllerRos
     // publish data to export using another thread;
     double time_at_start_;
     ros::Publisher pub_data_export_;
-  void publish_data(Eigen::VectorXd q, Eigen::VectorXd dq, Eigen::Vector3d position, Eigen::Quaterniond orientation,
-                    Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d,
-                    Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_,
-                    Eigen::Matrix<double, 6, 1> error, Eigen::Matrix<double, 6, 1> F, double cartesian_velocity);
+    void publish_data(Eigen::VectorXd q, Eigen::VectorXd dq, Eigen::Vector3d position, Eigen::Quaterniond orientation,
+                      Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d,
+                      Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_,
+                      Eigen::Matrix<double, 6, 1> error, Eigen::Matrix<double, 6, 1> F, double cartesian_velocity);
 
     //------------------------------------------------------------------------------------------------
 
@@ -155,7 +154,7 @@ class CartesianImpedanceControllerRos
     tf::Vector3 tf_pos_;
     tf::Quaternion tf_rot_;
   };
-PLUGINLIB_EXPORT_CLASS(cartesian_impedance_controller::CartesianImpedanceControllerRos,
-                       controller_interface::ControllerBase);
+  PLUGINLIB_EXPORT_CLASS(cartesian_impedance_controller::CartesianImpedanceControllerRos,
+                         controller_interface::ControllerBase);
 
-}  // namespace cartesian_impedance_controller
+} // namespace cartesian_impedance_controller
