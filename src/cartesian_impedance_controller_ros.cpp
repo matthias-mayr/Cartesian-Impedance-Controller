@@ -5,7 +5,17 @@ namespace cartesian_impedance_controller
 
   bool CartesianImpedanceControllerRos::get_fk(const Eigen::Matrix<double, 7, 1> &q, Eigen::Vector3d &translation, Eigen::Quaterniond &orientation)
   {
-    rbdyn_wrapper::EefState ee_state = _tools.perform_fk(q);
+    rbdyn_wrapper::EefState ee_state;
+    if (this->_tools.n_joints() != this->n_joints_)
+    {
+      Eigen::VectorXd q_rb = Eigen::VectorXd::Zero(this->_tools.n_joints());
+      q_rb.head(q.size()) = q;
+      ee_state = this->_tools.perform_fk(q_rb);
+    }
+    else
+    {
+      ee_state = this->_tools.perform_fk(q);
+    }
     translation = ee_state.translation;
     orientation = ee_state.orientation;
     return true;
@@ -13,7 +23,18 @@ namespace cartesian_impedance_controller
 
   bool CartesianImpedanceControllerRos::get_jacobian(const Eigen::Matrix<double, 7, 1> &q, const Eigen::Matrix<double, 7, 1> &dq, Eigen::Matrix<double, 6, 7> &jacobian)
   {
-    jacobian = _tools.jacobian(q, dq);
+    if (this->_tools.n_joints() != this->n_joints_)
+    {
+      Eigen::VectorXd q_rb = Eigen::VectorXd::Zero(this->_tools.n_joints());
+      q_rb.head(q.size()) = q;
+      Eigen::VectorXd dq_rb = Eigen::VectorXd::Zero(this->_tools.n_joints());
+      dq_rb.head(dq.size()) = dq;
+      jacobian = this->_tools.jacobian(q_rb, dq_rb);
+    }
+    else
+    {
+      jacobian = this->_tools.jacobian(q, dq);
+    }
     jacobian = jacobian_perm_ * jacobian;
     return true;
   }
@@ -63,7 +84,7 @@ namespace cartesian_impedance_controller
           "aborting controller init!");
       return false;
     }
-    for (size_t i = 0; i < 7; ++i)
+    for (size_t i = 0; i < this->n_joints_; ++i)
     {
       try
       {
@@ -94,9 +115,11 @@ namespace cartesian_impedance_controller
 
     // Initialize iiwa tools
     _tools.init_rbdyn(urdf_string, end_effector_);
-    // Number of joints
-    n_joints_ = _tools.n_joints();
-    ROS_INFO_STREAM_NAMED("CartesianImpedanceControllerRos", "Number of joints found in urdf: " << n_joints_);
+    if (this->_tools.n_joints() < this->n_joints_)
+    {
+      ROS_FATAL("Number of joints in the URDF is smaller than supplied number of joints. %i < %i", this->_tools.n_joints(), this->n_joints_);
+    }
+    ROS_INFO_STREAM_NAMED("CartesianImpedanceControllerRos", "Number of joints found in urdf: " << this->_tools.n_joints());
 
     pub_torques_.init(node_handle, "commanded_torques", 20);
     pub_torques_.msg_.layout.dim.resize(1);

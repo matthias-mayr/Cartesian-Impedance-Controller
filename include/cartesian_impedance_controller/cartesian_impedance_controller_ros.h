@@ -89,7 +89,7 @@ namespace cartesian_impedance_controller
     rbdyn_wrapper _tools;
     std::string end_effector_;
     std::string robot_description_;
-    unsigned int n_joints_;
+    unsigned int n_joints_ {7};
     // The Jacobian of RBDyn comes with orientation in the first three lines. Needs to be interchanged.
     Eigen::VectorXi perm_indices_;
     Eigen::PermutationMatrix<Eigen::Dynamic, 6> jacobian_perm_;
