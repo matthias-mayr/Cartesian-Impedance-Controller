@@ -54,18 +54,18 @@ namespace cartesian_impedance_controller
     perm_indices_ << 3, 4, 5, 0, 1, 2;
     jacobian_perm_ = Eigen::PermutationMatrix<Eigen::Dynamic, 6>(perm_indices_);
 
-    as_ = std::unique_ptr<actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>>(
+    traj_as_ = std::unique_ptr<actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>>(
         new actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>(
             node_handle, std::string("follow_joint_trajectory"), false));
-    as_->registerGoalCallback(boost::bind(&CartesianImpedanceControllerRos::goalCallback, this));
-    as_->registerPreemptCallback(boost::bind(&CartesianImpedanceControllerRos::preemptCallback, this));
-    as_->start();
+    traj_as_->registerGoalCallback(boost::bind(&CartesianImpedanceControllerRos::trajGoalCb, this));
+    traj_as_->registerPreemptCallback(boost::bind(&CartesianImpedanceControllerRos::trajPreemptCb, this));
+    traj_as_->start();
 
     // Set desired poses through this topic
     sub_reference_pose_ = node_handle.subscribe("target_pose", 1, &CartesianImpedanceControllerRos::referencePoseCb, this);
 
     //set cartesian stiffness values through this topic
-    sub_cart_impedance_config_ =
+    sub_impedance_config_ =
         node_handle.subscribe("set_stiffness", 1, &CartesianImpedanceControllerRos::impedanceControlCb, this);
     sub_cart_stiffness_ = node_handle.subscribe("set_cartesian_stiffness", 1,
                                                 &CartesianImpedanceControllerRos::stiffnessCb, this);
@@ -82,10 +82,7 @@ namespace cartesian_impedance_controller
     node_handle.param<std::string>("from_frame_wrench", from_frame_wrench_, "world");
     node_handle.param<std::string>("to_frame_wrench", to_frame_wrench_, "bh_link_ee");
 
-    sub_trajectory_ = node_handle.subscribe("command", 1, &CartesianImpedanceControllerRos::trajectoryCallback, this);
-    sub_equilibrium_pose_ =
-        node_handle.subscribe("equilibrium_pose", 20, &CartesianImpedanceControllerRos::equilibriumPoseCallback, this,
-                              ros::TransportHints().reliable().tcpNoDelay());
+    sub_trajectory_ = node_handle.subscribe("command", 1, &CartesianImpedanceControllerRos::trajCb, this);
 
     // Get JointHandles
     std::vector<std::string> joint_names;
@@ -197,7 +194,7 @@ namespace cartesian_impedance_controller
   {
     if (traj_running_)
     {
-      trajectoryUpdate();
+      trajUpdate();
     }
     Eigen::VectorXd q(joint_handles_.size());
     Eigen::VectorXd dq(joint_handles_.size());
@@ -390,7 +387,7 @@ namespace cartesian_impedance_controller
   }
 
   //------------------------------------------------------------------------------------------------------
-  void CartesianImpedanceControllerRos::trajectoryStart(const trajectory_msgs::JointTrajectory &trajectory)
+  void CartesianImpedanceControllerRos::trajStart(const trajectory_msgs::JointTrajectory &trajectory)
   {
     traj_duration_ = trajectory.points[trajectory.points.size() - 1].time_from_start;
     ROS_INFO_STREAM("Got a new trajectory with " << trajectory.points.size() << " points that takes " << traj_duration_
@@ -399,10 +396,10 @@ namespace cartesian_impedance_controller
     traj_running_ = true;
     traj_start_ = ros::Time::now();
     traj_index_ = 0;
-    trajectoryUpdate();
+    trajUpdate();
   }
 
-  void CartesianImpedanceControllerRos::trajectoryUpdate()
+  void CartesianImpedanceControllerRos::trajUpdate()
   {
     if (ros::Time::now() > (traj_start_ + trajectory_.points[traj_index_].time_from_start))
     {
@@ -424,9 +421,9 @@ namespace cartesian_impedance_controller
     if (ros::Time::now() > (traj_start_ + traj_duration_))
     {
       ROS_INFO_STREAM("Finished executing trajectory.");
-      if (as_->isActive())
+      if (traj_as_->isActive())
       {
-        as_->setSucceeded();
+        traj_as_->setSucceeded();
       }
       traj_running_ = false;
       return;
@@ -514,22 +511,22 @@ namespace cartesian_impedance_controller
     }
   }
 
-  void CartesianImpedanceControllerRos::goalCallback()
+  void CartesianImpedanceControllerRos::trajGoalCb()
   {
-    goal_ = as_->acceptNewGoal();
+    traj_goal_ = traj_as_->acceptNewGoal();
     ROS_INFO("Accepted new goal");
-    trajectoryStart(goal_->trajectory);
+    trajStart(traj_goal_->trajectory);
   }
 
-  void CartesianImpedanceControllerRos::preemptCallback()
+  void CartesianImpedanceControllerRos::trajPreemptCb()
   {
     ROS_INFO("Actionserver got preempted.");
   }
 
-  void CartesianImpedanceControllerRos::trajectoryCallback(const trajectory_msgs::JointTrajectoryConstPtr &msg)
+  void CartesianImpedanceControllerRos::trajCb(const trajectory_msgs::JointTrajectoryConstPtr &msg)
   {
     ROS_INFO("Got trajectory msg");
-    trajectoryStart(*msg);
+    trajStart(*msg);
   }
   //Dynamic reconfigure
   //--------------------------------------------------------------------------------------------------------------------------------------
@@ -583,20 +580,6 @@ namespace cartesian_impedance_controller
       transformWrench(F, from_frame_wrench_, to_frame_wrench_);
       base_tools_.applyWrench(F);
     }
-  }
-
-  //--------------------------------------------------------------------------------------------------------------------------------------
-  void CartesianImpedanceControllerRos::equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr &msg)
-  {
-    position_d_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
-    Eigen::Quaterniond last_orientation_d_target(orientation_d_);
-    orientation_d_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z,
-        msg->pose.orientation.w;
-    if (last_orientation_d_target.coeffs().dot(orientation_d_.coeffs()) < 0.0)
-    {
-      orientation_d_.coeffs() << -orientation_d_.coeffs();
-    }
-    base_tools_.setDesiredPose(position_d_, orientation_d_);
   }
 
   void CartesianImpedanceControllerRos::publish()

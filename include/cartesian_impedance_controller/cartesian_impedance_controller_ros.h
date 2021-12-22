@@ -59,7 +59,34 @@ namespace cartesian_impedance_controller
     bool getFk(const Eigen::VectorXd &q, Eigen::Vector3d &translation, Eigen::Quaterniond &rotation);
     bool getJacobian(const Eigen::VectorXd &q, const Eigen::VectorXd &dq, Eigen::MatrixXd &jacobian);
 
+    void dampingCb(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
+    void impedanceControlCb(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
+    void stiffnessCb(const geometry_msgs::WrenchStampedConstPtr &msg);
+    void wrenchCommandCb(const geometry_msgs::WrenchStampedConstPtr &msg);
+    void referencePoseCb(const geometry_msgs::PoseStampedConstPtr &msg);
+
+    void transformWrench(Eigen::Matrix<double, 6, 1> &cartesian_wrench, std::string from_frame, std::string to_frame);
+    void publishData(Eigen::VectorXd q, Eigen::VectorXd dq, Eigen::Vector3d position, Eigen::Quaterniond orientation,
+                     Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d,
+                     Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_,
+                     Eigen::Matrix<double, 6, 1> error, Eigen::Matrix<double, 6, 1> F, double cartesian_velocity);
+    void publish();
+
+    void dynamicConfigCb(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level);
+    void dynamicDampingCb(cartesian_impedance_controller::damping_configConfig &config, uint32_t level);
+    void dynamicWrenchCb(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level);
+
+    void trajGoalCb();
+    void trajPreemptCb();
+    void trajStart(const trajectory_msgs::JointTrajectory &trajectory);
+    void trajUpdate();
+    void trajCb(const trajectory_msgs::JointTrajectoryConstPtr &msg);
+
     std::vector<hardware_interface::JointHandle> joint_handles_;
+    rbdyn_wrapper rbdyn_wrapper_;
+    unsigned int n_joints_;
+    std::string end_effector_;
+    std::string robot_description_;
     double delta_tau_max_{5};
 
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
@@ -70,43 +97,21 @@ namespace cartesian_impedance_controller
     Eigen::Vector3d position_d_;
     Eigen::Quaterniond orientation_d_;
 
-    //Apply stiffness through this topic
-    ros::Subscriber sub_cart_impedance_config_;
-    void impedanceControlCb(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
     ros::Subscriber sub_cart_stiffness_;
-    void stiffnessCb(const geometry_msgs::WrenchStampedConstPtr &msg);
-
-    // Apply damping through this topic
-    ros::Subscriber sub_damping_;
-    void dampingCb(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
-
-    //Apply cartesian wrenches through this topic
     ros::Subscriber sub_cart_wrench_;
-    void wrenchCommandCb(const geometry_msgs::WrenchStampedConstPtr &msg);
+    ros::Subscriber sub_damping_;
+    ros::Subscriber sub_impedance_config_;
+    ros::Subscriber sub_reference_pose_;
+    ros::Publisher pub_data_export_;
+
     tf::TransformListener tf_listener_;
     tf::StampedTransform transform_;
     std::string from_frame_wrench_;
     std::string to_frame_wrench_;
-    void transformWrench(Eigen::Matrix<double, 6, 1> &cartesian_wrench, std::string from_frame, std::string to_frame);
-
-    // the trajectory generator
-    ros::Subscriber sub_reference_pose_;
-    void referencePoseCb(const geometry_msgs::PoseStampedConstPtr &msg);
 
     // publish data to export using another thread;
     double time_at_start_;
-    ros::Publisher pub_data_export_;
-    void publishData(Eigen::VectorXd q, Eigen::VectorXd dq, Eigen::Vector3d position, Eigen::Quaterniond orientation,
-                     Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d,
-                     Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_,
-                     Eigen::Matrix<double, 6, 1> error, Eigen::Matrix<double, 6, 1> F, double cartesian_velocity);
 
-    //------------------------------------------------------------------------------------------------
-
-    rbdyn_wrapper rbdyn_wrapper_;
-    std::string end_effector_;
-    std::string robot_description_;
-    unsigned int n_joints_;
     // The Jacobian of RBDyn comes with orientation in the first three lines. Needs to be interchanged.
     Eigen::VectorXi perm_indices_;
     Eigen::PermutationMatrix<Eigen::Dynamic, 6> jacobian_perm_;
@@ -114,37 +119,20 @@ namespace cartesian_impedance_controller
     // Dynamic reconfigure
     std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>>
         dynamic_server_compliance_param_;
-    void dynamicConfigCb(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level);
-
     std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::damping_configConfig>>
         dynamic_server_damping_param_;
-    void dynamicDampingCb(cartesian_impedance_controller::damping_configConfig &config, uint32_t level);
-
     std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::wrench_configConfig>>
         dynamic_server_wrench_param_;
-    void dynamicWrenchCb(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level);
 
     // Trajectory handling
-    std::unique_ptr<actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>> as_;
-    void goalCallback();
-    void preemptCallback();
-    boost::shared_ptr<const control_msgs::FollowJointTrajectoryGoal> goal_;
+    ros::Subscriber sub_trajectory_;
+    std::unique_ptr<actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>> traj_as_;
+    boost::shared_ptr<const control_msgs::FollowJointTrajectoryGoal> traj_goal_;
     trajectory_msgs::JointTrajectory trajectory_;
     ros::Time traj_start_;
     ros::Duration traj_duration_;
     unsigned int traj_index_{0};
     bool traj_running_{false};
-    void trajectoryStart(const trajectory_msgs::JointTrajectory &trajectory);
-    void trajectoryUpdate();
-
-    ros::Subscriber sub_trajectory_;
-    void trajectoryCallback(const trajectory_msgs::JointTrajectoryConstPtr &msg);
-
-    // Equilibrium pose subscriber
-    ros::Subscriber sub_equilibrium_pose_;
-    void equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr &msg);
-
-    void publish();
 
     // for debugging
     bool verbose_{false};
