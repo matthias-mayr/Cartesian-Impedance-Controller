@@ -55,15 +55,14 @@ namespace cartesian_impedance_controller
     void update(const ros::Time &, const ros::Duration &period) override;
 
   private:
-    CartesianImpedanceController base_tools_;
-    bool getFk(const Eigen::VectorXd &q, Eigen::Vector3d &translation, Eigen::Quaterniond &rotation);
+    bool getFk(const Eigen::VectorXd &q, Eigen::Vector3d &position, Eigen::Quaterniond &rotation);
     bool getJacobian(const Eigen::VectorXd &q, const Eigen::VectorXd &dq, Eigen::MatrixXd &jacobian);
 
     void dampingCb(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
     void impedanceControlCb(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
+    void referencePoseCb(const geometry_msgs::PoseStampedConstPtr &msg);
     void stiffnessCb(const geometry_msgs::WrenchStampedConstPtr &msg);
     void wrenchCommandCb(const geometry_msgs::WrenchStampedConstPtr &msg);
-    void referencePoseCb(const geometry_msgs::PoseStampedConstPtr &msg);
 
     void transformWrench(Eigen::Matrix<double, 6, 1> &cartesian_wrench, std::string from_frame, std::string to_frame);
     void publishData(Eigen::VectorXd q, Eigen::VectorXd dq, Eigen::Vector3d position, Eigen::Quaterniond orientation,
@@ -81,6 +80,8 @@ namespace cartesian_impedance_controller
     void trajStart(const trajectory_msgs::JointTrajectory &trajectory);
     void trajUpdate();
     void trajCb(const trajectory_msgs::JointTrajectoryConstPtr &msg);
+
+    CartesianImpedanceController base_tools_;
 
     std::vector<hardware_interface::JointHandle> joint_handles_;
     rbdyn_wrapper rbdyn_wrapper_;
