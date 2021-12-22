@@ -55,7 +55,7 @@ namespace cartesian_impedance_controller
     void update(const ros::Time &, const ros::Duration &period) override;
 
   private:
-    CartesianImpedanceController base_tools;
+    CartesianImpedanceController base_tools_;
     bool getFk(const Eigen::VectorXd &q, Eigen::Vector3d &translation, Eigen::Quaterniond &rotation);
     bool getJacobian(const Eigen::VectorXd &q, const Eigen::VectorXd &dq, Eigen::MatrixXd &jacobian);
 
@@ -71,17 +71,17 @@ namespace cartesian_impedance_controller
     Eigen::Quaterniond orientation_d_;
 
     //Apply stiffness through this topic
-    ros::Subscriber sub_CartesianImpedanceParams;
+    ros::Subscriber sub_cart_impedance_config_;
     void impedanceControlCb(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
-    ros::Subscriber sub_CartesianStiffness;
+    ros::Subscriber sub_cart_stiffness_;
     void stiffnessCb(const geometry_msgs::WrenchStampedConstPtr &msg);
 
     // Apply damping through this topic
-    ros::Subscriber sub_DampingParams;
+    ros::Subscriber sub_damping_;
     void dampingCb(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
 
     //Apply cartesian wrenches through this topic
-    ros::Subscriber sub_CartesianWrench;
+    ros::Subscriber sub_cart_wrench_;
     void wrenchCommandCb(const geometry_msgs::WrenchStampedConstPtr &msg);
     tf::TransformListener tf_listener_;
     tf::StampedTransform transform_;
@@ -90,7 +90,7 @@ namespace cartesian_impedance_controller
     void transformWrench(Eigen::Matrix<double, 6, 1> &cartesian_wrench, std::string from_frame, std::string to_frame);
 
     // the trajectory generator
-    ros::Subscriber sub_desired_pose;
+    ros::Subscriber sub_reference_pose_;
     void referencePoseCb(const geometry_msgs::PoseStampedConstPtr &msg);
 
     // publish data to export using another thread;
@@ -103,7 +103,7 @@ namespace cartesian_impedance_controller
 
     //------------------------------------------------------------------------------------------------
 
-    rbdyn_wrapper _tools;
+    rbdyn_wrapper rbdyn_wrapper_;
     std::string end_effector_;
     std::string robot_description_;
     unsigned int n_joints_;
