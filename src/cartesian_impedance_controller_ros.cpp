@@ -193,33 +193,6 @@ namespace cartesian_impedance_controller
       joint_handles_[i].setCommand(this->tau_J_d_(i));
     }
 
-    if (verbose_)
-    {
-      tf::vectorEigenToTF(Eigen::Vector3d(base_tools_->getPoseError().head(3)), tf_pos_);
-      tf_br_transform_.setOrigin(tf_pos_);
-
-      tf::vectorEigenToTF(position_, tf_pos_);
-      ROS_INFO_STREAM_THROTTLE(0.1, "\nCARTESIAN POSITION:\n"
-                                        << position_);
-      tf_br_transform_.setOrigin(tf_pos_);
-      tf::quaternionEigenToTF(orientation_, tf_rot_);
-      tf_br_transform_.setRotation(tf_rot_);
-      tf_br_.sendTransform(tf::StampedTransform(tf_br_transform_, ros::Time::now(), "world", "fk_ee"));
-
-      Eigen::Matrix<double, 6, 1> dx;
-      dx << jacobian_ * dq_;
-      double cartesian_velocity = sqrt(dx(0) * dx(0) + dx(1) * dx(1) + dx(2) * dx(2));
-      ROS_INFO_STREAM_THROTTLE(0.1, "\nERROR:\n"
-                                        << base_tools_->getPoseError());
-      ROS_INFO_STREAM_THROTTLE(0.1, "\nParameters:\nCartesian Stiffness:\n"
-                                        << cartesian_stiffness_ << "\nCartesian damping:\n"
-                                        << cartesian_damping_ << "\nNullspace stiffness:\n"
-                                        << nullspace_stiffness_ << "\nq_d_nullspace:\n"
-                                        << q_d_nullspace_);
-      ROS_INFO_STREAM_THROTTLE(0.1, "\ntau_d:\n"
-                                        << tau_J_d_);
-    }
-
     try
     {
       // Update transformation of Cartesian Wrench
@@ -472,12 +445,40 @@ namespace cartesian_impedance_controller
       }
       pub_torques_.unlockAndPublish();
     }
-    // Publish tf to the equilibrium pose
-    tf::vectorEigenToTF(position_d_, tf_pos_);
-    tf_br_transform_.setOrigin(tf_pos_);
-    tf::quaternionEigenToTF(orientation_d_, tf_rot_);
-    tf_br_transform_.setRotation(tf_rot_);
-    tf_br_.sendTransform(tf::StampedTransform(tf_br_transform_, ros::Time::now(), "world", "eq_pose"));
+
+    if (verbose_)
+    {
+      tf::vectorEigenToTF(Eigen::Vector3d(base_tools_->getPoseError().head(3)), tf_pos_);
+      tf_br_transform_.setOrigin(tf_pos_);
+
+      tf::vectorEigenToTF(position_, tf_pos_);
+      ROS_INFO_STREAM_THROTTLE(0.1, "\nCARTESIAN POSITION:\n"
+                                        << position_);
+      tf_br_transform_.setOrigin(tf_pos_);
+      tf::quaternionEigenToTF(orientation_, tf_rot_);
+      tf_br_transform_.setRotation(tf_rot_);
+      tf_br_.sendTransform(tf::StampedTransform(tf_br_transform_, ros::Time::now(), "world", "fk_ee"));
+
+      Eigen::Matrix<double, 6, 1> dx;
+      dx << jacobian_ * dq_;
+      double cartesian_velocity = sqrt(dx(0) * dx(0) + dx(1) * dx(1) + dx(2) * dx(2));
+      ROS_INFO_STREAM_THROTTLE(0.1, "\nERROR:\n"
+                                        << base_tools_->getPoseError());
+      ROS_INFO_STREAM_THROTTLE(0.1, "\nParameters:\nCartesian Stiffness:\n"
+                                        << cartesian_stiffness_ << "\nCartesian damping:\n"
+                                        << cartesian_damping_ << "\nNullspace stiffness:\n"
+                                        << nullspace_stiffness_ << "\nq_d_nullspace:\n"
+                                        << q_d_nullspace_);
+      ROS_INFO_STREAM_THROTTLE(0.1, "\ntau_d:\n"
+                                        << tau_J_d_);
+
+      // Publish tf to the reference pose
+      tf::vectorEigenToTF(position_d_, tf_pos_);
+      tf_br_transform_.setOrigin(tf_pos_);
+      tf::quaternionEigenToTF(orientation_d_, tf_rot_);
+      tf_br_transform_.setRotation(tf_rot_);
+      tf_br_.sendTransform(tf::StampedTransform(tf_br_transform_, ros::Time::now(), "world", this->end_effector_ + "_ref_pose"));
+    }
   }
 
   //Dynamic reconfigure
