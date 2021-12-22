@@ -5,10 +5,19 @@ This project is an implementation of aCartesian impedance controller. It is a ty
 
 The controller has been developed using the seven degree-of-freedom (DoF) robot arm called LBR iiwa by KUKA AG. It is, however, universal and should therefore work for other seven DoF robot arms, such as the Panda by Franka Emika.
 
-## Installation
+## Prerequisites
+### Required
+- [Eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page)
 
-### Dependencies
-We use `RBDyn` to calculate forward kinematics and the Jacobian. The below-mentioned installation steps are automated in `scripts/install_dependencies.sh`:
+### ROS Controller
+We use `RBDyn` to calculate forward kinematics and the Jacobian.
+
+- [RBDyn](https://github.com/jrl-umi3218/RBDyn)
+- mc_rbdyn_urdf (provide link)
+- SpaceVecAlg (provide link)
+- [ROS](https://www.ros.org/)
+
+The below-mentioned installation steps are automated in `scripts/install_dependencies.sh`:
 
 **SpaceVecAlg**
 ```bash
@@ -31,7 +40,6 @@ cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_SIMD=ON -DPYTHON_BINDING=OFF ..
 make -j
 sudo make install
 ```
-
 
 **mc_rbdyn_urdf**
 ```bash
@@ -68,45 +76,38 @@ CartesianImpedance_trajectory_controller:
     - iiwa_joint_6
     - iiwa_joint_7
   end_effector: iiwa_link_ee            # Link to control arm in
-  # Optional parameters
+  update_frequency: 500                 # Controller update frequency in Hz
+  # Optional parameters - the mentioned values are the defaults
   verbose: false                        # Enables additional output
   dynamic_reconfigure: true             # Starts dynamic reconfigure server
   handle_trajectories: true             # Accept traj., e.g. from MoveIt
   robot_description: /robot_description # In case of a varying name
   from_frame_wrench: world              # Base frame of wrench msgs.
-  to_frame_wrench: iiwa_link_ee         # Frame for wrench commands
+  to_frame_wrench: <end_effector>         # Frame for wrench commands
   delta_tau_max: 1.0                    # Max. commanded torque diff between steps
+  filtering:                            # Update existing values (0.0 1.0] per s
+    pose: 0.1                           # Reference pose filtering
+    stiffness: 0.1                      # Cartesian and nullspace stiffness
+    wrench: 0.1                         # Commanded torque
 ```
 
 ## Features
 
 - Configurable stiffness values along all Cartesian dimensions
 - Configurable damping factors along all Cartesian dimensions
-- Change desired pose in run-time
-- Apply Cartesian forces in run-time
+- Change desired pose at runtime
+- Apply Cartesian forces and torques at runtime
+- Optional filtering of stiffnesses, pose and wrenches for smoother operation
+- Can handle joint trajectories with nullspace configurations, e.g. from MoveIt
+- Limit jerk
 
 ![](./res/flowchart.png)
 
-Before new reference stiffness, damping and/or Cartesian forces are sent to the controller, they are saturated to reasonable limits and filtered through a low-pass filter. This is done in order to make the transition between reference values safer and less jerky. The control signals goes through a rate-limiter for similar reasons, before being sent to the robot actuators.
-
 ## Limitations
 
-- Friction not accounted for
+- Friction is not accounted for
 - Stiffness and damping values along the Cartesian dimensions are uncoupled
 - Only tested for the LBR iiwa model
-
-## Prerequisites
-
-- [ROS melodic](https://www.ros.org/)
-- [Eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page)
-- [RBDyn](https://github.com/jrl-umi3218/RBDyn)
-- bh_robot (provide link)
-- kuka-fri (provide link)
-- corrade (provide link)
-- mc_rbdyn_urdf (provide link)
-- SpaceVecAlg (provide link)
-- robot_controllers (provide link)
-- cartesian_trajectory_generator (provide link)
 
 ## Usage
 
