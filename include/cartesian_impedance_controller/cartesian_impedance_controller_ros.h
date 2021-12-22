@@ -88,7 +88,7 @@ namespace cartesian_impedance_controller
     void trajUpdate();
     void trajCb(const trajectory_msgs::JointTrajectoryConstPtr &msg);
 
-    CartesianImpedanceController base_tools_;
+    std::unique_ptr<CartesianImpedanceController> base_tools_;
 
     std::vector<hardware_interface::JointHandle> joint_handles_;
     rbdyn_wrapper rbdyn_wrapper_;
