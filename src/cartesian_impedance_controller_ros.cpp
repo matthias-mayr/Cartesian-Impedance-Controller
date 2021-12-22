@@ -157,9 +157,6 @@ namespace cartesian_impedance_controller
 
     // set nullspace equilibrium configuration to initial q
     base_tools_.setNullspaceConfig(q_initial);
-
-    //Save the time at start
-    time_at_start_ = ros::Time::now().toSec();
   }
 
   void CartesianImpedanceControllerRos::update(const ros::Time & /*time*/, const ros::Duration &period /*period*/)
@@ -409,7 +406,7 @@ namespace cartesian_impedance_controller
                                                     Eigen::Matrix<double, 6, 1> F, double cartesian_velocity)
   {
     cartesian_impedance_controller::RobotImpedanceState data_to_analyze;
-    data_to_analyze.time = ros::Time::now().toSec() - time_at_start_;
+    data_to_analyze.time = ros::Time::now().toSec();
     data_to_analyze.position.x = position[0];
     data_to_analyze.position.y = position[1];
     data_to_analyze.position.z = position[2];

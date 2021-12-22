@@ -116,9 +116,6 @@ namespace cartesian_impedance_controller
     std::string from_frame_wrench_;
     std::string to_frame_wrench_;
 
-    // publish data to export using another thread;
-    double time_at_start_;
-
     // The Jacobian of RBDyn comes with orientation in the first three lines. Needs to be interchanged.
     const Eigen::VectorXi perm_indices_ = (Eigen::Matrix<int, 6, 1>() << 3, 4, 5, 0, 1, 2).finished();
     const Eigen::PermutationMatrix<Eigen::Dynamic, 6> jacobian_perm_{Eigen::PermutationMatrix<Eigen::Dynamic, 6>(perm_indices_)};
