@@ -136,6 +136,11 @@ namespace cartesian_impedance_controller
 
     base_tools_.setMaxTorqueDelta(delta_tau_max);
 
+    // Size members
+    q_ = Eigen::VectorXd(this->n_joints_);
+    dq_ = Eigen::VectorXd(this->n_joints_);
+    jacobian_ = Eigen::MatrixXd(6, joint_handles_.size());
+
     //Initialize publisher of useful data
     pub_data_export_ =
         node_handle.advertise<cartesian_impedance_controller::RobotImpedanceState>("useful_data_to_analyze", 1);
@@ -145,24 +150,12 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceControllerRos::starting(const ros::Time & /*time*/)
   {
-    // set x_attractor and q_d_nullspace
     ROS_INFO("Starting Cartesian Impedance Controller");
-    Eigen::VectorXd q_initial(joint_handles_.size());
-    Eigen::VectorXd dq_initial(joint_handles_.size());
-    for (size_t i = 0; i < joint_handles_.size(); ++i)
-    {
-      q_initial[i] = joint_handles_[i].getPosition();
-      dq_initial[i] = joint_handles_[i].getVelocity();
-    }
+    this->updateState();
 
-    // set equilibrium point to current state
-    Eigen::Vector3d initial_pos;
-    Eigen::Quaterniond initial_quat;
-    getFk(q_initial, initial_pos, initial_quat);
-    base_tools_.setDesiredPose(initial_pos, initial_quat);
-
-    // set nullspace equilibrium configuration to initial q
-    base_tools_.setNullspaceConfig(q_initial);
+    // set x_attractor and q_d_nullspace
+    base_tools_.setDesiredPose(position_, orientation_);
+    base_tools_.setNullspaceConfig(q_);
   }
 
   void CartesianImpedanceControllerRos::update(const ros::Time & /*time*/, const ros::Duration &period /*period*/)
@@ -172,81 +165,46 @@ namespace cartesian_impedance_controller
     {
       trajUpdate();
     }
-    Eigen::VectorXd q(joint_handles_.size());
-    Eigen::VectorXd dq(joint_handles_.size());
 
-    for (size_t i = 0; i < joint_handles_.size(); ++i)
-    {
-      q[i] = joint_handles_[i].getPosition();
-      dq[i] = joint_handles_[i].getVelocity();
-    }
-    // get jacobian
-    Eigen::MatrixXd jacobian(6, joint_handles_.size());
-    getJacobian(q, dq, jacobian);
-    Eigen::Matrix<double, 6, 1> dx;
-    dx << jacobian * dq;
-    double cartesian_velocity = sqrt(dx(0) * dx(0) + dx(1) * dx(1) + dx(2) * dx(2));
+    this->updateState();
 
-    // get forward kinematics
-    Eigen::Vector3d position;
-    Eigen::Quaterniond orientation;
-    getFk(q, position, orientation);
+    // Apply control law in base library
+    this->tau_J_d_ = base_tools_.calculateCommandedTorques(q_, dq_, position_, orientation_, jacobian_);
 
-    if (verbose_)
-    {
-      tf::vectorEigenToTF(position, tf_pos_);
-      ROS_INFO_STREAM_THROTTLE(0.1, "\nCARTESIAN POSITION:\n"
-                                        << position);
-      tf_br_transform_.setOrigin(tf_pos_);
-      tf::quaternionEigenToTF(orientation, tf_rot_);
-      tf_br_transform_.setRotation(tf_rot_);
-      tf_br_.sendTransform(tf::StampedTransform(tf_br_transform_, ros::Time::now(), "world", "fk_ee"));
-    }
-
-    // compute error to desired pose
-    // position error
-    Eigen::Matrix<double, 6, 1> error;
-    error.head(3) << position - position_d_;
-
-    // orientation error
-    if (orientation_d_.coeffs().dot(orientation.coeffs()) < 0.0)
-    {
-      orientation.coeffs() << -orientation.coeffs();
-    }
-    // "difference" quaternion
-    Eigen::Quaterniond error_quaternion(orientation * orientation_d_.inverse());
-    // convert to axis angle
-    Eigen::AngleAxisd error_quaternion_angle_axis(error_quaternion);
-    // compute "orientation error"
-    error.tail(3) << error_quaternion_angle_axis.axis() * error_quaternion_angle_axis.angle();
-    // compute the control law
-    Eigen::VectorXd tau_d = base_tools_.calculateCommandedTorques(q, dq, position, orientation, jacobian);
-    this->tau_J_d_ = tau_d;
-    // get the robot state
+    // Get the updated controller state
     base_tools_.getState(&position_d_, &orientation_d_, &cartesian_stiffness_, &nullspace_stiffness_, &q_d_nullspace_,
                          &cartesian_damping_);
 
-    // compute error to desired pose
-    // position error
-    tf::vectorEigenToTF(Eigen::Vector3d(error.head(3)), tf_pos_);
-    tf_br_transform_.setOrigin(tf_pos_);
-
-    for (size_t i = 0; i < joint_handles_.size(); ++i)
+    for (size_t i = 0; i < this->n_joints_; ++i)
     {
-      joint_handles_[i].setCommand(tau_d(i));
+      joint_handles_[i].setCommand(this->tau_J_d_(i));
     }
 
     if (verbose_)
     {
+      tf::vectorEigenToTF(Eigen::Vector3d(base_tools_.getPoseError().head(3)), tf_pos_);
+      tf_br_transform_.setOrigin(tf_pos_);
+
+      tf::vectorEigenToTF(position_, tf_pos_);
+      ROS_INFO_STREAM_THROTTLE(0.1, "\nCARTESIAN POSITION:\n"
+                                        << position_);
+      tf_br_transform_.setOrigin(tf_pos_);
+      tf::quaternionEigenToTF(orientation_, tf_rot_);
+      tf_br_transform_.setRotation(tf_rot_);
+      tf_br_.sendTransform(tf::StampedTransform(tf_br_transform_, ros::Time::now(), "world", "fk_ee"));
+
+      Eigen::Matrix<double, 6, 1> dx;
+      dx << jacobian_ * dq_;
+      double cartesian_velocity = sqrt(dx(0) * dx(0) + dx(1) * dx(1) + dx(2) * dx(2));
       ROS_INFO_STREAM_THROTTLE(0.1, "\nERROR:\n"
-                                        << error);
+                                        << base_tools_.getPoseError());
       ROS_INFO_STREAM_THROTTLE(0.1, "\nParameters:\nCartesian Stiffness:\n"
                                         << cartesian_stiffness_ << "\nCartesian damping:\n"
                                         << cartesian_damping_ << "\nNullspace stiffness:\n"
                                         << nullspace_stiffness_ << "\nq_d_nullspace:\n"
                                         << q_d_nullspace_);
       ROS_INFO_STREAM_THROTTLE(0.1, "\ntau_d:\n"
-                                        << tau_d);
+                                        << tau_J_d_);
     }
 
     try
@@ -266,8 +224,8 @@ namespace cartesian_impedance_controller
     base_tools_.setFiltering(update_frequency, 0.1, 1., 0.1);
 
     //publish useful data to a topic
-    publishData(q, dq, position, orientation, position_d_, orientation_d_, tau_d, cartesian_stiffness_,
-                nullspace_stiffness_, error, base_tools_.getAppliedWrench(), cartesian_velocity);
+    // publishData(q, dq, position, orientation, position_d_, orientation_d_, tau_d_, cartesian_stiffness_,
+    // nullspace_stiffness_, error, base_tools_.getAppliedWrench(), cartesian_velocity);
   }
 
   bool CartesianImpedanceControllerRos::getFk(const Eigen::VectorXd &q, Eigen::Vector3d &position,
@@ -306,6 +264,17 @@ namespace cartesian_impedance_controller
     }
     jacobian = jacobian_perm_ * jacobian;
     return true;
+  }
+
+  void CartesianImpedanceControllerRos::updateState()
+  {
+    for (size_t i = 0; i < this->n_joints_; ++i)
+    {
+      q_[i] = joint_handles_[i].getPosition();
+      dq_[i] = joint_handles_[i].getVelocity();
+    }
+    getJacobian(q_, dq_, jacobian_);
+    getFk(q_, position_, orientation_);
   }
 
   void CartesianImpedanceControllerRos::dampingCb(

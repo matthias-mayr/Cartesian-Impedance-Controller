@@ -63,6 +63,7 @@ namespace cartesian_impedance_controller
 
     bool getFk(const Eigen::VectorXd &q, Eigen::Vector3d &position, Eigen::Quaterniond &rotation);
     bool getJacobian(const Eigen::VectorXd &q, const Eigen::VectorXd &dq, Eigen::MatrixXd &jacobian);
+    void updateState();
 
     void dampingCb(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
     void impedanceControlCb(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
@@ -102,6 +103,11 @@ namespace cartesian_impedance_controller
     Eigen::VectorXd tau_J_d_;
     Eigen::Vector3d position_d_;
     Eigen::Quaterniond orientation_d_;
+    Eigen::Vector3d position_;
+    Eigen::Quaterniond orientation_;
+    Eigen::VectorXd q_;
+    Eigen::VectorXd dq_;
+    Eigen::MatrixXd jacobian_;
 
     ros::Subscriber sub_cart_stiffness_;
     ros::Subscriber sub_cart_wrench_;
