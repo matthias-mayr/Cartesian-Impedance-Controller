@@ -44,7 +44,7 @@ make -j
 sudo make install
 ```
 
-### Controller Usage in ROS
+## Controller Usage in ROS
 For using this controller within ROS, a catkin workspace is needed:
 
 ```bash
@@ -53,6 +53,29 @@ cd catkin_ws
 catkin init
 cd src
 git clone git@git.cs.lth.se:robotlab/cartesian-impedance-controller.git
+```
+
+### Configuration file
+```YAML
+CartesianImpedance_trajectory_controller:
+  type: cartesian_impedance_controller/CartesianImpedanceController
+  joints:                               # Joints to control
+    - iiwa_joint_1
+    - iiwa_joint_2
+    - iiwa_joint_3
+    - iiwa_joint_4
+    - iiwa_joint_5
+    - iiwa_joint_6
+    - iiwa_joint_7
+  end_effector: iiwa_link_ee            # Link to control arm in
+  # Optional parameters
+  verbose: false                        # Enables additional output
+  dynamic_reconfigure: true             # Starts dynamic reconfigure server
+  handle_trajectories: true             # Accept traj., e.g. from MoveIt
+  robot_description: /robot_description # In case of a varying name
+  from_frame_wrench: world              # Base frame of wrench msgs.
+  to_frame_wrench: iiwa_link_ee         # Frame for wrench commands
+  delta_tau_max: 1.0                    # Max. commanded torque diff between steps
 ```
 
 ## Features
