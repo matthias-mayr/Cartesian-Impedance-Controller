@@ -138,10 +138,17 @@ namespace cartesian_impedance_controller
       return false;
     }
 
+    // Initialize base_tools and member variables
     base_tools_ = std::make_unique<CartesianImpedanceController>(this->n_joints_);
     base_tools_->setMaxTorqueDelta(delta_tau_max);
-
-    // Size members
+    if (this->n_joints_ < 6)
+    {
+      ROS_WARN("Number of joints is below 6. Functions might be limited.");
+    }
+    if (this->n_joints_ < 7)
+    {
+      ROS_WARN("Number of joints is below 7. No redundant joint for nullspace.");
+    }
     q_ = Eigen::VectorXd(this->n_joints_);
     dq_ = Eigen::VectorXd(this->n_joints_);
     jacobian_ = Eigen::MatrixXd(6, joint_handles_.size());
@@ -166,7 +173,6 @@ namespace cartesian_impedance_controller
   }
 
   void CartesianImpedanceControllerRos::update(const ros::Time & /*time*/, const ros::Duration &period /*period*/)
-
   {
     if (traj_running_)
     {
