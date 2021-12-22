@@ -113,7 +113,7 @@ namespace cartesian_impedance_controller
     ROS_INFO_STREAM("End effektor link is: " << end_effector_);
     // Frames for applying commanded Cartesian wrenches
     node_handle.param<std::string>("from_frame_wrench", from_frame_wrench_, "world");
-    node_handle.param<std::string>("to_frame_wrench", to_frame_wrench_, "iiwa_link_ee");
+    node_handle.param<std::string>("to_frame_wrench", to_frame_wrench_, end_effector_);
     bool dynamic_reconfigure{true};
     node_handle.param<bool>("dynamic_reconfigure", dynamic_reconfigure, true);
     bool enable_trajectories{true};
