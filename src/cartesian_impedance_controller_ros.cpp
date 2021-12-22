@@ -120,6 +120,10 @@ namespace cartesian_impedance_controller
     node_handle.param<bool>("handle_trajectories", enable_trajectories, true);
     double delta_tau_max{1.};
     node_handle.param<double>("delta_tau_max", delta_tau_max, 1.);
+    node_handle.param<double>("update_frequency", update_frequency_, 500.);
+    node_handle.param<double>("filtering/stiffness", filtering_stiffness_, 0.1);
+    node_handle.param<double>("filtering/pose", filtering_pose_, 0.1);
+    node_handle.param<double>("filtering/wrench", filtering_wrench_, 0.1);
 
     if (!this->initJointHandles(hw, node_handle) || !this->initMessaging(node_handle) || !this->initRBDyn(node_handle))
     {
@@ -141,6 +145,8 @@ namespace cartesian_impedance_controller
     q_ = Eigen::VectorXd(this->n_joints_);
     dq_ = Eigen::VectorXd(this->n_joints_);
     jacobian_ = Eigen::MatrixXd(6, joint_handles_.size());
+
+    base_tools_->setFiltering(update_frequency_, filtering_stiffness_, filtering_pose_, filtering_wrench_);
 
     //Initialize publisher of useful data
     pub_data_export_ =
@@ -219,10 +225,6 @@ namespace cartesian_impedance_controller
     }
 
     publish();
-
-    //filtering
-    double update_frequency = 1 / period.toSec();
-    base_tools_->setFiltering(update_frequency, 0.1, 1., 0.1);
 
     //publish useful data to a topic
     // publishData(q, dq, position, orientation, position_d_, orientation_d_, tau_d_, cartesian_stiffness_,

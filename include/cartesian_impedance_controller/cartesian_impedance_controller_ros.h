@@ -121,6 +121,11 @@ namespace cartesian_impedance_controller
     std::string from_frame_wrench_;
     std::string to_frame_wrench_;
 
+    double update_frequency_{500};
+    double filtering_stiffness_{0.1};
+    double filtering_pose_{0.1};
+    double filtering_wrench_{0.1};
+
     // The Jacobian of RBDyn comes with orientation in the first three lines. Needs to be interchanged.
     const Eigen::VectorXi perm_indices_ = (Eigen::Matrix<int, 6, 1>() << 3, 4, 5, 0, 1, 2).finished();
     const Eigen::PermutationMatrix<Eigen::Dynamic, 6> jacobian_perm_{Eigen::PermutationMatrix<Eigen::Dynamic, 6>(perm_indices_)};
