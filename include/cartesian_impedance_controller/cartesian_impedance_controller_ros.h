@@ -94,7 +94,6 @@ namespace cartesian_impedance_controller
     unsigned int n_joints_;
     std::string end_effector_;
     std::string robot_description_;
-    double delta_tau_max_{5};
 
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
     Eigen::Matrix<double, 6, 6> cartesian_damping_;

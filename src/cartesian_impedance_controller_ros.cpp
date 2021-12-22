@@ -118,6 +118,8 @@ namespace cartesian_impedance_controller
     node_handle.param<bool>("dynamic_reconfigure", dynamic_reconfigure, true);
     bool enable_trajectories{true};
     node_handle.param<bool>("handle_trajectories", enable_trajectories, true);
+    double delta_tau_max{1.};
+    node_handle.param<double>("delta_tau_max", delta_tau_max, 1.);
 
     if (!this->initJointHandles(hw, node_handle) || !this->initMessaging(node_handle) || !this->initRBDyn(node_handle))
     {
@@ -132,7 +134,7 @@ namespace cartesian_impedance_controller
       return false;
     }
 
-    base_tools_.setMaxTorqueDelta(delta_tau_max_);
+    base_tools_.setMaxTorqueDelta(delta_tau_max);
 
     //Initialize publisher of useful data
     pub_data_export_ =
