@@ -56,8 +56,8 @@ namespace cartesian_impedance_controller
 
   private:
     CartesianImpedanceController base_tools;
-    bool get_fk(const Eigen::VectorXd &q, Eigen::Vector3d &translation, Eigen::Quaterniond &rotation);
-    bool get_jacobian(const Eigen::VectorXd &q, const Eigen::VectorXd &dq, Eigen::MatrixXd &jacobian);
+    bool getFk(const Eigen::VectorXd &q, Eigen::Vector3d &translation, Eigen::Quaterniond &rotation);
+    bool getJacobian(const Eigen::VectorXd &q, const Eigen::VectorXd &dq, Eigen::MatrixXd &jacobian);
 
     std::vector<hardware_interface::JointHandle> joint_handles_;
     double delta_tau_max_{5};
@@ -72,34 +72,34 @@ namespace cartesian_impedance_controller
 
     //Apply stiffness through this topic
     ros::Subscriber sub_CartesianImpedanceParams;
-    void cartesian_impedance_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
+    void impedanceControlCb(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
     ros::Subscriber sub_CartesianStiffness;
-    void cartesian_stiffness_Callback(const geometry_msgs::WrenchStampedConstPtr &msg);
+    void stiffnessCb(const geometry_msgs::WrenchStampedConstPtr &msg);
 
     // Apply damping through this topic
     ros::Subscriber sub_DampingParams;
-    void damping_parameters_Callback(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
+    void dampingCb(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
 
     //Apply cartesian wrenches through this topic
     ros::Subscriber sub_CartesianWrench;
-    void cartesian_wrench_Callback(const geometry_msgs::WrenchStampedConstPtr &msg);
+    void wrenchCommandCb(const geometry_msgs::WrenchStampedConstPtr &msg);
     tf::TransformListener tf_listener_;
     tf::StampedTransform transform_;
     std::string from_frame_wrench_;
     std::string to_frame_wrench_;
-    void transform_wrench(Eigen::Matrix<double, 6, 1> &cartesian_wrench, std::string from_frame, std::string to_frame);
+    void transformWrench(Eigen::Matrix<double, 6, 1> &cartesian_wrench, std::string from_frame, std::string to_frame);
 
-    // the  trajectory generator
+    // the trajectory generator
     ros::Subscriber sub_desired_pose;
-    void ee_pose_Callback(const geometry_msgs::PoseStampedConstPtr &msg);
+    void referencePoseCb(const geometry_msgs::PoseStampedConstPtr &msg);
 
     // publish data to export using another thread;
     double time_at_start_;
     ros::Publisher pub_data_export_;
-    void publish_data(Eigen::VectorXd q, Eigen::VectorXd dq, Eigen::Vector3d position, Eigen::Quaterniond orientation,
-                      Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d,
-                      Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_,
-                      Eigen::Matrix<double, 6, 1> error, Eigen::Matrix<double, 6, 1> F, double cartesian_velocity);
+    void publishData(Eigen::VectorXd q, Eigen::VectorXd dq, Eigen::Vector3d position, Eigen::Quaterniond orientation,
+                     Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d,
+                     Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_,
+                     Eigen::Matrix<double, 6, 1> error, Eigen::Matrix<double, 6, 1> F, double cartesian_velocity);
 
     //------------------------------------------------------------------------------------------------
 
@@ -114,15 +114,15 @@ namespace cartesian_impedance_controller
     // Dynamic reconfigure
     std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>>
         dynamic_server_compliance_param_;
-    void dynamicConfigCallback(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level);
+    void dynamicConfigCb(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level);
 
     std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::damping_configConfig>>
         dynamic_server_damping_param_;
-    void dynamicDampingCallback(cartesian_impedance_controller::damping_configConfig &config, uint32_t level);
+    void dynamicDampingCb(cartesian_impedance_controller::damping_configConfig &config, uint32_t level);
 
     std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::wrench_configConfig>>
         dynamic_server_wrench_param_;
-    void dynamicWrenchCallback(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level);
+    void dynamicWrenchCb(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level);
 
     // Trajectory handling
     std::unique_ptr<actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>> as_;
