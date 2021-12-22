@@ -168,10 +168,8 @@ Eigen::VectorXd CartesianImpedanceController::calculateCommandedTorques(const Ei
   updateFilteredWrench();
 
   // Compute error term
-  // Position error
-  Eigen::Matrix<double, 6, 1> error;
-  error.head(3) << this->position_ - this->position_d_;
-  error.tail(3) << calculateOrientationError(this->orientation_d_, &orientation);
+  error_.head(3) << this->position_ - this->position_d_;
+  error_.tail(3) << calculateOrientationError(this->orientation_d_, &orientation);
 
   // Kinematic pseuoinverse
   Eigen::MatrixXd jacobian_transpose_pinv;
@@ -180,7 +178,7 @@ Eigen::VectorXd CartesianImpedanceController::calculateCommandedTorques(const Ei
   Eigen::VectorXd tau_task(this->n_joints_), tau_nullspace(this->n_joints_), tau_ext(this->n_joints_);
 
   // Cartesian PD control with damping ratio = 1
-  tau_task << jacobian.transpose() * (-cartesian_stiffness_ * error - cartesian_damping_ * (jacobian * dq));
+  tau_task << jacobian.transpose() * (-cartesian_stiffness_ * error_ - cartesian_damping_ * (jacobian * dq));
   // Nullspace PD control with damping ratio = 1
   tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) - jacobian.transpose() * jacobian_transpose_pinv) *
                        (nullspace_stiffness_ * (q_d_nullspace_ - q) - nullspace_damping_ * dq);
@@ -232,6 +230,11 @@ Eigen::VectorXd CartesianImpedanceController::getLastCommands() const
 Eigen::Matrix<double, 6, 1> CartesianImpedanceController::getAppliedWrench() const
 {
   return this->cartesian_wrench_;
+}
+
+Eigen::Matrix<double, 6, 1> CartesianImpedanceController::getPoseError() const
+{
+  return this->error_;
 }
 
 double CartesianImpedanceController::dampingRule(double stiffness) const

@@ -64,6 +64,8 @@ public:
   // Get the currently applied Cartesian wrench
   Eigen::Matrix<double, 6, 1> getAppliedWrench() const;
 
+  Eigen::Matrix<double, 6, 1> getPoseError() const;
+
 private:
   // Implements the damping based on a stiffness
   double dampingRule(double stiffness) const;
@@ -104,6 +106,7 @@ private:
   Eigen::VectorXd dq_;
   // Jacobian. Row format: 3 translations, 3 rotation
   Eigen::MatrixXd jacobian_;
+  Eigen::Matrix<double, 6, 1> error_;
 
   // End effector control parameters
   Eigen::Matrix<double, 6, 6> cartesian_stiffness_{ Eigen::Matrix<double, 6, 6>::Identity() };
