@@ -55,6 +55,12 @@ namespace cartesian_impedance_controller
     void update(const ros::Time &, const ros::Duration &period) override;
 
   private:
+    bool initDynamicReconfigure(const ros::NodeHandle &nh);
+    bool initJointHandles(hardware_interface::EffortJointInterface *hw, const ros::NodeHandle &nh);
+    bool initMessaging(ros::NodeHandle &nh);
+    bool initRBDyn(const ros::NodeHandle &nh);
+    bool initTrajectories(ros::NodeHandle &nh);
+
     bool getFk(const Eigen::VectorXd &q, Eigen::Vector3d &position, Eigen::Quaterniond &rotation);
     bool getJacobian(const Eigen::VectorXd &q, const Eigen::VectorXd &dq, Eigen::MatrixXd &jacobian);
 
@@ -114,8 +120,8 @@ namespace cartesian_impedance_controller
     double time_at_start_;
 
     // The Jacobian of RBDyn comes with orientation in the first three lines. Needs to be interchanged.
-    Eigen::VectorXi perm_indices_;
-    Eigen::PermutationMatrix<Eigen::Dynamic, 6> jacobian_perm_;
+    const Eigen::VectorXi perm_indices_ = (Eigen::Matrix<int, 6, 1>() << 3, 4, 5, 0, 1, 2).finished();
+    const Eigen::PermutationMatrix<Eigen::Dynamic, 6> jacobian_perm_{Eigen::PermutationMatrix<Eigen::Dynamic, 6>(perm_indices_)};
 
     // Dynamic reconfigure
     std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>>

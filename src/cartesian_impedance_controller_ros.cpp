@@ -8,50 +8,28 @@ namespace cartesian_impedance_controller
     return std::min(std::max(x, x_min), x_max);
   }
 
-  bool CartesianImpedanceControllerRos::init(hardware_interface::EffortJointInterface *hw, ros::NodeHandle &node_handle)
+  bool CartesianImpedanceControllerRos::initDynamicReconfigure(const ros::NodeHandle &nh)
   {
-    ROS_INFO("CartesianImpedanceControllerRos namespace: %s", node_handle.getNamespace().c_str());
-    node_handle.param<bool>("verbose", verbose_, false);
-    perm_indices_ = Eigen::VectorXi(6);
-    perm_indices_ << 3, 4, 5, 0, 1, 2;
-    jacobian_perm_ = Eigen::PermutationMatrix<Eigen::Dynamic, 6>(perm_indices_);
+    dynamic_server_compliance_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>>(ros::NodeHandle(std::string(nh.getNamespace() + "/stiffness_reconfigure")));
+    dynamic_server_compliance_param_->setCallback(
+        boost::bind(&CartesianImpedanceControllerRos::dynamicConfigCb, this, _1, _2));
 
-    traj_as_ = std::unique_ptr<actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>>(
-        new actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>(
-            node_handle, std::string("follow_joint_trajectory"), false));
-    traj_as_->registerGoalCallback(boost::bind(&CartesianImpedanceControllerRos::trajGoalCb, this));
-    traj_as_->registerPreemptCallback(boost::bind(&CartesianImpedanceControllerRos::trajPreemptCb, this));
-    traj_as_->start();
+    dynamic_server_damping_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::damping_configConfig>>(ros::NodeHandle(std::string(nh.getNamespace() + "/damping_factors_reconfigure")));
+    dynamic_server_damping_param_->setCallback(
+        boost::bind(&CartesianImpedanceControllerRos::dynamicDampingCb, this, _1, _2));
 
-    // Set desired poses through this topic
-    sub_reference_pose_ = node_handle.subscribe("target_pose", 1, &CartesianImpedanceControllerRos::referencePoseCb, this);
+    dynamic_server_wrench_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::wrench_configConfig>>(ros::NodeHandle(std::string(nh.getNamespace() + "/cartesian_wrench_reconfigure")));
+    dynamic_server_wrench_param_->setCallback(
+        boost::bind(&CartesianImpedanceControllerRos::dynamicWrenchCb, this, _1, _2));
+    return true;
+  }
 
-    //set cartesian stiffness values through this topic
-    sub_impedance_config_ =
-        node_handle.subscribe("set_stiffness", 1, &CartesianImpedanceControllerRos::impedanceControlCb, this);
-    sub_cart_stiffness_ = node_handle.subscribe("set_cartesian_stiffness", 1,
-                                                &CartesianImpedanceControllerRos::stiffnessCb, this);
-
-    //set cartesian damping values through this topic
-    sub_damping_ = node_handle.subscribe("set_damping_factors", 1,
-                                         &CartesianImpedanceControllerRos::dampingCb, this);
-
-    //set cartesian wrench through this topic
-    sub_cart_wrench_ = node_handle.subscribe("set_cartesian_wrench", 1,
-                                             &CartesianImpedanceControllerRos::wrenchCommandCb, this);
-
-    //get params for applying Cartesian wrenches
-    node_handle.param<std::string>("from_frame_wrench", from_frame_wrench_, "world");
-    node_handle.param<std::string>("to_frame_wrench", to_frame_wrench_, "bh_link_ee");
-
-    sub_trajectory_ = node_handle.subscribe("command", 1, &CartesianImpedanceControllerRos::trajCb, this);
-
-    // Get JointHandles
+  bool CartesianImpedanceControllerRos::initJointHandles(hardware_interface::EffortJointInterface *hw, const ros::NodeHandle &nh)
+  {
     std::vector<std::string> joint_names;
-    if (!node_handle.getParam("joints", joint_names))
+    if (!nh.getParam("joints", joint_names))
     {
-      ROS_ERROR("CartesianImpedanceExampleController: Invalid or no joint_names parameters provided, "
-                "aborting controller init!");
+      ROS_ERROR("Invalid or no joint_names parameters provided, aborting controller init!");
       return false;
     }
     for (size_t i = 0; i < joint_names.size(); ++i)
@@ -62,60 +40,94 @@ namespace cartesian_impedance_controller
       }
       catch (const hardware_interface::HardwareInterfaceException &ex)
       {
-        ROS_ERROR_STREAM("CartesianImpedanceExampleController: Exception getting joint handles: " << ex.what());
+        ROS_ERROR_STREAM("Exception getting joint handles: " << ex.what());
         return false;
       }
     }
     this->n_joints_ = joint_names.size();
+    return true;
+  }
 
-    // Setup for iiwa_tools
-    node_handle.param<std::string>("end_effector", end_effector_, "iiwa_link_ee");
-    ROS_INFO_STREAM("End effektor link is: " << end_effector_);
-    // Get the URDF XML from the parameter server
-    std::string urdf_string;
-    // search and wait for robot_description on param server
-    node_handle.param<std::string>("robot_description", robot_description_, "/robot_description");
-    while (urdf_string.empty())
-    {
-      ROS_INFO_ONCE_NAMED("CartesianImpedanceControllerRos",
-                          "Waiting for robot description in parameter %s on the ROS param server.",
-                          robot_description_.c_str());
-      node_handle.getParam(robot_description_, urdf_string);
-      usleep(100000);
-    }
+  bool CartesianImpedanceControllerRos::initMessaging(ros::NodeHandle &nh)
+  {
+    sub_cart_stiffness_ = nh.subscribe("set_cartesian_stiffness", 1,
+                                       &CartesianImpedanceControllerRos::stiffnessCb, this);
+    sub_cart_wrench_ = nh.subscribe("set_cartesian_wrench", 1,
+                                    &CartesianImpedanceControllerRos::wrenchCommandCb, this);
+    sub_damping_ = nh.subscribe("set_damping_factors", 1,
+                                &CartesianImpedanceControllerRos::dampingCb, this);
+    sub_impedance_config_ =
+        nh.subscribe("set_stiffness", 1, &CartesianImpedanceControllerRos::impedanceControlCb, this);
+    sub_reference_pose_ = nh.subscribe("target_pose", 1, &CartesianImpedanceControllerRos::referencePoseCb, this);
 
-    // Initialize iiwa tools
-    rbdyn_wrapper_.init_rbdyn(urdf_string, end_effector_);
-    if (this->rbdyn_wrapper_.n_joints() < this->n_joints_)
-    {
-      ROS_FATAL("Number of joints in the URDF is smaller than supplied number of joints. %i < %i", this->rbdyn_wrapper_.n_joints(), this->n_joints_);
-    }
-    ROS_INFO_STREAM_NAMED("CartesianImpedanceControllerRos", "Number of joints found in urdf: " << this->rbdyn_wrapper_.n_joints());
-
-    pub_torques_.init(node_handle, "commanded_torques", 20);
+    pub_torques_.init(nh, "commanded_torques", 20);
     pub_torques_.msg_.layout.dim.resize(1);
     pub_torques_.msg_.layout.data_offset = 0;
     pub_torques_.msg_.layout.dim[0].size = n_joints_;
     pub_torques_.msg_.layout.dim[0].stride = 0;
     pub_torques_.msg_.data.resize(n_joints_);
+    return true;
+  }
 
-    //DYNAMIC RECONFIGURE
-    //-------------------------------------------------------------------------------------------------------------------------------------
-    // Change stiffness
-    dynamic_server_compliance_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>>(ros::NodeHandle(std::string(node_handle.getNamespace() + "/stiffness_reconfigure")));
-    dynamic_server_compliance_param_->setCallback(
-        boost::bind(&CartesianImpedanceControllerRos::dynamicConfigCb, this, _1, _2));
+  bool CartesianImpedanceControllerRos::initRBDyn(const ros::NodeHandle &nh)
+  {
+    // Get the URDF XML from the parameter server. Wait if needed.
+    std::string urdf_string;
+    nh.param<std::string>("robot_description", robot_description_, "/robot_description");
+    while (urdf_string.empty())
+    {
+      ROS_INFO_ONCE("Waiting for robot description in parameter %s on the ROS param server.",
+                    robot_description_.c_str());
+      nh.getParam(robot_description_, urdf_string);
+      usleep(100000);
+    }
+    rbdyn_wrapper_.init_rbdyn(urdf_string, end_effector_);
+    if (this->rbdyn_wrapper_.n_joints() < this->n_joints_)
+    {
+      ROS_ERROR("Number of joints in the URDF is smaller than supplied number of joints. %i < %i", this->rbdyn_wrapper_.n_joints(), this->n_joints_);
+      return false;
+    }
+    ROS_INFO_STREAM("Number of joints found in urdf: " << this->rbdyn_wrapper_.n_joints());
+    return true;
+  }
 
-    //Change damping factors
-    dynamic_server_damping_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::damping_configConfig>>(ros::NodeHandle(std::string(node_handle.getNamespace() + "/damping_factors_reconfigure")));
-    dynamic_server_damping_param_->setCallback(
-        boost::bind(&CartesianImpedanceControllerRos::dynamicDampingCb, this, _1, _2));
+  bool CartesianImpedanceControllerRos::initTrajectories(ros::NodeHandle &nh)
+  {
+    sub_trajectory_ = nh.subscribe("command", 1, &CartesianImpedanceControllerRos::trajCb, this);
+    traj_as_ = std::unique_ptr<actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>>(
+        new actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>(
+            nh, std::string("follow_joint_trajectory"), false));
+    traj_as_->registerGoalCallback(boost::bind(&CartesianImpedanceControllerRos::trajGoalCb, this));
+    traj_as_->registerPreemptCallback(boost::bind(&CartesianImpedanceControllerRos::trajPreemptCb, this));
+    traj_as_->start();
+    return true;
+  }
 
-    // Apply Cartesian wrench
-    dynamic_server_wrench_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::wrench_configConfig>>(ros::NodeHandle(std::string(node_handle.getNamespace() + "/cartesian_wrench_reconfigure")));
-    dynamic_server_wrench_param_->setCallback(
-        boost::bind(&CartesianImpedanceControllerRos::dynamicWrenchCb, this, _1, _2));
-    //-------------------------------------------------------------------------------------------------------------------------------------
+  bool CartesianImpedanceControllerRos::init(hardware_interface::EffortJointInterface *hw, ros::NodeHandle &node_handle)
+  {
+    ROS_INFO("Initializing Cartesian impedance controller in namespace: %s", node_handle.getNamespace().c_str());
+    node_handle.param<bool>("verbose", verbose_, false);
+    node_handle.param<std::string>("end_effector", end_effector_, "iiwa_link_ee");
+    ROS_INFO_STREAM("End effektor link is: " << end_effector_);
+    // Frames for applying commanded Cartesian wrenches
+    node_handle.param<std::string>("from_frame_wrench", from_frame_wrench_, "world");
+    node_handle.param<std::string>("to_frame_wrench", to_frame_wrench_, "iiwa_link_ee");
+
+    if (!this->initJointHandles(hw, node_handle) || !this->initMessaging(node_handle) || !this->initRBDyn(node_handle))
+    {
+      return false;
+    }
+
+    if (!this->initDynamicReconfigure(node_handle))
+    {
+      return false;
+    }
+
+    if (!this->initTrajectories(node_handle))
+    {
+      return false;
+    }
+
     base_tools_.setMaxTorqueDelta(delta_tau_max_);
 
     //Initialize publisher of useful data
@@ -137,7 +149,6 @@ namespace cartesian_impedance_controller
       dq_initial[i] = joint_handles_[i].getVelocity();
     }
 
-    // get end effector pose
     // set equilibrium point to current state
     Eigen::Vector3d initial_pos;
     Eigen::Quaterniond initial_quat;
