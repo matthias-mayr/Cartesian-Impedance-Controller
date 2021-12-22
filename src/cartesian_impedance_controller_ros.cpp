@@ -106,24 +106,28 @@ namespace cartesian_impedance_controller
   bool CartesianImpedanceControllerRos::init(hardware_interface::EffortJointInterface *hw, ros::NodeHandle &node_handle)
   {
     ROS_INFO("Initializing Cartesian impedance controller in namespace: %s", node_handle.getNamespace().c_str());
+
+    // Fetch parameters
     node_handle.param<bool>("verbose", verbose_, false);
     node_handle.param<std::string>("end_effector", end_effector_, "iiwa_link_ee");
     ROS_INFO_STREAM("End effektor link is: " << end_effector_);
     // Frames for applying commanded Cartesian wrenches
     node_handle.param<std::string>("from_frame_wrench", from_frame_wrench_, "world");
     node_handle.param<std::string>("to_frame_wrench", to_frame_wrench_, "iiwa_link_ee");
+    bool dynamic_reconfigure{true};
+    node_handle.param<bool>("dynamic_reconfigure", dynamic_reconfigure, true);
+    bool enable_trajectories{true};
+    node_handle.param<bool>("handle_trajectories", enable_trajectories, true);
 
     if (!this->initJointHandles(hw, node_handle) || !this->initMessaging(node_handle) || !this->initRBDyn(node_handle))
     {
       return false;
     }
-
-    if (!this->initDynamicReconfigure(node_handle))
+    if (dynamic_reconfigure && !this->initDynamicReconfigure(node_handle))
     {
       return false;
     }
-
-    if (!this->initTrajectories(node_handle))
+    if (enable_trajectories && !this->initTrajectories(node_handle))
     {
       return false;
     }
