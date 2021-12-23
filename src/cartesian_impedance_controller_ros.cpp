@@ -57,7 +57,7 @@ namespace cartesian_impedance_controller
     sub_damping_ = nh.subscribe("set_damping_factors", 1,
                                 &CartesianImpedanceControllerRos::dampingCb, this);
     sub_impedance_config_ =
-        nh.subscribe("set_stiffness", 1, &CartesianImpedanceControllerRos::impedanceControlCb, this);
+        nh.subscribe("set_config", 1, &CartesianImpedanceControllerRos::controllerConfigCb, this);
     sub_reference_pose_ = nh.subscribe("target_pose", 1, &CartesianImpedanceControllerRos::referencePoseCb, this);
 
     pub_torques_.init(nh, "commanded_torques", 20);
@@ -81,13 +81,25 @@ namespace cartesian_impedance_controller
       nh.getParam(robot_description_, urdf_string);
       usleep(100000);
     }
-    rbdyn_wrapper_.init_rbdyn(urdf_string, end_effector_);
+    try
+    {
+      rbdyn_wrapper_.init_rbdyn(urdf_string, end_effector_);
+    }
+    catch (std::runtime_error e)
+    {
+      ROS_ERROR("Error when intializing RBDyn: %s", e.what());
+      return false;
+    }
+    ROS_INFO_STREAM("Number of joints found in urdf: " << this->rbdyn_wrapper_.n_joints());
     if (this->rbdyn_wrapper_.n_joints() < this->n_joints_)
     {
       ROS_ERROR("Number of joints in the URDF is smaller than supplied number of joints. %i < %i", this->rbdyn_wrapper_.n_joints(), this->n_joints_);
       return false;
     }
-    ROS_INFO_STREAM("Number of joints found in urdf: " << this->rbdyn_wrapper_.n_joints());
+    else if (this->rbdyn_wrapper_.n_joints() < this->n_joints_)
+    {
+      ROS_WARN("Number of joints in the URDF is greater than supplied number of joints: %i > %i. Assuming that the actuated joints come first.", this->rbdyn_wrapper_.n_joints(), this->n_joints_);
+    }
     return true;
   }
 
@@ -151,13 +163,10 @@ namespace cartesian_impedance_controller
     }
     q_ = Eigen::VectorXd(this->n_joints_);
     dq_ = Eigen::VectorXd(this->n_joints_);
+    q_d_nullspace_ = Eigen::VectorXd(this->n_joints_);
     jacobian_ = Eigen::MatrixXd(6, joint_handles_.size());
 
     base_tools_->setFiltering(update_frequency_, filtering_stiffness_, filtering_pose_, filtering_wrench_);
-
-    //Initialize publisher of useful data
-    pub_data_export_ =
-        node_handle.advertise<cartesian_impedance_controller::RobotImpedanceState>("useful_data_to_analyze", 1);
 
     return true;
   }
@@ -184,10 +193,11 @@ namespace cartesian_impedance_controller
     // Apply control law in base library
     this->tau_J_d_ = base_tools_->calculateCommandedTorques(q_, dq_, position_, orientation_, jacobian_);
 
-    // Get the updated controller state
+    // Get the updated internal controller state
     base_tools_->getState(&position_d_, &orientation_d_, &cartesian_stiffness_, &nullspace_stiffness_, &q_d_nullspace_,
                           &cartesian_damping_);
 
+    // Write commands
     for (size_t i = 0; i < this->n_joints_; ++i)
     {
       joint_handles_[i].setCommand(this->tau_J_d_(i));
@@ -259,37 +269,24 @@ namespace cartesian_impedance_controller
     getFk(q_, position_, orientation_);
   }
 
-  void CartesianImpedanceControllerRos::dampingCb(
-      const cartesian_impedance_controller::CartesianImpedanceControlMode &msg)
+  void CartesianImpedanceControllerRos::controllerConfigCb(const cartesian_impedance_controller::ControllerConfigConstPtr &msg)
   {
-    double dmp_max = 1;
-    double dmp_min = 0.1;
-    base_tools_->setDamping(saturateValue(msg.cartesian_damping.x, dmp_min, dmp_max),
-                            saturateValue(msg.cartesian_damping.y, dmp_min, dmp_max),
-                            saturateValue(msg.cartesian_damping.z, dmp_min, dmp_max),
-                            saturateValue(msg.cartesian_damping.a, dmp_min, dmp_max),
-                            saturateValue(msg.cartesian_damping.b, dmp_min, dmp_max),
-                            saturateValue(msg.cartesian_damping.c, dmp_min, dmp_max), msg.nullspace_damping);
+    this->setStiffness(msg->cartesian_stiffness, msg->nullspace_stiffness);
+    this->setDamping(msg->cartesian_damping, msg->nullspace_damping);
+
+    if (msg->q_d_nullspace.size() == this->n_joints_)
+    {
+      for (size_t i = 0; i < this->n_joints_; i++)
+      {
+        this->q_d_nullspace_(i) = msg->q_d_nullspace.at(i);
+      }
+      base_tools_->setNullspaceConfig(this->q_d_nullspace_);
+    }
   }
 
-  void CartesianImpedanceControllerRos::impedanceControlCb(
-      const cartesian_impedance_controller::CartesianImpedanceControlMode &msg)
+  void CartesianImpedanceControllerRos::dampingCb(const geometry_msgs::WrenchConstPtr &msg)
   {
-    double trans_stf_max = 2000;
-    double trans_stf_min = 0;
-    double rot_stf_max = 500;
-    double rot_stf_min = 0;
-    base_tools_->setStiffness(saturateValue(msg.cartesian_stiffness.x, trans_stf_min, trans_stf_max),
-                              saturateValue(msg.cartesian_stiffness.y, trans_stf_min, trans_stf_max),
-                              saturateValue(msg.cartesian_stiffness.z, trans_stf_min, trans_stf_max),
-                              saturateValue(msg.cartesian_stiffness.a, trans_stf_min, trans_stf_max),
-                              saturateValue(msg.cartesian_stiffness.b, trans_stf_min, trans_stf_max),
-                              saturateValue(msg.cartesian_stiffness.c, trans_stf_min, trans_stf_max),
-                              msg.nullspace_stiffness);
-    Eigen::VectorXd q_d_nullspace_target_;
-    q_d_nullspace_target_ << msg.q_d_nullspace.q1, msg.q_d_nullspace.q2, msg.q_d_nullspace.q3, msg.q_d_nullspace.q4,
-        msg.q_d_nullspace.q5, msg.q_d_nullspace.q6, msg.q_d_nullspace.q7;
-    base_tools_->setNullspaceConfig(q_d_nullspace_target_);
+    this->setDamping(*msg, this->nullspace_damping_);
   }
 
   void CartesianImpedanceControllerRos::referencePoseCb(const geometry_msgs::PoseStampedConstPtr &msg)
@@ -307,16 +304,37 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceControllerRos::stiffnessCb(const geometry_msgs::WrenchStampedConstPtr &msg)
   {
-    double trans_stf_max = 2000;
-    double trans_stf_min = 0;
-    double rot_stf_max = 500;
-    double rot_stf_min = 0;
-    base_tools_->setStiffness(saturateValue(msg->wrench.force.x, trans_stf_min, trans_stf_max),
-                              saturateValue(msg->wrench.force.y, trans_stf_min, trans_stf_max),
-                              saturateValue(msg->wrench.force.z, trans_stf_min, trans_stf_max),
-                              saturateValue(msg->wrench.torque.x, trans_stf_min, trans_stf_max),
-                              saturateValue(msg->wrench.torque.y, trans_stf_min, trans_stf_max),
-                              saturateValue(msg->wrench.torque.z, trans_stf_min, trans_stf_max));
+    this->setStiffness(msg->wrench, this->nullspace_stiffness_);
+  }
+
+  void CartesianImpedanceControllerRos::setDamping(const geometry_msgs::Wrench &cart_stiffness, double nullspace)
+  {
+    constexpr double dmp_min = 0.0;
+    constexpr double dmp_max = 1;
+    base_tools_->setDamping(saturateValue(cart_stiffness.force.x, dmp_min, dmp_max),
+                            saturateValue(cart_stiffness.force.y, dmp_min, dmp_max),
+                            saturateValue(cart_stiffness.force.z, dmp_min, dmp_max),
+                            saturateValue(cart_stiffness.torque.x, dmp_min, dmp_max),
+                            saturateValue(cart_stiffness.torque.y, dmp_min, dmp_max),
+                            saturateValue(cart_stiffness.torque.z, dmp_min, dmp_max),
+                            saturateValue(nullspace, dmp_min, dmp_max));
+  }
+
+  void CartesianImpedanceControllerRos::setStiffness(const geometry_msgs::Wrench &cart_stiffness, double nullspace)
+  {
+    constexpr double trans_stf_min = 0;
+    constexpr double trans_stf_max = 2000;
+    constexpr double rot_stf_min = 0;
+    constexpr double rot_stf_max = 500;
+    constexpr double ns_min = 0;
+    constexpr double ns_max = 10000;
+    base_tools_->setStiffness(saturateValue(cart_stiffness.force.x, trans_stf_min, trans_stf_max),
+                              saturateValue(cart_stiffness.force.y, trans_stf_min, trans_stf_max),
+                              saturateValue(cart_stiffness.force.z, trans_stf_min, trans_stf_max),
+                              saturateValue(cart_stiffness.torque.x, rot_stf_min, rot_stf_max),
+                              saturateValue(cart_stiffness.torque.y, rot_stf_min, rot_stf_max),
+                              saturateValue(cart_stiffness.torque.z, rot_stf_min, rot_stf_max),
+                              saturateValue(nullspace, ns_min, ns_max));
   }
 
   //Adds a wrench at the end-effector, using the world frame
@@ -355,84 +373,84 @@ namespace cartesian_impedance_controller
   }
 
   //Publish data to export and analyze
-  void CartesianImpedanceControllerRos::publishData(Eigen::VectorXd q, Eigen::VectorXd dq, Eigen::Vector3d position,
-                                                    Eigen::Quaterniond orientation, Eigen::Vector3d position_d_,
-                                                    Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d,
-                                                    Eigen::Matrix<double, 6, 6> cartesian_stiffness_,
-                                                    double nullspace_stiffness_, Eigen::Matrix<double, 6, 1> error,
-                                                    Eigen::Matrix<double, 6, 1> F, double cartesian_velocity)
-  {
-    cartesian_impedance_controller::RobotImpedanceState data_to_analyze;
-    data_to_analyze.time = ros::Time::now().toSec();
-    data_to_analyze.position.x = position[0];
-    data_to_analyze.position.y = position[1];
-    data_to_analyze.position.z = position[2];
+  // void CartesianImpedanceControllerRos::publishData(Eigen::VectorXd q, Eigen::VectorXd dq, Eigen::Vector3d position,
+  //                                                   Eigen::Quaterniond orientation, Eigen::Vector3d position_d_,
+  //                                                   Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d,
+  //                                                   Eigen::Matrix<double, 6, 6> cartesian_stiffness_,
+  //                                                   double nullspace_stiffness_, Eigen::Matrix<double, 6, 1> error,
+  //                                                   Eigen::Matrix<double, 6, 1> F, double cartesian_velocity)
+  // {
+  //   cartesian_impedance_controller::RobotImpedanceState data_to_analyze;
+  //   data_to_analyze.time = ros::Time::now().toSec();
+  //   data_to_analyze.position.x = position[0];
+  //   data_to_analyze.position.y = position[1];
+  //   data_to_analyze.position.z = position[2];
 
-    data_to_analyze.position_d_.x = position_d_[0];
-    data_to_analyze.position_d_.y = position_d_[1];
-    data_to_analyze.position_d_.z = position_d_[2];
+  //   data_to_analyze.position_d_.x = position_d_[0];
+  //   data_to_analyze.position_d_.y = position_d_[1];
+  //   data_to_analyze.position_d_.z = position_d_[2];
 
-    data_to_analyze.orientation.x = orientation.coeffs()[0];
-    data_to_analyze.orientation.y = orientation.coeffs()[1];
-    data_to_analyze.orientation.z = orientation.coeffs()[2];
-    data_to_analyze.orientation.w = orientation.coeffs()[3];
+  //   data_to_analyze.orientation.x = orientation.coeffs()[0];
+  //   data_to_analyze.orientation.y = orientation.coeffs()[1];
+  //   data_to_analyze.orientation.z = orientation.coeffs()[2];
+  //   data_to_analyze.orientation.w = orientation.coeffs()[3];
 
-    data_to_analyze.orientation_d_.x = orientation_d_.coeffs()[0];
-    data_to_analyze.orientation_d_.y = orientation_d_.coeffs()[1];
-    data_to_analyze.orientation_d_.z = orientation_d_.coeffs()[2];
-    data_to_analyze.orientation_d_.w = orientation_d_.coeffs()[3];
+  //   data_to_analyze.orientation_d_.x = orientation_d_.coeffs()[0];
+  //   data_to_analyze.orientation_d_.y = orientation_d_.coeffs()[1];
+  //   data_to_analyze.orientation_d_.z = orientation_d_.coeffs()[2];
+  //   data_to_analyze.orientation_d_.w = orientation_d_.coeffs()[3];
 
-    data_to_analyze.tau_d.q1 = tau_d(0);
-    data_to_analyze.tau_d.q2 = tau_d(1);
-    data_to_analyze.tau_d.q3 = tau_d(2);
-    data_to_analyze.tau_d.q4 = tau_d(3);
-    data_to_analyze.tau_d.q5 = tau_d(4);
-    data_to_analyze.tau_d.q6 = tau_d(5);
-    data_to_analyze.tau_d.q7 = tau_d(6);
+  //   data_to_analyze.tau_d.q1 = tau_d(0);
+  //   data_to_analyze.tau_d.q2 = tau_d(1);
+  //   data_to_analyze.tau_d.q3 = tau_d(2);
+  //   data_to_analyze.tau_d.q4 = tau_d(3);
+  //   data_to_analyze.tau_d.q5 = tau_d(4);
+  //   data_to_analyze.tau_d.q6 = tau_d(5);
+  //   data_to_analyze.tau_d.q7 = tau_d(6);
 
-    data_to_analyze.q.q1 = q(0);
-    data_to_analyze.q.q2 = q(1);
-    data_to_analyze.q.q3 = q(2);
-    data_to_analyze.q.q4 = q(3);
-    data_to_analyze.q.q5 = q(4);
-    data_to_analyze.q.q6 = q(5);
-    data_to_analyze.q.q7 = q(6);
+  //   data_to_analyze.q.q1 = q(0);
+  //   data_to_analyze.q.q2 = q(1);
+  //   data_to_analyze.q.q3 = q(2);
+  //   data_to_analyze.q.q4 = q(3);
+  //   data_to_analyze.q.q5 = q(4);
+  //   data_to_analyze.q.q6 = q(5);
+  //   data_to_analyze.q.q7 = q(6);
 
-    data_to_analyze.dq.q1 = dq(0);
-    data_to_analyze.dq.q2 = dq(1);
-    data_to_analyze.dq.q3 = dq(2);
-    data_to_analyze.dq.q4 = dq(3);
-    data_to_analyze.dq.q5 = dq(4);
-    data_to_analyze.dq.q6 = dq(5);
-    data_to_analyze.dq.q7 = dq(6);
+  //   data_to_analyze.dq.q1 = dq(0);
+  //   data_to_analyze.dq.q2 = dq(1);
+  //   data_to_analyze.dq.q3 = dq(2);
+  //   data_to_analyze.dq.q4 = dq(3);
+  //   data_to_analyze.dq.q5 = dq(4);
+  //   data_to_analyze.dq.q6 = dq(5);
+  //   data_to_analyze.dq.q7 = dq(6);
 
-    data_to_analyze.cartesian_stiffness.x = cartesian_stiffness_(0, 0);
-    data_to_analyze.cartesian_stiffness.y = cartesian_stiffness_(1, 1);
-    data_to_analyze.cartesian_stiffness.z = cartesian_stiffness_(2, 2);
-    data_to_analyze.cartesian_stiffness.a = cartesian_stiffness_(3, 3);
-    data_to_analyze.cartesian_stiffness.b = cartesian_stiffness_(4, 4);
-    data_to_analyze.cartesian_stiffness.c = cartesian_stiffness_(5, 5);
+  //   data_to_analyze.cartesian_stiffness.x = cartesian_stiffness_(0, 0);
+  //   data_to_analyze.cartesian_stiffness.y = cartesian_stiffness_(1, 1);
+  //   data_to_analyze.cartesian_stiffness.z = cartesian_stiffness_(2, 2);
+  //   data_to_analyze.cartesian_stiffness.a = cartesian_stiffness_(3, 3);
+  //   data_to_analyze.cartesian_stiffness.b = cartesian_stiffness_(4, 4);
+  //   data_to_analyze.cartesian_stiffness.c = cartesian_stiffness_(5, 5);
 
-    data_to_analyze.nullspace_stiffness = nullspace_stiffness_;
+  //   data_to_analyze.nullspace_stiffness = nullspace_stiffness_;
 
-    data_to_analyze.cartesian_wrench.f_x = F(0);
-    data_to_analyze.cartesian_wrench.f_y = F(1);
-    data_to_analyze.cartesian_wrench.f_z = F(2);
-    data_to_analyze.cartesian_wrench.tau_x = F(3);
-    data_to_analyze.cartesian_wrench.tau_y = F(4);
-    data_to_analyze.cartesian_wrench.tau_z = F(5);
+  //   data_to_analyze.cartesian_wrench.f_x = F(0);
+  //   data_to_analyze.cartesian_wrench.f_y = F(1);
+  //   data_to_analyze.cartesian_wrench.f_z = F(2);
+  //   data_to_analyze.cartesian_wrench.tau_x = F(3);
+  //   data_to_analyze.cartesian_wrench.tau_y = F(4);
+  //   data_to_analyze.cartesian_wrench.tau_z = F(5);
 
-    data_to_analyze.error_position.x = error(0);
-    data_to_analyze.error_position.y = error(1);
-    data_to_analyze.error_position.z = error(2);
-    data_to_analyze.error_rotation.x = error(3);
-    data_to_analyze.error_rotation.y = error(4);
-    data_to_analyze.error_rotation.z = error(5);
+  //   data_to_analyze.error_position.x = error(0);
+  //   data_to_analyze.error_position.y = error(1);
+  //   data_to_analyze.error_position.z = error(2);
+  //   data_to_analyze.error_rotation.x = error(3);
+  //   data_to_analyze.error_rotation.y = error(4);
+  //   data_to_analyze.error_rotation.z = error(5);
 
-    data_to_analyze.cartesian_velocity = cartesian_velocity;
+  //   data_to_analyze.cartesian_velocity = cartesian_velocity;
 
-    pub_data_export_.publish(data_to_analyze);
-  }
+  //   pub_data_export_.publish(data_to_analyze);
+  // }
 
   void CartesianImpedanceControllerRos::publish()
   {

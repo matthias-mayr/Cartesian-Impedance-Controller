@@ -27,8 +27,8 @@
 #include <tf/transform_listener.h>
 #include <tf_conversions/tf_eigen.h>
 
-#include <cartesian_impedance_controller/CartesianImpedanceControlMode.h>
-#include <cartesian_impedance_controller/RobotImpedanceState.h>
+#include <cartesian_impedance_controller/ControllerConfig.h>
+#include <cartesian_impedance_controller/ControllerState.h>
 #include <cartesian_impedance_controller/cartesian_impedance_controller.h>
 #include <cartesian_impedance_controller/damping_configConfig.h>
 #include <cartesian_impedance_controller/impedance_configConfig.h>
@@ -39,8 +39,6 @@
 #include <trajectory_msgs/JointTrajectory.h>
 #include <realtime_tools/realtime_publisher.h>
 #include <Eigen/Dense>
-#include <cartesian_impedance_controller/impedance_configConfig.h>
-#include <cartesian_impedance_controller/damping_configConfig.h>
 #include <cartesian_impedance_controller/wrench_configConfig.h>
 
 namespace cartesian_impedance_controller
@@ -64,9 +62,11 @@ namespace cartesian_impedance_controller
     bool getFk(const Eigen::VectorXd &q, Eigen::Vector3d &position, Eigen::Quaterniond &rotation);
     bool getJacobian(const Eigen::VectorXd &q, const Eigen::VectorXd &dq, Eigen::MatrixXd &jacobian);
     void updateState();
+    void setDamping(const geometry_msgs::Wrench &cart_stiffness, double nullspace);
+    void setStiffness(const geometry_msgs::Wrench &cart_stiffness, double nullspace);
 
-    void dampingCb(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
-    void impedanceControlCb(const cartesian_impedance_controller::CartesianImpedanceControlMode &msg);
+    void controllerConfigCb(const cartesian_impedance_controller::ControllerConfigConstPtr &msg);
+    void dampingCb(const geometry_msgs::WrenchConstPtr &msg);
     void referencePoseCb(const geometry_msgs::PoseStampedConstPtr &msg);
     void stiffnessCb(const geometry_msgs::WrenchStampedConstPtr &msg);
     void wrenchCommandCb(const geometry_msgs::WrenchStampedConstPtr &msg);
@@ -98,7 +98,8 @@ namespace cartesian_impedance_controller
 
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
     Eigen::Matrix<double, 6, 6> cartesian_damping_;
-    double nullspace_stiffness_;
+    double nullspace_stiffness_{0.0};
+    double nullspace_damping_{0.0};
     Eigen::VectorXd q_d_nullspace_;
     Eigen::VectorXd tau_J_d_;
     Eigen::Vector3d position_d_;

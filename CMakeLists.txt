@@ -29,23 +29,22 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib_msgs
   trajectory_msgs
   control_msgs
+  sensor_msgs
+  geometry_msgs
   message_generation
   dynamic_reconfigure
 )
 
 add_message_files(FILES
-  CartesianImpedanceControlMode.msg
-  CartesianQuantity.msg
-  JointsQuantity.msg
-  RobotImpedanceState.msg
-  ThreeDimensionalQuantity.msg
-  FourDimensionalQuantity.msg
-  CartesianWrench.msg
+  ControllerConfig.msg
+  ControllerState.msg
 )
 
 generate_messages(
   DEPENDENCIES
   std_msgs
+  geometry_msgs
+  sensor_msgs
 )
 
 generate_dynamic_reconfigure_options(
