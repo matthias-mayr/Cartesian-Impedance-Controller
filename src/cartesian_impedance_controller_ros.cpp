@@ -414,15 +414,12 @@ namespace cartesian_impedance_controller
     if (verbose_print_)
     {
       ROS_INFO_STREAM_THROTTLE(0.1, "\nCARTESIAN POSITION:\n"
-                                        << position_);
-      ROS_INFO_STREAM_THROTTLE(0.1, "\nERROR:\n"
-                                        << error);
-      ROS_INFO_STREAM_THROTTLE(0.1, "\nParameters:\nCartesian Stiffness:\n"
+                                        << position_ << "\nERROR:\n"
+                                        << error << "\nCartesian Stiffness:\n"
                                         << cartesian_stiffness_ << "\nCartesian damping:\n"
                                         << cartesian_damping_ << "\nNullspace stiffness:\n"
                                         << nullspace_stiffness_ << "\nq_d_nullspace:\n"
-                                        << q_d_nullspace_);
-      ROS_INFO_STREAM_THROTTLE(0.1, "\ntau_d:\n"
+                                        << q_d_nullspace_ << "\ntau_d:\n"
                                         << tau_J_d_);
     }
     if (verbose_tf_)
