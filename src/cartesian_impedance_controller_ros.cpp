@@ -8,7 +8,7 @@ namespace cartesian_impedance_controller
     return std::min(std::max(x, x_min), x_max);
   }
 
-  void EigenVectorToWrench(const Eigen::Matrix<double, 6, 1> v, geometry_msgs::Wrench *wrench)
+  void EigenVectorToWrench(const Eigen::Matrix<double, 6, 1>& v, geometry_msgs::Wrench *wrench)
   {
     wrench->force.x = v(0);
     wrench->force.y = v(1);
@@ -55,6 +55,7 @@ namespace cartesian_impedance_controller
       }
     }
     this->n_joints_ = joint_names.size();
+    ROS_INFO_STREAM("Number of joints specified in parameters: " << this->n_joints_);
     return true;
   }
 
@@ -198,12 +199,12 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceControllerRos::starting(const ros::Time & /*time*/)
   {
-    ROS_INFO("Starting Cartesian Impedance Controller");
     this->updateState();
 
     // set x_attractor and q_d_nullspace
     base_tools_->setDesiredPose(position_, orientation_);
     base_tools_->setNullspaceConfig(q_);
+    ROS_INFO("Started Cartesian Impedance Controller");
   }
 
   void CartesianImpedanceControllerRos::update(const ros::Time & /*time*/, const ros::Duration &period /*period*/)
@@ -239,10 +240,6 @@ namespace cartesian_impedance_controller
     }
 
     publish();
-
-    //publish useful data to a topic
-    // publishData(q, dq, position, orientation, position_d_, orientation_d_, tau_d_, cartesian_stiffness_,
-    // nullspace_stiffness_, error, base_tools_->getAppliedWrench(), cartesian_velocity);
   }
 
   bool CartesianImpedanceControllerRos::getFk(const Eigen::VectorXd &q, Eigen::Vector3d &position,
@@ -586,7 +583,7 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceControllerRos::trajCb(const trajectory_msgs::JointTrajectoryConstPtr &msg)
   {
-    ROS_INFO("Got trajectory msg");
+    ROS_INFO("Got trajectory msg ");
     trajStart(*msg);
   }
 
