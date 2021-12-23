@@ -8,10 +8,11 @@ sensor_msgs/JointState joint_state  # Effort are commanded efforts
 
 # Stiffness values for the cartesian impedance, x, y, z in [N/m], x, y, z in [Nm/rad]. 
 geometry_msgs/Wrench cartesian_stiffness
+geometry_msgs/Wrench cartesian_damping
 
-# The stiffness value for null space [Nm/rad]. 
-# Precondition: 0.0 <= value. 
 float64 nullspace_stiffness
+float64 nullspace_damping
+float64[] nullspace_config
 
 geometry_msgs/Wrench commanded_wrench
 

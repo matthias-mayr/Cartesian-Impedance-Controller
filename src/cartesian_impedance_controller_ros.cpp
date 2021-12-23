@@ -8,6 +8,16 @@ namespace cartesian_impedance_controller
     return std::min(std::max(x, x_min), x_max);
   }
 
+  void EigenVectorToWrench(const Eigen::Matrix<double, 6, 1> v, geometry_msgs::Wrench *wrench)
+  {
+    wrench->force.x = v(0);
+    wrench->force.y = v(1);
+    wrench->force.z = v(2);
+    wrench->torque.x = v(4);
+    wrench->torque.y = v(5);
+    wrench->torque.z = v(6);
+  }
+
   bool CartesianImpedanceControllerRos::initDynamicReconfigure(const ros::NodeHandle &nh)
   {
     dynamic_server_compliance_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>>(ros::NodeHandle(std::string(nh.getNamespace() + "/stiffness_reconfigure")));
@@ -66,6 +76,19 @@ namespace cartesian_impedance_controller
     pub_torques_.msg_.layout.dim[0].size = n_joints_;
     pub_torques_.msg_.layout.dim[0].stride = 0;
     pub_torques_.msg_.data.resize(n_joints_);
+
+    std::vector<std::string> joint_names;
+    nh.getParam("joints", joint_names);
+    pub_state_.init(nh, "controller_state", 10);
+    pub_state_.msg_.header.seq = 0;
+    for (size_t i = 0; i < this->n_joints_; i++)
+    {
+      pub_state_.msg_.joint_state.name.push_back(joint_names.at(i));
+    }
+    pub_state_.msg_.joint_state.position = std::vector<double>(this->n_joints_);
+    pub_state_.msg_.joint_state.velocity = std::vector<double>(this->n_joints_);
+    pub_state_.msg_.joint_state.effort = std::vector<double>(this->n_joints_);
+    pub_state_.msg_.nullspace_config = std::vector<double>(this->n_joints_);
     return true;
   }
 
@@ -120,7 +143,6 @@ namespace cartesian_impedance_controller
     ROS_INFO("Initializing Cartesian impedance controller in namespace: %s", node_handle.getNamespace().c_str());
 
     // Fetch parameters
-    node_handle.param<bool>("verbose", verbose_, false);
     node_handle.param<std::string>("end_effector", end_effector_, "iiwa_link_ee");
     ROS_INFO_STREAM("End effektor link is: " << end_effector_);
     // Frames for applying commanded Cartesian wrenches
@@ -136,6 +158,9 @@ namespace cartesian_impedance_controller
     node_handle.param<double>("filtering/stiffness", filtering_stiffness_, 0.1);
     node_handle.param<double>("filtering/pose", filtering_pose_, 0.1);
     node_handle.param<double>("filtering/wrench", filtering_wrench_, 0.1);
+    node_handle.param<bool>("verbosity/verbose_print", verbose_print_, false);
+    node_handle.param<bool>("verbosity/state_msgs", verbose_state_, false);
+    node_handle.param<bool>("verbosity/tf_frames", verbose_tf_, false);
 
     if (!this->initJointHandles(hw, node_handle) || !this->initMessaging(node_handle) || !this->initRBDyn(node_handle))
     {
@@ -372,116 +397,26 @@ namespace cartesian_impedance_controller
     }
   }
 
-  //Publish data to export and analyze
-  // void CartesianImpedanceControllerRos::publishData(Eigen::VectorXd q, Eigen::VectorXd dq, Eigen::Vector3d position,
-  //                                                   Eigen::Quaterniond orientation, Eigen::Vector3d position_d_,
-  //                                                   Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d,
-  //                                                   Eigen::Matrix<double, 6, 6> cartesian_stiffness_,
-  //                                                   double nullspace_stiffness_, Eigen::Matrix<double, 6, 1> error,
-  //                                                   Eigen::Matrix<double, 6, 1> F, double cartesian_velocity)
-  // {
-  //   cartesian_impedance_controller::RobotImpedanceState data_to_analyze;
-  //   data_to_analyze.time = ros::Time::now().toSec();
-  //   data_to_analyze.position.x = position[0];
-  //   data_to_analyze.position.y = position[1];
-  //   data_to_analyze.position.z = position[2];
-
-  //   data_to_analyze.position_d_.x = position_d_[0];
-  //   data_to_analyze.position_d_.y = position_d_[1];
-  //   data_to_analyze.position_d_.z = position_d_[2];
-
-  //   data_to_analyze.orientation.x = orientation.coeffs()[0];
-  //   data_to_analyze.orientation.y = orientation.coeffs()[1];
-  //   data_to_analyze.orientation.z = orientation.coeffs()[2];
-  //   data_to_analyze.orientation.w = orientation.coeffs()[3];
-
-  //   data_to_analyze.orientation_d_.x = orientation_d_.coeffs()[0];
-  //   data_to_analyze.orientation_d_.y = orientation_d_.coeffs()[1];
-  //   data_to_analyze.orientation_d_.z = orientation_d_.coeffs()[2];
-  //   data_to_analyze.orientation_d_.w = orientation_d_.coeffs()[3];
-
-  //   data_to_analyze.tau_d.q1 = tau_d(0);
-  //   data_to_analyze.tau_d.q2 = tau_d(1);
-  //   data_to_analyze.tau_d.q3 = tau_d(2);
-  //   data_to_analyze.tau_d.q4 = tau_d(3);
-  //   data_to_analyze.tau_d.q5 = tau_d(4);
-  //   data_to_analyze.tau_d.q6 = tau_d(5);
-  //   data_to_analyze.tau_d.q7 = tau_d(6);
-
-  //   data_to_analyze.q.q1 = q(0);
-  //   data_to_analyze.q.q2 = q(1);
-  //   data_to_analyze.q.q3 = q(2);
-  //   data_to_analyze.q.q4 = q(3);
-  //   data_to_analyze.q.q5 = q(4);
-  //   data_to_analyze.q.q6 = q(5);
-  //   data_to_analyze.q.q7 = q(6);
-
-  //   data_to_analyze.dq.q1 = dq(0);
-  //   data_to_analyze.dq.q2 = dq(1);
-  //   data_to_analyze.dq.q3 = dq(2);
-  //   data_to_analyze.dq.q4 = dq(3);
-  //   data_to_analyze.dq.q5 = dq(4);
-  //   data_to_analyze.dq.q6 = dq(5);
-  //   data_to_analyze.dq.q7 = dq(6);
-
-  //   data_to_analyze.cartesian_stiffness.x = cartesian_stiffness_(0, 0);
-  //   data_to_analyze.cartesian_stiffness.y = cartesian_stiffness_(1, 1);
-  //   data_to_analyze.cartesian_stiffness.z = cartesian_stiffness_(2, 2);
-  //   data_to_analyze.cartesian_stiffness.a = cartesian_stiffness_(3, 3);
-  //   data_to_analyze.cartesian_stiffness.b = cartesian_stiffness_(4, 4);
-  //   data_to_analyze.cartesian_stiffness.c = cartesian_stiffness_(5, 5);
-
-  //   data_to_analyze.nullspace_stiffness = nullspace_stiffness_;
-
-  //   data_to_analyze.cartesian_wrench.f_x = F(0);
-  //   data_to_analyze.cartesian_wrench.f_y = F(1);
-  //   data_to_analyze.cartesian_wrench.f_z = F(2);
-  //   data_to_analyze.cartesian_wrench.tau_x = F(3);
-  //   data_to_analyze.cartesian_wrench.tau_y = F(4);
-  //   data_to_analyze.cartesian_wrench.tau_z = F(5);
-
-  //   data_to_analyze.error_position.x = error(0);
-  //   data_to_analyze.error_position.y = error(1);
-  //   data_to_analyze.error_position.z = error(2);
-  //   data_to_analyze.error_rotation.x = error(3);
-  //   data_to_analyze.error_rotation.y = error(4);
-  //   data_to_analyze.error_rotation.z = error(5);
-
-  //   data_to_analyze.cartesian_velocity = cartesian_velocity;
-
-  //   pub_data_export_.publish(data_to_analyze);
-  // }
-
   void CartesianImpedanceControllerRos::publish()
   {
     // publish commanded torques
     if (pub_torques_.trylock())
     {
-      for (unsigned i = 0; i < n_joints_; i++)
+      for (unsigned i = 0; i < this->n_joints_; i++)
       {
         pub_torques_.msg_.data[i] = tau_J_d_[i];
       }
       pub_torques_.unlockAndPublish();
     }
 
-    if (verbose_)
-    {
-      tf::vectorEigenToTF(Eigen::Vector3d(base_tools_->getPoseError().head(3)), tf_pos_);
-      tf_br_transform_.setOrigin(tf_pos_);
+    const Eigen::Matrix<double, 6, 1> error{base_tools_->getPoseError()};
 
-      tf::vectorEigenToTF(position_, tf_pos_);
+    if (verbose_print_)
+    {
       ROS_INFO_STREAM_THROTTLE(0.1, "\nCARTESIAN POSITION:\n"
                                         << position_);
-      tf_br_transform_.setOrigin(tf_pos_);
-      tf::quaternionEigenToTF(orientation_, tf_rot_);
-      tf_br_transform_.setRotation(tf_rot_);
-      tf_br_.sendTransform(tf::StampedTransform(tf_br_transform_, ros::Time::now(), "world", "fk_ee"));
-
-      Eigen::Matrix<double, 6, 1> dx;
-      dx << jacobian_ * dq_;
-      double cartesian_velocity = sqrt(dx(0) * dx(0) + dx(1) * dx(1) + dx(2) * dx(2));
       ROS_INFO_STREAM_THROTTLE(0.1, "\nERROR:\n"
-                                        << base_tools_->getPoseError());
+                                        << error);
       ROS_INFO_STREAM_THROTTLE(0.1, "\nParameters:\nCartesian Stiffness:\n"
                                         << cartesian_stiffness_ << "\nCartesian damping:\n"
                                         << cartesian_damping_ << "\nNullspace stiffness:\n"
@@ -489,13 +424,57 @@ namespace cartesian_impedance_controller
                                         << q_d_nullspace_);
       ROS_INFO_STREAM_THROTTLE(0.1, "\ntau_d:\n"
                                         << tau_J_d_);
+    }
+    if (verbose_tf_)
+    {
 
+      tf::vectorEigenToTF(Eigen::Vector3d(base_tools_->getPoseError().head(3)), tf_pos_);
+      tf_br_transform_.setOrigin(tf_pos_);
+
+      tf::vectorEigenToTF(position_, tf_pos_);
+      tf_br_transform_.setOrigin(tf_pos_);
+      tf::quaternionEigenToTF(orientation_, tf_rot_);
+      tf_br_transform_.setRotation(tf_rot_);
+      tf_br_.sendTransform(tf::StampedTransform(tf_br_transform_, ros::Time::now(), "world", "fk_ee"));
       // Publish tf to the reference pose
       tf::vectorEigenToTF(position_d_, tf_pos_);
       tf_br_transform_.setOrigin(tf_pos_);
       tf::quaternionEigenToTF(orientation_d_, tf_rot_);
       tf_br_transform_.setRotation(tf_rot_);
       tf_br_.sendTransform(tf::StampedTransform(tf_br_transform_, ros::Time::now(), "world", this->end_effector_ + "_ref_pose"));
+    }
+    if (verbose_state_)
+    {
+      if (pub_state_.trylock())
+      {
+        pub_state_.msg_.header.stamp = ros::Time::now();
+        tf::pointEigenToMsg(this->position_, pub_state_.msg_.current_pose.position);
+        tf::quaternionEigenToMsg(this->orientation_, pub_state_.msg_.current_pose.orientation);
+        tf::pointEigenToMsg(this->position_d_, pub_state_.msg_.reference_pose.position);
+        tf::quaternionEigenToMsg(this->orientation_d_, pub_state_.msg_.reference_pose.orientation);
+        tf::pointEigenToMsg(error.head(3), pub_state_.msg_.pose_error.position);
+        Eigen::Quaterniond q = Eigen::AngleAxisd(error(4), Eigen::Vector3d::UnitX()) * Eigen::AngleAxisd(error(5), Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(error(6), Eigen::Vector3d::UnitZ());
+        tf::quaternionEigenToMsg(q, pub_state_.msg_.pose_error.orientation);
+
+        EigenVectorToWrench(this->cartesian_stiffness_.diagonal(), &pub_state_.msg_.cartesian_stiffness);
+        EigenVectorToWrench(this->cartesian_damping_.diagonal(), &pub_state_.msg_.cartesian_damping);
+        EigenVectorToWrench(base_tools_->getAppliedWrench(), &pub_state_.msg_.commanded_wrench);
+
+        for (size_t i = 0; i < this->n_joints_; i++)
+        {
+          pub_state_.msg_.joint_state.position.at(i) = q_(i);
+          pub_state_.msg_.joint_state.velocity.at(i) = dq_(i);
+          pub_state_.msg_.joint_state.effort.at(i) = tau_J_d_(i);
+          pub_state_.msg_.nullspace_config.at(i) = q_d_nullspace_(i);
+        }
+        pub_state_.msg_.nullspace_stiffness = this->nullspace_stiffness_;
+        pub_state_.msg_.nullspace_damping = this->nullspace_damping_;
+        Eigen::Matrix<double, 6, 1> dx = this->jacobian_ * this->dq_;
+        pub_state_.msg_.cartesian_velocity = sqrt(dx(0) * dx(0) + dx(1) * dx(1) + dx(2) * dx(2));
+
+        pub_state_.unlockAndPublish();
+        pub_state_.msg_.header.seq++;
+      }
     }
   }
 

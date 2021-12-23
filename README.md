@@ -78,7 +78,6 @@ CartesianImpedance_trajectory_controller:
   end_effector: iiwa_link_ee            # Link to control arm in
   update_frequency: 500                 # Controller update frequency in Hz
   # Optional parameters - the mentioned values are the defaults
-  verbose: false                        # Enables additional output
   dynamic_reconfigure: true             # Starts dynamic reconfigure server
   handle_trajectories: true             # Accept traj., e.g. from MoveIt
   robot_description: /robot_description # In case of a varying name
@@ -89,6 +88,10 @@ CartesianImpedance_trajectory_controller:
     pose: 0.1                           # Reference pose filtering
     stiffness: 0.1                      # Cartesian and nullspace stiffness
     wrench: 0.1                         # Commanded torque
+  verbosity:
+    verbose_print: false                # Enables additional prints
+    state_msgs: false                   # Messages of controller state
+    tf_frames: false                    # Extra tf frames
 ```
 
 ## Features

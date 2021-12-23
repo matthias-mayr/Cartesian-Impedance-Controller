@@ -26,6 +26,7 @@
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include <tf_conversions/tf_eigen.h>
+#include <eigen_conversions/eigen_msg.h>
 
 #include <cartesian_impedance_controller/ControllerConfig.h>
 #include <cartesian_impedance_controller/ControllerState.h>
@@ -115,7 +116,6 @@ namespace cartesian_impedance_controller
     ros::Subscriber sub_damping_;
     ros::Subscriber sub_impedance_config_;
     ros::Subscriber sub_reference_pose_;
-    ros::Publisher pub_data_export_;
 
     tf::TransformListener tf_listener_;
     tf::StampedTransform transform_;
@@ -149,10 +149,13 @@ namespace cartesian_impedance_controller
     unsigned int traj_index_{0};
     bool traj_running_{false};
 
-    // for debugging
-    bool verbose_{false};
+    // Extra output
+    bool verbose_print_{false};
+    bool verbose_state_{false};
+    bool verbose_tf_{false};
     tf::TransformBroadcaster tf_br_;
     realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray> pub_torques_;
+    realtime_tools::RealtimePublisher<cartesian_impedance_controller::ControllerState> pub_state_;
     tf::Transform tf_br_transform_;
     tf::Vector3 tf_pos_;
     tf::Quaternion tf_rot_;
