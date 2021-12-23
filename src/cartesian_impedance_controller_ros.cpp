@@ -8,7 +8,7 @@ namespace cartesian_impedance_controller
     return std::min(std::max(x, x_min), x_max);
   }
 
-  void EigenVectorToWrench(const Eigen::Matrix<double, 6, 1>& v, geometry_msgs::Wrench *wrench)
+  void EigenVectorToWrench(const Eigen::Matrix<double, 6, 1> &v, geometry_msgs::Wrench *wrench)
   {
     wrench->force.x = v(0);
     wrench->force.y = v(1);
@@ -528,31 +528,32 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceControllerRos::trajStart(const trajectory_msgs::JointTrajectory &trajectory)
   {
-    traj_duration_ = trajectory.points[trajectory.points.size() - 1].time_from_start;
-    ROS_INFO_STREAM("Got a new trajectory with " << trajectory.points.size() << " points that takes " << traj_duration_
-                                                 << "s.");
-    trajectory_ = trajectory;
-    traj_running_ = true;
-    traj_start_ = ros::Time::now();
-    traj_index_ = 0;
+    this->traj_duration_ = trajectory.points[trajectory.points.size() - 1].time_from_start;
+    ROS_INFO_STREAM("Starting a new trajectory with " << trajectory.points.size() << " points that takes " << traj_duration_ << "s.");
+    this->trajectory_ = trajectory;
+    this->traj_running_ = true;
+    this->traj_start_ = ros::Time::now();
+    this->traj_index_ = 0;
     trajUpdate();
+    if (this->nullspace_stiffness_ < 5.)
+    {
+      ROS_WARN("Nullspace stiffness is low. The joints might not follow the planned path.");
+    }
   }
 
   void CartesianImpedanceControllerRos::trajUpdate()
   {
-    if (ros::Time::now() > (traj_start_ + trajectory_.points[traj_index_].time_from_start))
+    if (ros::Time::now() > (traj_start_ + trajectory_.points.at(traj_index_).time_from_start))
     {
       // Get end effector pose
-      Eigen::VectorXd q = Eigen::VectorXd::Map(trajectory_.points[traj_index_].positions.data(),
-                                               trajectory_.points[traj_index_].positions.size());
-      ROS_INFO_STREAM("Index " << traj_index_ << " q_nullspace: " << q.transpose());
-      Eigen::Vector3d translation;
-      Eigen::Quaterniond orientation;
-      getFk(q, translation, orientation);
-      // Update end effector pose
-      position_d_ = translation;
-      orientation_d_ = orientation;
-      // Update nullspace
+      Eigen::VectorXd q = Eigen::VectorXd::Map(trajectory_.points.at(traj_index_).positions.data(),
+                                               trajectory_.points.at(traj_index_).positions.size());
+      if (this->verbose_print_)
+      {
+        ROS_INFO_STREAM("Index " << traj_index_ << " q_nullspace: " << q.transpose());
+      }
+      // Update end-effector pose and nullspace
+      getFk(q, this->position_d_, this->orientation_d_);
       base_tools_->setNullspaceConfig(q);
       traj_index_++;
     }
@@ -572,19 +573,24 @@ namespace cartesian_impedance_controller
   void CartesianImpedanceControllerRos::trajGoalCb()
   {
     traj_goal_ = traj_as_->acceptNewGoal();
-    ROS_INFO("Accepted new goal");
+    ROS_INFO("Accepted new goal from action server.");
     trajStart(traj_goal_->trajectory);
   }
 
   void CartesianImpedanceControllerRos::trajPreemptCb()
   {
     ROS_INFO("Actionserver got preempted.");
+    traj_as_->setPreempted();
   }
 
   void CartesianImpedanceControllerRos::trajCb(const trajectory_msgs::JointTrajectoryConstPtr &msg)
   {
-    ROS_INFO("Got trajectory msg ");
+    ROS_INFO("Got trajectory msg from trajectory topic.");
+    if (traj_as_->isActive())
+    {
+      traj_as_->setPreempted();
+      ROS_INFO("Preempted running action server goal.");
+    }
     trajStart(*msg);
   }
-
 } // namespace cartesian_impedance_controller
