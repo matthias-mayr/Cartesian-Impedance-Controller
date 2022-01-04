@@ -1,5 +1,8 @@
 #include <cartesian_impedance_controller/cartesian_impedance_controller_ros.h>
 
+#include <eigen_conversions/eigen_msg.h>
+#include <tf_conversions/tf_eigen.h>
+
 namespace cartesian_impedance_controller
 {
   // Saturate a variable x with the limits x_min and x_max

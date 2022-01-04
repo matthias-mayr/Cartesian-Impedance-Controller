@@ -6,16 +6,19 @@
 
 #include <Eigen/Dense>
 
-#include <realtime_tools/realtime_publisher.h>
 #include <ros/node_handle.h>
 #include <ros/time.h>
 
-#include <actionlib/server/simple_action_server.h>
 #include <controller_interface/controller.h>
-#include <dynamic_reconfigure/server.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/robot_hw.h>
 #include <pluginlib/class_list_macros.h>
+
+#include <actionlib/server/simple_action_server.h>
+#include <dynamic_reconfigure/server.h>
+#include <realtime_tools/realtime_publisher.h>
+#include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
 
 #include <control_msgs/FollowJointTrajectoryAction.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -23,23 +26,12 @@
 #include <std_msgs/Float64MultiArray.h>
 #include <trajectory_msgs/JointTrajectory.h>
 
-#include <tf/transform_broadcaster.h>
-#include <tf/transform_listener.h>
-#include <tf_conversions/tf_eigen.h>
-#include <eigen_conversions/eigen_msg.h>
-
+#include <cartesian_impedance_controller/cartesian_impedance_controller.h>
 #include <cartesian_impedance_controller/ControllerConfig.h>
 #include <cartesian_impedance_controller/ControllerState.h>
-#include <cartesian_impedance_controller/cartesian_impedance_controller.h>
 #include <cartesian_impedance_controller/damping_configConfig.h>
 #include <cartesian_impedance_controller/impedance_configConfig.h>
 #include <cartesian_impedance_controller/rbdyn_wrapper.h>
-#include <actionlib/server/simple_action_server.h>
-#include <control_msgs/FollowJointTrajectoryAction.h>
-#include <std_msgs/Float64MultiArray.h>
-#include <trajectory_msgs/JointTrajectory.h>
-#include <realtime_tools/realtime_publisher.h>
-#include <Eigen/Dense>
 #include <cartesian_impedance_controller/wrench_configConfig.h>
 
 namespace cartesian_impedance_controller
