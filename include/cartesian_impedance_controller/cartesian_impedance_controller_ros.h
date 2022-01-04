@@ -56,12 +56,12 @@ namespace cartesian_impedance_controller
   private:
     bool initDynamicReconfigure(const ros::NodeHandle &nh);
     bool initJointHandles(hardware_interface::EffortJointInterface *hw, const ros::NodeHandle &nh);
-    bool initMessaging(ros::NodeHandle &nh);
+    bool initMessaging(ros::NodeHandle *nh);
     bool initRBDyn(const ros::NodeHandle &nh);
-    bool initTrajectories(ros::NodeHandle &nh);
+    bool initTrajectories(ros::NodeHandle *nh);
 
-    bool getFk(const Eigen::VectorXd &q, Eigen::Vector3d &position, Eigen::Quaterniond &rotation);
-    bool getJacobian(const Eigen::VectorXd &q, const Eigen::VectorXd &dq, Eigen::MatrixXd &jacobian);
+    bool getFk(const Eigen::VectorXd &q, Eigen::Vector3d *position, Eigen::Quaterniond *rotation) const;
+    bool getJacobian(const Eigen::VectorXd &q, const Eigen::VectorXd &dq, Eigen::MatrixXd *jacobian);
     void updateState();
     void setDamping(const geometry_msgs::Wrench &cart_stiffness, double nullspace);
     void setStiffness(const geometry_msgs::Wrench &cart_stiffness, double nullspace);
@@ -72,7 +72,7 @@ namespace cartesian_impedance_controller
     void stiffnessCb(const geometry_msgs::WrenchStampedConstPtr &msg);
     void wrenchCommandCb(const geometry_msgs::WrenchStampedConstPtr &msg);
 
-    void transformWrench(Eigen::Matrix<double, 6, 1>* cartesian_wrench, std::string from_frame, std::string to_frame) const;
+    void transformWrench(Eigen::Matrix<double, 6, 1> *cartesian_wrench, const std::string &from_frame, const std::string &to_frame) const;
     void publish();
 
     void dynamicConfigCb(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level);

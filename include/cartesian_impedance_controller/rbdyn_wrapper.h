@@ -60,7 +60,7 @@ public:
     return jac.jacobian(rbdyn_urdf.mb, rbdyn_urdf.mbc);
   }
 
-  EefState perform_fk(const Eigen::VectorXd& q)
+  EefState perform_fk(const Eigen::VectorXd& q) const
   {
     mc_rbdyn_urdf::URDFParserResult rbdyn_urdf = _rbdyn_urdf;
 
@@ -103,7 +103,7 @@ public:
     return { trans, quat };
   }
 
-  int n_joints()
+  int n_joints() const
   {
     return _rbd_indices.size();
   }
@@ -128,7 +128,7 @@ private:
     }
   }
 
-  double _wrap_angle(const double& angle)
+  double _wrap_angle(const double& angle) const
   {
     double wrapped;
     if ((angle <= M_PI) && (angle >= -M_PI))

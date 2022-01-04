@@ -59,19 +59,19 @@ namespace cartesian_impedance_controller
     return true;
   }
 
-  bool CartesianImpedanceControllerRos::initMessaging(ros::NodeHandle &nh)
+  bool CartesianImpedanceControllerRos::initMessaging(ros::NodeHandle *nh)
   {
-    this->sub_cart_stiffness_ = nh.subscribe("set_cartesian_stiffness", 1,
-                                       &CartesianImpedanceControllerRos::stiffnessCb, this);
-    this->sub_cart_wrench_ = nh.subscribe("set_cartesian_wrench", 1,
-                                    &CartesianImpedanceControllerRos::wrenchCommandCb, this);
-    this->sub_damping_ = nh.subscribe("set_damping_factors", 1,
-                                &CartesianImpedanceControllerRos::dampingCb, this);
+    this->sub_cart_stiffness_ = nh->subscribe("set_cartesian_stiffness", 1,
+                                              &CartesianImpedanceControllerRos::stiffnessCb, this);
+    this->sub_cart_wrench_ = nh->subscribe("set_cartesian_wrench", 1,
+                                           &CartesianImpedanceControllerRos::wrenchCommandCb, this);
+    this->sub_damping_ = nh->subscribe("set_damping_factors", 1,
+                                       &CartesianImpedanceControllerRos::dampingCb, this);
     this->sub_impedance_config_ =
-        nh.subscribe("set_config", 1, &CartesianImpedanceControllerRos::controllerConfigCb, this);
-    this->sub_reference_pose_ = nh.subscribe("target_pose", 1, &CartesianImpedanceControllerRos::referencePoseCb, this);
+        nh->subscribe("set_config", 1, &CartesianImpedanceControllerRos::controllerConfigCb, this);
+    this->sub_reference_pose_ = nh->subscribe("target_pose", 1, &CartesianImpedanceControllerRos::referencePoseCb, this);
 
-    this->pub_torques_.init(nh, "commanded_torques", 20);
+    this->pub_torques_.init(*nh, "commanded_torques", 20);
     this->pub_torques_.msg_.layout.dim.resize(1);
     this->pub_torques_.msg_.layout.data_offset = 0;
     this->pub_torques_.msg_.layout.dim[0].size = this->n_joints_;
@@ -79,8 +79,8 @@ namespace cartesian_impedance_controller
     this->pub_torques_.msg_.data.resize(this->n_joints_);
 
     std::vector<std::string> joint_names;
-    nh.getParam("joints", joint_names);
-    this->pub_state_.init(nh, "controller_state", 10);
+    nh->getParam("joints", joint_names);
+    this->pub_state_.init(*nh, "controller_state", 10);
     this->pub_state_.msg_.header.seq = 0;
     for (size_t i = 0; i < this->n_joints_; i++)
     {
@@ -126,12 +126,12 @@ namespace cartesian_impedance_controller
     return true;
   }
 
-  bool CartesianImpedanceControllerRos::initTrajectories(ros::NodeHandle &nh)
+  bool CartesianImpedanceControllerRos::initTrajectories(ros::NodeHandle *nh)
   {
-    this->sub_trajectory_ = nh.subscribe("command", 1, &CartesianImpedanceControllerRos::trajCb, this);
+    this->sub_trajectory_ = nh->subscribe("command", 1, &CartesianImpedanceControllerRos::trajCb, this);
     this->traj_as_ = std::unique_ptr<actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>>(
         new actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>(
-            nh, std::string("follow_joint_trajectory"), false));
+            *nh, std::string("follow_joint_trajectory"), false));
     this->traj_as_->registerGoalCallback(boost::bind(&CartesianImpedanceControllerRos::trajGoalCb, this));
     this->traj_as_->registerPreemptCallback(boost::bind(&CartesianImpedanceControllerRos::trajPreemptCb, this));
     this->traj_as_->start();
@@ -162,11 +162,11 @@ namespace cartesian_impedance_controller
     node_handle.param<bool>("verbosity/state_msgs", this->verbose_state_, false);
     node_handle.param<bool>("verbosity/tf_frames", this->verbose_tf_, false);
 
-    if (!this->initJointHandles(hw, node_handle) || !this->initMessaging(node_handle) || !this->initRBDyn(node_handle))
+    if (!this->initJointHandles(hw, node_handle) || !this->initMessaging(&node_handle) || !this->initRBDyn(node_handle))
     {
       return false;
     }
-    if (enable_trajectories && !this->initTrajectories(node_handle))
+    if (enable_trajectories && !this->initTrajectories(&node_handle))
     {
       return false;
     }
@@ -234,8 +234,8 @@ namespace cartesian_impedance_controller
     publish();
   }
 
-  bool CartesianImpedanceControllerRos::getFk(const Eigen::VectorXd &q, Eigen::Vector3d &position,
-                                              Eigen::Quaterniond &orientation)
+  bool CartesianImpedanceControllerRos::getFk(const Eigen::VectorXd &q, Eigen::Vector3d *position,
+                                              Eigen::Quaterniond *orientation) const
   {
     rbdyn_wrapper::EefState ee_state;
     if (this->rbdyn_wrapper_.n_joints() != this->n_joints_)
@@ -248,13 +248,13 @@ namespace cartesian_impedance_controller
     {
       ee_state = this->rbdyn_wrapper_.perform_fk(q);
     }
-    position = ee_state.translation;
-    orientation = ee_state.orientation;
+    *position = ee_state.translation;
+    *orientation = ee_state.orientation;
     return true;
   }
 
   bool CartesianImpedanceControllerRos::getJacobian(const Eigen::VectorXd &q, const Eigen::VectorXd &dq,
-                                                    Eigen::MatrixXd &jacobian)
+                                                    Eigen::MatrixXd *jacobian)
   {
     if (this->rbdyn_wrapper_.n_joints() != this->n_joints_)
     {
@@ -262,13 +262,13 @@ namespace cartesian_impedance_controller
       q_rb.head(q.size()) = q;
       Eigen::VectorXd dq_rb = Eigen::VectorXd::Zero(this->rbdyn_wrapper_.n_joints());
       dq_rb.head(dq.size()) = dq;
-      jacobian = this->rbdyn_wrapper_.jacobian(q_rb, dq_rb);
+      *jacobian = this->rbdyn_wrapper_.jacobian(q_rb, dq_rb);
     }
     else
     {
-      jacobian = this->rbdyn_wrapper_.jacobian(q, dq);
+      *jacobian = this->rbdyn_wrapper_.jacobian(q, dq);
     }
-    jacobian = jacobian_perm_ * jacobian;
+    *jacobian = jacobian_perm_ * *jacobian;
     return true;
   }
 
@@ -279,8 +279,8 @@ namespace cartesian_impedance_controller
       this->q_[i] = this->joint_handles_[i].getPosition();
       this->dq_[i] = this->joint_handles_[i].getVelocity();
     }
-    getJacobian(this->q_, this->dq_, this->jacobian_);
-    getFk(this->q_, this->position_, this->orientation_);
+    getJacobian(this->q_, this->dq_, &this->jacobian_);
+    getFk(this->q_, &this->position_, &this->orientation_);
   }
 
   void CartesianImpedanceControllerRos::controllerConfigCb(const cartesian_impedance_controller::ControllerConfigConstPtr &msg)
@@ -370,8 +370,8 @@ namespace cartesian_impedance_controller
   }
 
   // Transform a Cartesian wrench from "from_frame" to "to_frame". E.g. from_frame= "world" , to_frame = "bh_link_ee"
-  void CartesianImpedanceControllerRos::transformWrench(Eigen::Matrix<double, 6, 1>* cartesian_wrench,
-                                                        std::string from_frame, std::string to_frame) const
+  void CartesianImpedanceControllerRos::transformWrench(Eigen::Matrix<double, 6, 1> *cartesian_wrench,
+                                                        const std::string &from_frame, const std::string &to_frame) const
   {
     try
     {
@@ -538,7 +538,7 @@ namespace cartesian_impedance_controller
         ROS_INFO_STREAM("Index " << this->traj_index_ << " q_nullspace: " << q.transpose());
       }
       // Update end-effector pose and nullspace
-      getFk(q, this->position_d_, this->orientation_d_);
+      getFk(q, &this->position_d_, &this->orientation_d_);
       this->base_tools_->setNullspaceConfig(q);
       this->traj_index_++;
     }
