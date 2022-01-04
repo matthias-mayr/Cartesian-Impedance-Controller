@@ -18,7 +18,7 @@ public:
     Eigen::Quaterniond orientation;
   };
 
-  void init_rbdyn(const std::string& urdf_string, const std::string& end_effector)
+  void init_rbdyn(const std::string &urdf_string, const std::string &end_effector)
   {
     // Convert URDF to RBDyn
     _rbdyn_urdf = mc_rbdyn_urdf::rbdyn_from_urdf(urdf_string);
@@ -42,7 +42,7 @@ public:
     throw std::runtime_error("Index for end effector link " + end_effector + " not found in URDF. Aborting.");
   }
 
-  Eigen::MatrixXd jacobian(const Eigen::VectorXd& q, const Eigen::VectorXd& dq)
+  Eigen::MatrixXd jacobian(const Eigen::VectorXd &q, const Eigen::VectorXd &dq)
   {
     mc_rbdyn_urdf::URDFParserResult rbdyn_urdf = _rbdyn_urdf;
 
@@ -60,7 +60,7 @@ public:
     return jac.jacobian(rbdyn_urdf.mb, rbdyn_urdf.mbc);
   }
 
-  EefState perform_fk(const Eigen::VectorXd& q) const
+  EefState perform_fk(const Eigen::VectorXd &q) const
   {
     mc_rbdyn_urdf::URDFParserResult rbdyn_urdf = _rbdyn_urdf;
 
@@ -100,7 +100,7 @@ public:
     Eigen::Matrix3d rot_mat = eig_tf.block(0, 0, 3, 3);
     Eigen::Quaterniond quat = Eigen::Quaterniond(rot_mat).normalized();
 
-    return { trans, quat };
+    return {trans, quat};
   }
 
   int n_joints() const
@@ -114,8 +114,8 @@ public:
   }
 
 private:
-  void _update_urdf_state(mc_rbdyn_urdf::URDFParserResult& rbdyn_urdf, const Eigen::VectorXd& q,
-                          const Eigen::VectorXd& dq)
+  void _update_urdf_state(mc_rbdyn_urdf::URDFParserResult &rbdyn_urdf, const Eigen::VectorXd &q,
+                          const Eigen::VectorXd &dq)
   {
     for (size_t i = 0; i < _rbd_indices.size(); i++)
     {
@@ -128,7 +128,7 @@ private:
     }
   }
 
-  double _wrap_angle(const double& angle) const
+  double _wrap_angle(const double &angle) const
   {
     double wrapped;
     if ((angle <= M_PI) && (angle >= -M_PI))

@@ -226,7 +226,7 @@ namespace cartesian_impedance_controller
 
     // Get the updated internal controller state
     this->base_tools_->getState(&this->position_d_, &this->orientation_d_, &this->cartesian_stiffness_, &this->nullspace_stiffness_, &this->q_d_nullspace_,
-                          &this->cartesian_damping_);
+                                &this->cartesian_damping_);
 
     // Write commands
     for (size_t i = 0; i < this->n_joints_; ++i)
@@ -329,12 +329,12 @@ namespace cartesian_impedance_controller
     constexpr double dmp_min = 0.0;
     constexpr double dmp_max = 1;
     this->base_tools_->setDamping(saturateValue(cart_stiffness.force.x, dmp_min, dmp_max),
-                            saturateValue(cart_stiffness.force.y, dmp_min, dmp_max),
-                            saturateValue(cart_stiffness.force.z, dmp_min, dmp_max),
-                            saturateValue(cart_stiffness.torque.x, dmp_min, dmp_max),
-                            saturateValue(cart_stiffness.torque.y, dmp_min, dmp_max),
-                            saturateValue(cart_stiffness.torque.z, dmp_min, dmp_max),
-                            saturateValue(nullspace, dmp_min, dmp_max));
+                                  saturateValue(cart_stiffness.force.y, dmp_min, dmp_max),
+                                  saturateValue(cart_stiffness.force.z, dmp_min, dmp_max),
+                                  saturateValue(cart_stiffness.torque.x, dmp_min, dmp_max),
+                                  saturateValue(cart_stiffness.torque.y, dmp_min, dmp_max),
+                                  saturateValue(cart_stiffness.torque.z, dmp_min, dmp_max),
+                                  saturateValue(nullspace, dmp_min, dmp_max));
   }
 
   void CartesianImpedanceControllerRos::setStiffness(const geometry_msgs::Wrench &cart_stiffness, double nullspace)
@@ -346,12 +346,12 @@ namespace cartesian_impedance_controller
     constexpr double ns_min = 0;
     constexpr double ns_max = 10000;
     this->base_tools_->setStiffness(saturateValue(cart_stiffness.force.x, trans_stf_min, trans_stf_max),
-                              saturateValue(cart_stiffness.force.y, trans_stf_min, trans_stf_max),
-                              saturateValue(cart_stiffness.force.z, trans_stf_min, trans_stf_max),
-                              saturateValue(cart_stiffness.torque.x, rot_stf_min, rot_stf_max),
-                              saturateValue(cart_stiffness.torque.y, rot_stf_min, rot_stf_max),
-                              saturateValue(cart_stiffness.torque.z, rot_stf_min, rot_stf_max),
-                              saturateValue(nullspace, ns_min, ns_max));
+                                    saturateValue(cart_stiffness.force.y, trans_stf_min, trans_stf_max),
+                                    saturateValue(cart_stiffness.force.z, trans_stf_min, trans_stf_max),
+                                    saturateValue(cart_stiffness.torque.x, rot_stf_min, rot_stf_max),
+                                    saturateValue(cart_stiffness.torque.y, rot_stf_min, rot_stf_max),
+                                    saturateValue(cart_stiffness.torque.z, rot_stf_min, rot_stf_max),
+                                    saturateValue(nullspace, ns_min, ns_max));
   }
 
   // Adds a wrench at the end-effector, using the root frame of the robot description
@@ -386,7 +386,7 @@ namespace cartesian_impedance_controller
       tf::Vector3 v_t_rot = tf::quatRotate(transform.getRotation(), v_t);
       *cartesian_wrench << v_f_rot[0], v_f_rot[1], v_f_rot[2], v_t_rot[0], v_t_rot[1], v_t_rot[2];
     }
-    catch (const tf::TransformException& ex)
+    catch (const tf::TransformException &ex)
     {
       ROS_ERROR_THROTTLE(1, "%s", ex.what());
     }
@@ -479,11 +479,11 @@ namespace cartesian_impedance_controller
       double rot_stf_max = 300;
       double rot_stf_min = 0;
       this->base_tools_->setStiffness(saturateValue(config.translation_x, trans_stf_min, trans_stf_max),
-                                saturateValue(config.translation_y, trans_stf_min, trans_stf_max),
-                                saturateValue(config.translation_z, trans_stf_min, trans_stf_max),
-                                saturateValue(config.rotation_x, trans_stf_min, trans_stf_max),
-                                saturateValue(config.rotation_y, trans_stf_min, trans_stf_max),
-                                saturateValue(config.rotation_z, trans_stf_min, trans_stf_max), config.nullspace_stiffness);
+                                      saturateValue(config.translation_y, trans_stf_min, trans_stf_max),
+                                      saturateValue(config.translation_z, trans_stf_min, trans_stf_max),
+                                      saturateValue(config.rotation_x, trans_stf_min, trans_stf_max),
+                                      saturateValue(config.rotation_y, trans_stf_min, trans_stf_max),
+                                      saturateValue(config.rotation_z, trans_stf_min, trans_stf_max), config.nullspace_stiffness);
     }
   }
 
@@ -505,7 +505,7 @@ namespace cartesian_impedance_controller
   void CartesianImpedanceControllerRos::dynamicWrenchCb(cartesian_impedance_controller::wrench_configConfig &config,
                                                         uint32_t level)
   {
-    Eigen::Vector6d F {Eigen::Vector6d::Zero()};
+    Eigen::Vector6d F{Eigen::Vector6d::Zero()};
     if (config.apply_wrench)
     {
       F << config.f_x, config.f_y, config.f_z, config.tau_x, config.tau_y, config.tau_z;
