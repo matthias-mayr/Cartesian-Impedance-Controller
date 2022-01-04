@@ -98,11 +98,10 @@ namespace cartesian_impedance_controller
     // Get the URDF XML from the parameter server. Wait if needed.
     std::string urdf_string;
     nh.param<std::string>("robot_description", robot_description_, "/robot_description");
-    while (urdf_string.empty())
+    while (!nh.getParam(robot_description_, urdf_string))
     {
       ROS_INFO_ONCE("Waiting for robot description in parameter %s on the ROS param server.",
                     robot_description_.c_str());
-      nh.getParam(robot_description_, urdf_string);
       usleep(100000);
     }
     try
