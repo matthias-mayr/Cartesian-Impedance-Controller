@@ -423,21 +423,18 @@ namespace cartesian_impedance_controller
     }
     if (verbose_tf_)
     {
-
-      tf::vectorEigenToTF(Eigen::Vector3d(base_tools_->getPoseError().head(3)), tf_pos_);
-      tf_br_transform_.setOrigin(tf_pos_);
-
-      tf::vectorEigenToTF(position_, tf_pos_);
-      tf_br_transform_.setOrigin(tf_pos_);
-      tf::quaternionEigenToTF(orientation_, tf_rot_);
-      tf_br_transform_.setRotation(tf_rot_);
-      tf_br_.sendTransform(tf::StampedTransform(tf_br_transform_, ros::Time::now(), "world", "fk_ee"));
+      // Publish result of forward kinematics
+      tf::vectorEigenToTF(this->position_, this->tf_pos_);
+      this->tf_br_transform_.setOrigin(this->tf_pos_);
+      tf::quaternionEigenToTF(this->orientation_, this->tf_rot_);
+      this->tf_br_transform_.setRotation(this->tf_rot_);
+      tf_br_.sendTransform(tf::StampedTransform(this->tf_br_transform_, ros::Time::now(), "world", this->end_effector_ + "_ee_fk"));
       // Publish tf to the reference pose
-      tf::vectorEigenToTF(position_d_, tf_pos_);
-      tf_br_transform_.setOrigin(tf_pos_);
-      tf::quaternionEigenToTF(orientation_d_, tf_rot_);
-      tf_br_transform_.setRotation(tf_rot_);
-      tf_br_.sendTransform(tf::StampedTransform(tf_br_transform_, ros::Time::now(), "world", this->end_effector_ + "_ref_pose"));
+      tf::vectorEigenToTF(this->position_d_, this->tf_pos_);
+      this->tf_br_transform_.setOrigin(this->tf_pos_);
+      tf::quaternionEigenToTF(this->orientation_d_, this->tf_rot_);
+      this->tf_br_transform_.setRotation(this->tf_rot_);
+      tf_br_.sendTransform(tf::StampedTransform(this->tf_br_transform_, ros::Time::now(), "world", this->end_effector_ + "_ee_ref_pose"));
     }
     if (verbose_state_)
     {
