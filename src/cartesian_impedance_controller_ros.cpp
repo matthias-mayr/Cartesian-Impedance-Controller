@@ -13,9 +13,9 @@ namespace cartesian_impedance_controller
     wrench->force.x = v(0);
     wrench->force.y = v(1);
     wrench->force.z = v(2);
-    wrench->torque.x = v(4);
-    wrench->torque.y = v(5);
-    wrench->torque.z = v(6);
+    wrench->torque.x = v(3);
+    wrench->torque.y = v(4);
+    wrench->torque.z = v(5);
   }
 
   bool CartesianImpedanceControllerRos::initDynamicReconfigure(const ros::NodeHandle &nh)
@@ -447,7 +447,7 @@ namespace cartesian_impedance_controller
         tf::pointEigenToMsg(this->position_d_, pub_state_.msg_.reference_pose.position);
         tf::quaternionEigenToMsg(this->orientation_d_, pub_state_.msg_.reference_pose.orientation);
         tf::pointEigenToMsg(error.head(3), pub_state_.msg_.pose_error.position);
-        Eigen::Quaterniond q = Eigen::AngleAxisd(error(4), Eigen::Vector3d::UnitX()) * Eigen::AngleAxisd(error(5), Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(error(6), Eigen::Vector3d::UnitZ());
+        Eigen::Quaterniond q = Eigen::AngleAxisd(error(3), Eigen::Vector3d::UnitX()) * Eigen::AngleAxisd(error(4), Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(error(5), Eigen::Vector3d::UnitZ());
         tf::quaternionEigenToMsg(q, pub_state_.msg_.pose_error.orientation);
 
         EigenVectorToWrench(this->cartesian_stiffness_.diagonal(), &pub_state_.msg_.cartesian_stiffness);
