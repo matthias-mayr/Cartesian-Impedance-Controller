@@ -123,7 +123,7 @@ void CartesianImpedanceController::applyDamping()
   this->nullspace_damping_target_ = this->damping_factors_(6) * this->dampingRule(this->nullspace_stiffness_target_);
 }
 
-// Set the desired enf-effector pose
+// Set the desired end-effector pose
 void CartesianImpedanceController::setDesiredPose(const Eigen::Vector3d &position_d_target,
                                                   const Eigen::Quaterniond &orientation_d_target)
 {

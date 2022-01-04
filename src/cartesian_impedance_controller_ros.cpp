@@ -186,7 +186,7 @@ namespace cartesian_impedance_controller
     q_ = Eigen::VectorXd(this->n_joints_);
     dq_ = Eigen::VectorXd(this->n_joints_);
     q_d_nullspace_ = Eigen::VectorXd(this->n_joints_);
-    jacobian_ = Eigen::MatrixXd(6, joint_handles_.size());
+    jacobian_ = Eigen::MatrixXd(6, this->n_joints_);
 
     // Needs to be after base_tools init since the wrench callback calls it
     if (dynamic_reconfigure && !this->initDynamicReconfigure(node_handle))
@@ -195,6 +195,7 @@ namespace cartesian_impedance_controller
     }
     base_tools_->setFiltering(update_frequency_, filtering_nullspace_config_, filtering_stiffness_, filtering_pose_, filtering_wrench_);
 
+    ROS_INFO("Finished initialization.");
     return true;
   }
 

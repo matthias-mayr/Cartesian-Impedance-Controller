@@ -83,7 +83,7 @@ CartesianImpedance_trajectory_controller:
   robot_description: /robot_description # In case of a varying name
   from_frame_wrench: world              # Base frame of wrench msgs.
   to_frame_wrench: <end_effector>         # Frame for wrench commands
-  delta_tau_max: 1.0                    # Max. commanded torque diff between steps
+  delta_tau_max: 1.0                    # Max. commanded torque diff between steps in Nm
   filtering:                            # Update existing values (0.0 1.0] per s
     nullspace_config: 0.1               # Nullspace configuration filtering
     pose: 0.1                           # Reference pose filtering
