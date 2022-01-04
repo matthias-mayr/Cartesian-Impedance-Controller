@@ -81,7 +81,6 @@ CartesianImpedance_trajectory_controller:
   dynamic_reconfigure: true             # Starts dynamic reconfigure server
   handle_trajectories: true             # Accept traj., e.g. from MoveIt
   robot_description: /robot_description # In case of a varying name
-  from_frame_wrench: world              # Base frame of wrench msgs.
   to_frame_wrench: <end_effector>         # Frame for wrench commands
   delta_tau_max: 1.0                    # Max. commanded torque diff between steps in Nm
   filtering:                            # Update existing values (0.0 1.0] per s

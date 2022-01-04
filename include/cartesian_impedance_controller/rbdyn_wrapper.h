@@ -108,6 +108,11 @@ public:
     return _rbd_indices.size();
   }
 
+  std::string root_link() const
+  {
+    return _rbdyn_urdf.mb.body(0).name();
+  }
+
 private:
   void _update_urdf_state(mc_rbdyn_urdf::URDFParserResult& rbdyn_urdf, const Eigen::VectorXd& q,
                           const Eigen::VectorXd& dq)

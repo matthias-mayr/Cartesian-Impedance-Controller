@@ -72,11 +72,7 @@ namespace cartesian_impedance_controller
     void stiffnessCb(const geometry_msgs::WrenchStampedConstPtr &msg);
     void wrenchCommandCb(const geometry_msgs::WrenchStampedConstPtr &msg);
 
-    void transformWrench(Eigen::Matrix<double, 6, 1> &cartesian_wrench, std::string from_frame, std::string to_frame);
-    void publishData(Eigen::VectorXd q, Eigen::VectorXd dq, Eigen::Vector3d position, Eigen::Quaterniond orientation,
-                     Eigen::Vector3d position_d_, Eigen::Quaterniond orientation_d_, Eigen::VectorXd tau_d,
-                     Eigen::Matrix<double, 6, 6> cartesian_stiffness_, double nullspace_stiffness_,
-                     Eigen::Matrix<double, 6, 1> error, Eigen::Matrix<double, 6, 1> F, double cartesian_velocity);
+    void transformWrench(Eigen::Matrix<double, 6, 1>* cartesian_wrench, std::string from_frame, std::string to_frame) const;
     void publish();
 
     void dynamicConfigCb(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level);
@@ -118,7 +114,6 @@ namespace cartesian_impedance_controller
     ros::Subscriber sub_reference_pose_;
 
     tf::TransformListener tf_listener_;
-    tf::StampedTransform transform_;
     std::string from_frame_wrench_;
     std::string to_frame_wrench_;
 

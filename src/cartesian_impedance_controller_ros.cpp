@@ -145,8 +145,7 @@ namespace cartesian_impedance_controller
     // Fetch parameters
     node_handle.param<std::string>("end_effector", end_effector_, "iiwa_link_ee");
     ROS_INFO_STREAM("End effektor link is: " << end_effector_);
-    // Frames for applying commanded Cartesian wrenches
-    node_handle.param<std::string>("from_frame_wrench", from_frame_wrench_, "world");
+    // Frame for applying commanded Cartesian wrenches
     node_handle.param<std::string>("to_frame_wrench", to_frame_wrench_, end_effector_);
     bool dynamic_reconfigure{true};
     node_handle.param<bool>("dynamic_reconfigure", dynamic_reconfigure, true);
@@ -171,6 +170,7 @@ namespace cartesian_impedance_controller
     {
       return false;
     }
+    this->from_frame_wrench_ = this->rbdyn_wrapper_.root_link();
 
     // Initialize base_tools and member variables
     base_tools_ = std::make_unique<CartesianImpedanceController>(this->n_joints_);
@@ -229,16 +229,6 @@ namespace cartesian_impedance_controller
     for (size_t i = 0; i < this->n_joints_; ++i)
     {
       joint_handles_[i].setCommand(this->tau_J_d_(i));
-    }
-
-    try
-    {
-      // Update transformation of Cartesian Wrench
-      tf_listener_.lookupTransform(from_frame_wrench_, to_frame_wrench_, ros::Time(0), transform_);
-    }
-    catch (tf::TransformException ex)
-    {
-      ROS_ERROR_THROTTLE(1, "%s", ex.what());
     }
 
     publish();
@@ -361,34 +351,37 @@ namespace cartesian_impedance_controller
                               saturateValue(nullspace, ns_min, ns_max));
   }
 
-  //Adds a wrench at the end-effector, using the world frame
+  // Adds a wrench at the end-effector, using the root frame of the robot description
   void CartesianImpedanceControllerRos::wrenchCommandCb(const geometry_msgs::WrenchStampedConstPtr &msg)
   {
     Eigen::Matrix<double, 6, 1> F;
     F << msg->wrench.force.x, msg->wrench.force.y, msg->wrench.force.z, msg->wrench.torque.x, msg->wrench.torque.y,
         msg->wrench.torque.z;
-    if (!msg->header.frame_id.empty() && msg->header.frame_id != "world")
+
+    if (!msg->header.frame_id.empty() && msg->header.frame_id != this->from_frame_wrench_)
     {
-      transformWrench(F, msg->header.frame_id, to_frame_wrench_);
+      transformWrench(&F, msg->header.frame_id, this->to_frame_wrench_);
     }
     else if (msg->header.frame_id.empty())
     {
-      transformWrench(F, from_frame_wrench_, to_frame_wrench_);
+      transformWrench(&F, this->from_frame_wrench_, this->to_frame_wrench_);
     }
-    base_tools_->applyWrench(F);
+    this->base_tools_->applyWrench(F);
   }
 
   // Transform a Cartesian wrench from "from_frame" to "to_frame". E.g. from_frame= "world" , to_frame = "bh_link_ee"
-  void CartesianImpedanceControllerRos::transformWrench(Eigen::Matrix<double, 6, 1> &cartesian_wrench,
-                                                        std::string from_frame, std::string to_frame)
+  void CartesianImpedanceControllerRos::transformWrench(Eigen::Matrix<double, 6, 1>* cartesian_wrench,
+                                                        std::string from_frame, std::string to_frame) const
   {
     try
     {
-      tf::Vector3 v_f(cartesian_wrench(0), cartesian_wrench(1), cartesian_wrench(2));
-      tf::Vector3 v_t(cartesian_wrench(3), cartesian_wrench(4), cartesian_wrench(5));
-      tf::Vector3 v_f_rot = tf::quatRotate(transform_.getRotation(), v_f);
-      tf::Vector3 v_t_rot = tf::quatRotate(transform_.getRotation(), v_t);
-      cartesian_wrench << v_f_rot[0], v_f_rot[1], v_f_rot[2], v_t_rot[0], v_t_rot[1], v_t_rot[2];
+      tf::StampedTransform transform;
+      tf_listener_.lookupTransform(from_frame, to_frame, ros::Time(0), transform);
+      tf::Vector3 v_f(cartesian_wrench->operator()(0), cartesian_wrench->operator()(1), cartesian_wrench->operator()(2));
+      tf::Vector3 v_t(cartesian_wrench->operator()(3), cartesian_wrench->operator()(4), cartesian_wrench->operator()(5));
+      tf::Vector3 v_f_rot = tf::quatRotate(transform.getRotation(), v_f);
+      tf::Vector3 v_t_rot = tf::quatRotate(transform.getRotation(), v_t);
+      *cartesian_wrench << v_f_rot[0], v_f_rot[1], v_f_rot[2], v_t_rot[0], v_t_rot[1], v_t_rot[2];
     }
     catch (tf::TransformException ex)
     {
@@ -428,13 +421,13 @@ namespace cartesian_impedance_controller
       this->tf_br_transform_.setOrigin(this->tf_pos_);
       tf::quaternionEigenToTF(this->orientation_, this->tf_rot_);
       this->tf_br_transform_.setRotation(this->tf_rot_);
-      tf_br_.sendTransform(tf::StampedTransform(this->tf_br_transform_, ros::Time::now(), "world", this->end_effector_ + "_ee_fk"));
+      tf_br_.sendTransform(tf::StampedTransform(this->tf_br_transform_, ros::Time::now(), this->from_frame_wrench_, this->end_effector_ + "_ee_fk"));
       // Publish tf to the reference pose
       tf::vectorEigenToTF(this->position_d_, this->tf_pos_);
       this->tf_br_transform_.setOrigin(this->tf_pos_);
       tf::quaternionEigenToTF(this->orientation_d_, this->tf_rot_);
       this->tf_br_transform_.setRotation(this->tf_rot_);
-      tf_br_.sendTransform(tf::StampedTransform(this->tf_br_transform_, ros::Time::now(), "world", this->end_effector_ + "_ee_ref_pose"));
+      tf_br_.sendTransform(tf::StampedTransform(this->tf_br_transform_, ros::Time::now(), this->from_frame_wrench_, this->end_effector_ + "_ee_ref_pose"));
     }
     if (verbose_state_)
     {
