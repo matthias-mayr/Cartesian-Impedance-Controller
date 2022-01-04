@@ -502,20 +502,13 @@ namespace cartesian_impedance_controller
   void CartesianImpedanceControllerRos::dynamicWrenchCb(cartesian_impedance_controller::wrench_configConfig &config,
                                                         uint32_t level)
   {
+    Eigen::Vector6d F {Eigen::Vector6d::Zero()};
     if (config.apply_wrench)
     {
-      Eigen::Vector6d F;
       F << config.f_x, config.f_y, config.f_z, config.tau_x, config.tau_y, config.tau_z;
-      transformWrench(F, from_frame_wrench_, to_frame_wrench_);
-      base_tools_->applyWrench(F);
+      transformWrench(&F, this->from_frame_wrench_, this->to_frame_wrench_);
     }
-    else
-    {
-      Eigen::Vector6d F;
-      F << 0., 0., 0., 0., 0., 0.;
-      transformWrench(F, from_frame_wrench_, to_frame_wrench_);
-      base_tools_->applyWrench(F);
-    }
+    this->base_tools_->applyWrench(F);
   }
 
   void CartesianImpedanceControllerRos::trajStart(const trajectory_msgs::JointTrajectory &trajectory)
