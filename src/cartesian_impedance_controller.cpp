@@ -190,7 +190,7 @@ Eigen::VectorXd CartesianImpedanceController::calculateCommandedTorques(const Ei
 
   // Kinematic pseuoinverse
   Eigen::MatrixXd jacobian_transpose_pinv;
-  pseudoInverse(jacobian.transpose(), jacobian_transpose_pinv);
+    pseudoInverse(jacobian.transpose(), &jacobian_transpose_pinv);
 
   Eigen::VectorXd tau_task(this->n_joints_), tau_nullspace(this->n_joints_), tau_ext(this->n_joints_);
 

@@ -11,7 +11,7 @@
 #include <Eigen/LU>
 #include <Eigen/SVD>
 
-inline void pseudoInverse(const Eigen::MatrixXd& M_, Eigen::MatrixXd& M_pinv_, bool damped = true)
+inline void pseudoInverse(const Eigen::MatrixXd &M_, Eigen::MatrixXd* M_pinv_, bool damped = true)
 {
   double lambda_ = damped ? 0.2 : 0.0;
 
@@ -23,5 +23,5 @@ inline void pseudoInverse(const Eigen::MatrixXd& M_, Eigen::MatrixXd& M_pinv_, b
   for (int i = 0; i < sing_vals_.size(); i++)
     S_(i, i) = (sing_vals_(i)) / (sing_vals_(i) * sing_vals_(i) + lambda_ * lambda_);
 
-  M_pinv_ = Eigen::MatrixXd(svd.matrixV() * S_.transpose() * svd.matrixU().transpose());
+  *M_pinv_ = Eigen::MatrixXd(svd.matrixV() * S_.transpose() * svd.matrixU().transpose());
 }
