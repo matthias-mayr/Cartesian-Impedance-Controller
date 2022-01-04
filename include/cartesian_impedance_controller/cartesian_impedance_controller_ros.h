@@ -123,6 +123,7 @@ namespace cartesian_impedance_controller
     std::string to_frame_wrench_;
 
     double update_frequency_{500};
+    double filtering_nullspace_config_{0.1};
     double filtering_stiffness_{0.1};
     double filtering_pose_{0.1};
     double filtering_wrench_{0.1};

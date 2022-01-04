@@ -52,11 +52,26 @@ CartesianImpedanceController::CartesianImpedanceController(const size_t n_joints
   // Default stiffness values
   this->setStiffness(200., 200., 200., 20., 20., 20., 0.);
   this->cartesian_stiffness_ = this->cartesian_stiffness_target_;
+  this->cartesian_damping_ = this->cartesian_damping_target_;
 
   this->q_d_nullspace_ = Eigen::VectorXd::Zero(this->n_joints_);
   this->q_d_nullspace_target_ = this->q_d_nullspace_;
 
   this->tau_commanded_ = Eigen::VectorXd::Zero(this->n_joints_);
+}
+
+void CartesianImpedanceController::initDesiredPose(const Eigen::Vector3d &position_d_target,
+                                                   const Eigen::Quaterniond &orientation_d_target)
+{
+  this->setDesiredPose(position_d_target, orientation_d_target);
+  this->position_d_ = position_d_target;
+  this->orientation_d_ = orientation_d_target;
+}
+
+void CartesianImpedanceController::initNullspaceConfig(const Eigen::VectorXd &q_d_nullspace_target)
+{
+  this->setNullspaceConfig(q_d_nullspace_target);
+  this->q_d_nullspace_ = this->q_d_nullspace_target_;
 }
 
 void CartesianImpedanceController::setStiffness(const Eigen::Matrix<double, 7, 1> &stiffness)
@@ -125,10 +140,11 @@ void CartesianImpedanceController::setNullspaceConfig(const Eigen::VectorXd &q_d
 }
 
 // Apply filtering on stiffness + end-effector pose. Default inactive && depends on update_frequency
-void CartesianImpedanceController::setFiltering(double update_frequency, double filter_params_stiffness,
+void CartesianImpedanceController::setFiltering(double update_frequency, double filter_params_nullspace_config, double filter_params_stiffness,
                                                 double filter_params_pose, double filter_params_wrench)
 {
   this->setUpdateFrequency(update_frequency);
+  this->setFilterValue(filter_params_nullspace_config, &this->filter_params_nullspace_config_);
   this->setFilterValue(filter_params_stiffness, &this->filter_params_stiffness_);
   this->setFilterValue(filter_params_pose, &this->filter_params_pose_);
   this->setFilterValue(filter_params_wrench, &this->filter_params_wrench_);
@@ -163,6 +179,7 @@ Eigen::VectorXd CartesianImpedanceController::calculateCommandedTorques(const Ei
   updateStates(q, dq, jacobian, position, orientation);
 
   // Perform a filtering step
+  updateFilteredNullspaceConfig();
   updateFilteredStiffness();
   updateFilteredPose();
   updateFilteredWrench();
@@ -266,7 +283,14 @@ void CartesianImpedanceController::updateStates(const Eigen::VectorXd &q, const 
   this->jacobian_ << jacobian;
 }
 
-// Adds some filtering effect to stiffness
+// Adds a percental filtering effect to the nullspace configuration
+void CartesianImpedanceController::updateFilteredNullspaceConfig()
+{
+  const double step = this->filter_params_nullspace_config_ / this->update_frequency_;
+  this->q_d_nullspace_ = filteredUpdate(this->q_d_nullspace_target_, this->q_d_nullspace_, step);
+}
+
+// Adds a percental filtering effect to stiffness
 void CartesianImpedanceController::updateFilteredStiffness()
 {
   if (this->filter_params_stiffness_ == 1.0)
@@ -279,16 +303,15 @@ void CartesianImpedanceController::updateFilteredStiffness()
   }
   else
   {
-    double step = this->filter_params_stiffness_ / this->update_frequency_;
+    const double step = this->filter_params_stiffness_ / this->update_frequency_;
     this->cartesian_stiffness_ = filteredUpdate(this->cartesian_stiffness_target_, this->cartesian_stiffness_, step);
     this->cartesian_damping_ = filteredUpdate(this->cartesian_damping_target_, this->cartesian_damping_, step);
     this->nullspace_stiffness_ = filteredUpdate(this->nullspace_stiffness_target_, this->nullspace_stiffness_, step);
     this->nullspace_damping_ = filteredUpdate(this->nullspace_damping_target_, this->nullspace_damping_, step);
-    this->q_d_nullspace_ = filteredUpdate(this->q_d_nullspace_target_, this->q_d_nullspace_, step);
   }
 }
 
-// Adds some filtering effect to the end-effector pose
+// Adds a percental filtering effect to the end-effector pose
 void CartesianImpedanceController::updateFilteredPose()
 {
   if (filter_params_pose_ == 1.0)
@@ -298,15 +321,16 @@ void CartesianImpedanceController::updateFilteredPose()
   }
   else
   {
-    double step = this->filter_params_pose_ / this->update_frequency_;
+    const double step = this->filter_params_pose_ / this->update_frequency_;
     this->position_d_ = filteredUpdate(this->position_d_target_, this->position_d_, step);
     this->orientation_d_ = this->orientation_d_.slerp(step, this->orientation_d_target_);
   }
 }
-// Adds some filtering effect to the applied Cartesian wrench
+
+// Adds a percental filtering effect to the applied Cartesian wrench
 void CartesianImpedanceController::updateFilteredWrench()
 {
-  double step = this->filter_params_wrench_ / this->update_frequency_;
+  const double step = this->filter_params_wrench_ / this->update_frequency_;
   this->cartesian_wrench_ = filteredUpdate(this->cartesian_wrench_target_, this->cartesian_wrench_, step);
 }
 

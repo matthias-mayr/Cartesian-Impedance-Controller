@@ -11,6 +11,13 @@ public:
   CartesianImpedanceController(const size_t n_joints = 7);
   ~CartesianImpedanceController() = default;
 
+  // Sets pose without using filtering
+  void initDesiredPose(const Eigen::Vector3d &position_d_target,
+                       const Eigen::Quaterniond &orientation_d_target);
+
+  // Sets nullspace configuration without using filtering
+  void initNullspaceConfig(const Eigen::VectorXd &q_d_nullspace_target);
+
   // Set the desired diagonal stiffnessess + nullspace stiffness
   void setStiffness(const Eigen::Matrix<double, 7, 1> &stiffness);
 
@@ -30,7 +37,7 @@ public:
   void setNullspaceConfig(const Eigen::VectorXd &q_d_nullspace_target);
 
   // Apply filtering on stiffness + end-effector pose. Default inactive && depends on update_frequency
-  void setFiltering(double update_frequency, double filter_params_stiffness, double filter_params_pose,
+  void setFiltering(double update_frequency, double filter_params_nullspace_config, double filter_params_stiffness, double filter_params_pose,
                     double filter_params_wrench);
 
   // Maximum commanded torque change per time step
@@ -81,13 +88,16 @@ private:
   void updateStates(const Eigen::VectorXd &q, const Eigen::VectorXd &dq, const Eigen::MatrixXd &jacobian,
                     const Eigen::Vector3d &position, const Eigen::Quaterniond &orientation);
 
-  // Adds some filtering effect to stiffness
+  // Adds a percental filtering effect to the nullspace configuration
+  void updateFilteredNullspaceConfig();
+
+  // Adds a percental filtering effect to stiffness
   void updateFilteredStiffness();
 
-  // Adds some filtering effect to the end-effector pose
+  // Adds a percental filtering effect to the end-effector pose
   void updateFilteredPose();
 
-  // Adds some filtering effect to the applied Cartesian wrench
+  // Adds a percental filtering effect to the applied Cartesian wrench
   void updateFilteredWrench();
 
   // Robot variables
@@ -129,6 +139,7 @@ private:
 
   // Filtering parameters
   double update_frequency_{ 1000 };
+  double filter_params_nullspace_config_{ 1.0 };
   double filter_params_stiffness_{ 1.0 };
   double filter_params_pose_{ 1.0 };
   double filter_params_wrench_{ 1.0 };

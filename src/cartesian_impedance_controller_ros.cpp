@@ -155,6 +155,7 @@ namespace cartesian_impedance_controller
     double delta_tau_max{1.};
     node_handle.param<double>("delta_tau_max", delta_tau_max, 1.);
     node_handle.param<double>("update_frequency", update_frequency_, 500.);
+    node_handle.param<double>("filtering/nullspace_config", filtering_nullspace_config_, 0.1);
     node_handle.param<double>("filtering/stiffness", filtering_stiffness_, 0.1);
     node_handle.param<double>("filtering/pose", filtering_pose_, 0.1);
     node_handle.param<double>("filtering/wrench", filtering_wrench_, 0.1);
@@ -192,7 +193,7 @@ namespace cartesian_impedance_controller
     {
       return false;
     }
-    base_tools_->setFiltering(update_frequency_, filtering_stiffness_, filtering_pose_, filtering_wrench_);
+    base_tools_->setFiltering(update_frequency_, filtering_nullspace_config_, filtering_stiffness_, filtering_pose_, filtering_wrench_);
 
     return true;
   }
@@ -202,8 +203,8 @@ namespace cartesian_impedance_controller
     this->updateState();
 
     // set x_attractor and q_d_nullspace
-    base_tools_->setDesiredPose(position_, orientation_);
-    base_tools_->setNullspaceConfig(q_);
+    base_tools_->initDesiredPose(position_, orientation_);
+    base_tools_->initNullspaceConfig(q_);
     ROS_INFO("Started Cartesian Impedance Controller");
   }
 

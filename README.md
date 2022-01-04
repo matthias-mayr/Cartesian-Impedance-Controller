@@ -85,6 +85,7 @@ CartesianImpedance_trajectory_controller:
   to_frame_wrench: <end_effector>         # Frame for wrench commands
   delta_tau_max: 1.0                    # Max. commanded torque diff between steps
   filtering:                            # Update existing values (0.0 1.0] per s
+    nullspace_config: 0.1               # Nullspace configuration filtering
     pose: 0.1                           # Reference pose filtering
     stiffness: 0.1                      # Cartesian and nullspace stiffness
     wrench: 0.1                         # Commanded torque
