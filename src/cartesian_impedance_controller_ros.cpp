@@ -166,10 +166,6 @@ namespace cartesian_impedance_controller
     {
       return false;
     }
-    if (dynamic_reconfigure && !this->initDynamicReconfigure(node_handle))
-    {
-      return false;
-    }
     if (enable_trajectories && !this->initTrajectories(node_handle))
     {
       return false;
@@ -191,6 +187,11 @@ namespace cartesian_impedance_controller
     q_d_nullspace_ = Eigen::VectorXd(this->n_joints_);
     jacobian_ = Eigen::MatrixXd(6, joint_handles_.size());
 
+    // Needs to be after base_tools init since the wrench callback calls it
+    if (dynamic_reconfigure && !this->initDynamicReconfigure(node_handle))
+    {
+      return false;
+    }
     base_tools_->setFiltering(update_frequency_, filtering_stiffness_, filtering_pose_, filtering_wrench_);
 
     return true;
