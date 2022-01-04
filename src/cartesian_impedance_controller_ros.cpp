@@ -383,7 +383,7 @@ namespace cartesian_impedance_controller
       tf::Vector3 v_t_rot = tf::quatRotate(transform.getRotation(), v_t);
       *cartesian_wrench << v_f_rot[0], v_f_rot[1], v_f_rot[2], v_t_rot[0], v_t_rot[1], v_t_rot[2];
     }
-    catch (tf::TransformException ex)
+    catch (const tf::TransformException& ex)
     {
       ROS_ERROR_THROTTLE(1, "%s", ex.what());
     }
@@ -394,7 +394,7 @@ namespace cartesian_impedance_controller
     // publish commanded torques
     if (this->pub_torques_.trylock())
     {
-      for (unsigned i = 0; i < this->n_joints_; i++)
+      for (size_t i = 0; i < this->n_joints_; i++)
       {
         this->pub_torques_.msg_.data[i] = this->tau_J_d_[i];
       }
@@ -464,8 +464,8 @@ namespace cartesian_impedance_controller
     }
   }
 
-  //Dynamic reconfigure
-  //--------------------------------------------------------------------------------------------------------------------------------------
+  // Dynamic reconfigure
+  // --------------------------------------------------------------------------------------------------------------------------------------
   void CartesianImpedanceControllerRos::dynamicConfigCb(
       cartesian_impedance_controller::impedance_configConfig &config, uint32_t level)
   {
