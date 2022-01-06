@@ -46,7 +46,7 @@ namespace cartesian_impedance_controller
     // Maximum commanded torque change per time step
     void setMaxTorqueDelta(double d, double update_frequency);
 
-    // Apply a virtual Cartesian wrench in the world frame
+    // Apply a virtual Cartesian wrench in the root frame (often "world")
     void applyWrench(const Eigen::Matrix<double, 6, 1> &cartesian_wrench);
 
     // Returns the commanded torques. Performs a filtering step and updates internal state.

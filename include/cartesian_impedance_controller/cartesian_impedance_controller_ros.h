@@ -84,6 +84,7 @@ namespace cartesian_impedance_controller
     unsigned int n_joints_;
     std::string end_effector_;
     std::string robot_description_;
+    std::string root_frame_;
 
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
     Eigen::Matrix<double, 6, 6> cartesian_damping_;
@@ -106,8 +107,7 @@ namespace cartesian_impedance_controller
     ros::Subscriber sub_reference_pose_;
 
     tf::TransformListener tf_listener_;
-    std::string from_frame_wrench_;
-    std::string to_frame_wrench_;
+    std::string wrench_ee_frame_;
 
     double update_frequency_{500};
     double filtering_nullspace_config_{0.1};
