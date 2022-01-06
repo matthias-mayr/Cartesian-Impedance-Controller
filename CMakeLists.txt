@@ -48,9 +48,9 @@ generate_messages(
 )
 
 generate_dynamic_reconfigure_options(
-  cfg/impedance_config.cfg
-  cfg/wrench_config.cfg
-  cfg/damping_config.cfg
+  cfg/damping.cfg
+  cfg/stiffness.cfg
+  cfg/wrench.cfg
 )
 
 catkin_package(

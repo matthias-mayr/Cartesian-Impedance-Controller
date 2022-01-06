@@ -29,10 +29,10 @@
 #include <cartesian_impedance_controller/cartesian_impedance_controller.h>
 #include <cartesian_impedance_controller/ControllerConfig.h>
 #include <cartesian_impedance_controller/ControllerState.h>
-#include <cartesian_impedance_controller/damping_configConfig.h>
-#include <cartesian_impedance_controller/impedance_configConfig.h>
+#include <cartesian_impedance_controller/dampingConfig.h>
 #include <cartesian_impedance_controller/rbdyn_wrapper.h>
-#include <cartesian_impedance_controller/wrench_configConfig.h>
+#include <cartesian_impedance_controller/stiffnessConfig.h>
+#include <cartesian_impedance_controller/wrenchConfig.h>
 
 namespace cartesian_impedance_controller
 {
@@ -67,9 +67,9 @@ namespace cartesian_impedance_controller
     void transformWrench(Eigen::Matrix<double, 6, 1> *cartesian_wrench, const std::string &from_frame, const std::string &to_frame) const;
     void publish();
 
-    void dynamicConfigCb(cartesian_impedance_controller::impedance_configConfig &config, uint32_t level);
-    void dynamicDampingCb(cartesian_impedance_controller::damping_configConfig &config, uint32_t level);
-    void dynamicWrenchCb(cartesian_impedance_controller::wrench_configConfig &config, uint32_t level);
+    void dynamicConfigCb(cartesian_impedance_controller::stiffnessConfig &config, uint32_t level);
+    void dynamicDampingCb(cartesian_impedance_controller::dampingConfig &config, uint32_t level);
+    void dynamicWrenchCb(cartesian_impedance_controller::wrenchConfig &config, uint32_t level);
 
     void trajGoalCb();
     void trajPreemptCb();
@@ -120,11 +120,11 @@ namespace cartesian_impedance_controller
     const Eigen::PermutationMatrix<Eigen::Dynamic, 6> jacobian_perm_{Eigen::PermutationMatrix<Eigen::Dynamic, 6>(perm_indices_)};
 
     // Dynamic reconfigure
-    std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>>
+    std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::stiffnessConfig>>
         dynamic_server_compliance_param_;
-    std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::damping_configConfig>>
+    std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::dampingConfig>>
         dynamic_server_damping_param_;
-    std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::wrench_configConfig>>
+    std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::wrenchConfig>>
         dynamic_server_wrench_param_;
 
     // Trajectory handling

@@ -23,15 +23,15 @@ namespace cartesian_impedance_controller
 
   bool CartesianImpedanceControllerRos::initDynamicReconfigure(const ros::NodeHandle &nh)
   {
-    this->dynamic_server_compliance_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::impedance_configConfig>>(ros::NodeHandle(std::string(nh.getNamespace() + "/stiffness_reconfigure")));
+    this->dynamic_server_compliance_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::stiffnessConfig>>(ros::NodeHandle(std::string(nh.getNamespace() + "/stiffness_reconfigure")));
     this->dynamic_server_compliance_param_->setCallback(
         boost::bind(&CartesianImpedanceControllerRos::dynamicConfigCb, this, _1, _2));
 
-    this->dynamic_server_damping_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::damping_configConfig>>(ros::NodeHandle(std::string(nh.getNamespace() + "/damping_factors_reconfigure")));
+    this->dynamic_server_damping_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::dampingConfig>>(ros::NodeHandle(std::string(nh.getNamespace() + "/damping_factors_reconfigure")));
     dynamic_server_damping_param_->setCallback(
         boost::bind(&CartesianImpedanceControllerRos::dynamicDampingCb, this, _1, _2));
 
-    this->dynamic_server_wrench_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::wrench_configConfig>>(ros::NodeHandle(std::string(nh.getNamespace() + "/cartesian_wrench_reconfigure")));
+    this->dynamic_server_wrench_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::wrenchConfig>>(ros::NodeHandle(std::string(nh.getNamespace() + "/cartesian_wrench_reconfigure")));
     dynamic_server_wrench_param_->setCallback(
         boost::bind(&CartesianImpedanceControllerRos::dynamicWrenchCb, this, _1, _2));
     return true;
@@ -470,7 +470,7 @@ namespace cartesian_impedance_controller
   // Dynamic reconfigure
   // --------------------------------------------------------------------------------------------------------------------------------------
   void CartesianImpedanceControllerRos::dynamicConfigCb(
-      cartesian_impedance_controller::impedance_configConfig &config, uint32_t level)
+      cartesian_impedance_controller::stiffnessConfig &config, uint32_t level)
   {
     if (config.apply_stiffness)
     {
@@ -488,7 +488,7 @@ namespace cartesian_impedance_controller
   }
 
   void CartesianImpedanceControllerRos::dynamicDampingCb(
-      cartesian_impedance_controller::damping_configConfig &config, uint32_t level)
+      cartesian_impedance_controller::dampingConfig &config, uint32_t level)
   {
     double dmp_max = 1;
     double dmp_min = 0.1;
@@ -502,7 +502,7 @@ namespace cartesian_impedance_controller
     }
   }
 
-  void CartesianImpedanceControllerRos::dynamicWrenchCb(cartesian_impedance_controller::wrench_configConfig &config,
+  void CartesianImpedanceControllerRos::dynamicWrenchCb(cartesian_impedance_controller::wrenchConfig &config,
                                                         uint32_t level)
   {
     Eigen::Vector6d F{Eigen::Vector6d::Zero()};
