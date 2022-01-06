@@ -1,38 +1,37 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cartesian_impedance_controller)
 
+# When turning SIMD off, make sure that all libraries used are also built without it.
 option(ENABLE_SIMD "Build with all SIMD instructions on the current local machine" ON)
 
+find_package(Boost 1.49 REQUIRED)
 find_package(PkgConfig)
 
 # Find RBDyn library and dependencies
 pkg_search_module(Eigen3 REQUIRED eigen3)
-find_package(Boost 1.49 REQUIRED)
-
-pkg_check_modules(tinyxml2 REQUIRED tinyxml2)
-pkg_check_modules(SpaceVecAlg REQUIRED SpaceVecAlg)
-pkg_check_modules(RBDyn REQUIRED RBDyn)
 pkg_check_modules(mc_rbdyn_urdf REQUIRED mc_rbdyn_urdf)
+pkg_check_modules(RBDyn REQUIRED RBDyn)
+pkg_check_modules(SpaceVecAlg REQUIRED SpaceVecAlg)
+pkg_check_modules(tinyxml2 REQUIRED tinyxml2)
 
 find_package(catkin REQUIRED COMPONENTS
   actionlib
-  roscpp
-  pluginlib
+  actionlib_msgs
+  control_msgs
   controller_interface
-  hardware_interface
-  eigen_conversions
-  std_msgs
   controller_manager
+  dynamic_reconfigure
+  eigen_conversions
+  geometry_msgs
+  hardware_interface
+  message_generation
+  pluginlib
+  roscpp
+  sensor_msgs
+  std_msgs
   tf
   tf_conversions
-  actionlib
-  actionlib_msgs
   trajectory_msgs
-  control_msgs
-  sensor_msgs
-  geometry_msgs
-  message_generation
-  dynamic_reconfigure
 )
 
 add_message_files(FILES
@@ -55,8 +54,8 @@ generate_dynamic_reconfigure_options(
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS actionlib roscpp pluginlib controller_interface hardware_interface eigen_conversions std_msgs controller_manager tf tf_conversions actionlib actionlib_msgs trajectory_msgs control_msgs
-  DEPENDS Boost tinyxml2 SpaceVecAlg RBDyn mc_rbdyn_urdf Eigen3
+  CATKIN_DEPENDS actionlib actionlib_msgs control_msgs controller_interface controller_manager dynamic_reconfigure eigen_conversions geometry_msgs hardware_interface message_runtime pluginlib roscpp sensor_msgs std_msgs tf tf_conversions trajectory_msgs
+  DEPENDS Boost Eigen3 mc_rbdyn_urdf RBDyn SpaceVecAlg tinyxml2
   LIBRARIES ${PROJECT_NAME} ${PROJECT_NAME}_ros
 )
 
@@ -71,7 +70,7 @@ add_dependencies(
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
-# Yes, this is necessary. Otherwise the control plugin crashes.
+
 if(ENABLE_SIMD)
   if(CMAKE_COMPILER_IS_GNUCXX)
     execute_process(
@@ -98,7 +97,7 @@ add_dependencies(
   ${catkin_EXPORTED_TARGETS}
   ${PROJECT_NAME}_gencfg
 )
-# Yes, this is necessary. Otherwise the control plugin crashes.
+
 if(ENABLE_SIMD)
   if(CMAKE_COMPILER_IS_GNUCXX)
     execute_process(
