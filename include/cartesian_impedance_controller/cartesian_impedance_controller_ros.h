@@ -64,7 +64,7 @@ namespace cartesian_impedance_controller
     void stiffnessCb(const geometry_msgs::WrenchStampedConstPtr &msg);
     void wrenchCommandCb(const geometry_msgs::WrenchStampedConstPtr &msg);
 
-    void transformWrench(Eigen::Matrix<double, 6, 1> *cartesian_wrench, const std::string &from_frame, const std::string &to_frame) const;
+    bool transformWrench(Eigen::Matrix<double, 6, 1> *cartesian_wrench, const std::string &from_frame, const std::string &to_frame) const;
     void publish();
 
     void dynamicConfigCb(cartesian_impedance_controller::stiffnessConfig &config, uint32_t level);

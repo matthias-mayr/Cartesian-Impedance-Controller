@@ -363,17 +363,25 @@ namespace cartesian_impedance_controller
 
     if (!msg->header.frame_id.empty() && msg->header.frame_id != this->root_frame_)
     {
-      transformWrench(&F, msg->header.frame_id, this->root_frame_);
+      if (!transformWrench(&F, msg->header.frame_id, this->root_frame_))
+      {
+        ROS_ERROR("Could not transform wrench. Not applying it.");
+        return;
+      }
     }
     else if (msg->header.frame_id.empty())
     {
-      transformWrench(&F, this->wrench_ee_frame_, this->root_frame_);
+      if (!transformWrench(&F, this->wrench_ee_frame_, this->root_frame_))
+      {
+        ROS_ERROR("Could not transform wrench. Not applying it.");
+        return;
+      }
     }
     this->base_tools_->applyWrench(F);
   }
 
   // Transform a Cartesian wrench from "from_frame" to "to_frame". E.g. from_frame= "world" , to_frame = "bh_link_ee"
-  void CartesianImpedanceControllerRos::transformWrench(Eigen::Matrix<double, 6, 1> *cartesian_wrench,
+  bool CartesianImpedanceControllerRos::transformWrench(Eigen::Matrix<double, 6, 1> *cartesian_wrench,
                                                         const std::string &from_frame, const std::string &to_frame) const
   {
     try
@@ -385,10 +393,12 @@ namespace cartesian_impedance_controller
       tf::Vector3 v_f_rot = tf::quatRotate(transform.getRotation(), v_f);
       tf::Vector3 v_t_rot = tf::quatRotate(transform.getRotation(), v_t);
       *cartesian_wrench << v_f_rot[0], v_f_rot[1], v_f_rot[2], v_t_rot[0], v_t_rot[1], v_t_rot[2];
+      return true;
     }
     catch (const tf::TransformException &ex)
     {
       ROS_ERROR_THROTTLE(1, "%s", ex.what());
+      return false;
     }
   }
 
@@ -509,7 +519,11 @@ namespace cartesian_impedance_controller
     if (config.apply_wrench)
     {
       F << config.f_x, config.f_y, config.f_z, config.tau_x, config.tau_y, config.tau_z;
-      transformWrench(&F, this->wrench_ee_frame_, this->root_frame_);
+      if (!transformWrench(&F, this->wrench_ee_frame_, this->root_frame_))
+      {
+        ROS_ERROR("Could not transform wrench. Not applying it.");
+        return;
+      }
     }
     this->base_tools_->applyWrench(F);
   }
