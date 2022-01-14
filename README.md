@@ -60,7 +60,7 @@ mkdir -p catkin_ws/src
 cd catkin_ws
 catkin init
 cd src
-git clone git@git.cs.lth.se:robotlab/cartesian-impedance-controller.git
+git clone git@git.cs.lth.se:robotlab/cartesian_impedance_controller.git
 ```
 
 ### Configuration file
