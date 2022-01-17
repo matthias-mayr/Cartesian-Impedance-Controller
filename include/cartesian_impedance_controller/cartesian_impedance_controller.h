@@ -31,7 +31,7 @@ namespace cartesian_impedance_controller
     void setDamping(double d_x, double d_y, double d_z, double d_a, double d_b, double d_c, double d_n);
 
     // Set the desired end-effector pose
-    void setDesiredPose(const Eigen::Vector3d &position_d, const Eigen::Quaterniond &orientation_d);
+    void setReferencePose(const Eigen::Vector3d &position_d, const Eigen::Quaterniond &orientation_d);
 
     // Set the desired nullspace configuration
     void setNullspaceConfig(const Eigen::VectorXd &q_d_nullspace_target);

@@ -316,7 +316,7 @@ namespace cartesian_impedance_controller
     {
       this->orientation_d_.coeffs() << -this->orientation_d_.coeffs();
     }
-    this->base_tools_->setDesiredPose(this->position_d_, this->orientation_d_);
+    this->base_tools_->setReferencePose(this->position_d_, this->orientation_d_);
   }
 
   void CartesianImpedanceControllerRos::stiffnessCb(const geometry_msgs::WrenchStampedConstPtr &msg)

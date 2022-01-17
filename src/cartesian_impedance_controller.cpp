@@ -63,7 +63,7 @@ namespace cartesian_impedance_controller
   void CartesianImpedanceController::initDesiredPose(const Eigen::Vector3d &position_d_target,
                                                      const Eigen::Quaterniond &orientation_d_target)
   {
-    this->setDesiredPose(position_d_target, orientation_d_target);
+    this->setReferencePose(position_d_target, orientation_d_target);
     this->position_d_ = position_d_target;
     this->orientation_d_ = orientation_d_target;
   }
@@ -124,7 +124,7 @@ namespace cartesian_impedance_controller
   }
 
   // Set the desired end-effector pose
-  void CartesianImpedanceController::setDesiredPose(const Eigen::Vector3d &position_d_target,
+  void CartesianImpedanceController::setReferencePose(const Eigen::Vector3d &position_d_target,
                                                     const Eigen::Quaterniond &orientation_d_target)
   {
     this->position_d_target_ << position_d_target;
