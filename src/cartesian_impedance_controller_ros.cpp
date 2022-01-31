@@ -308,8 +308,13 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceControllerRos::referencePoseCb(const geometry_msgs::PoseStampedConstPtr &msg)
   {
+    if (!msg->header.frame_id.empty() && msg->header.frame_id != this->root_frame_)
+    {
+      ROS_WARN_STREAM("Reference poses need to be in the root frame '" << this->root_frame_ << "'. Ignoring.");
+      return;
+    }
     this->position_d_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
-    Eigen::Quaterniond last_orientation_d_target(this->orientation_d_);
+    const Eigen::Quaterniond last_orientation_d_target(this->orientation_d_);
     this->orientation_d_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z,
         msg->pose.orientation.w;
     if (last_orientation_d_target.coeffs().dot(this->orientation_d_.coeffs()) < 0.0)
