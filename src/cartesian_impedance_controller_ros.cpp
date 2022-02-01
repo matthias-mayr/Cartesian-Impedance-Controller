@@ -131,7 +131,7 @@ namespace cartesian_impedance_controller
 
   bool CartesianImpedanceControllerRos::initTrajectories(ros::NodeHandle *nh)
   {
-    this->sub_trajectory_ = nh->subscribe("command", 1, &CartesianImpedanceControllerRos::trajCb, this);
+    this->sub_trajectory_ = nh->subscribe("joint_trajectory", 1, &CartesianImpedanceControllerRos::trajCb, this);
     this->traj_as_ = std::unique_ptr<actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>>(
         new actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>(
             *nh, std::string("follow_joint_trajectory"), false));
