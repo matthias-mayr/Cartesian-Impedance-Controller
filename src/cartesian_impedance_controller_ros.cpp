@@ -174,6 +174,7 @@ namespace cartesian_impedance_controller
       return false;
     }
     this->root_frame_ = this->rbdyn_wrapper_.root_link();
+    node_handle.setParam("root_frame", this->root_frame_);
 
     // Initialize base_tools and member variables
     this->base_tools_ = std::make_unique<CartesianImpedanceController>(this->n_joints_);
