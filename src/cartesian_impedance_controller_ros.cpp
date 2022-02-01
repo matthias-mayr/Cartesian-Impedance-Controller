@@ -72,7 +72,7 @@ namespace cartesian_impedance_controller
                                        &CartesianImpedanceControllerRos::dampingCb, this);
     this->sub_impedance_config_ =
         nh->subscribe("set_config", 1, &CartesianImpedanceControllerRos::controllerConfigCb, this);
-    this->sub_reference_pose_ = nh->subscribe("target_pose", 1, &CartesianImpedanceControllerRos::referencePoseCb, this);
+    this->sub_reference_pose_ = nh->subscribe("reference_pose", 1, &CartesianImpedanceControllerRos::referencePoseCb, this);
 
     this->pub_torques_.init(*nh, "commanded_torques", 20);
     this->pub_torques_.msg_.layout.dim.resize(1);
