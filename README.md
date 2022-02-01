@@ -1,9 +1,35 @@
 # Cartesian Impedance Controller
 
 ## Description
-This project is an implementation of aCartesian impedance controller. It is a type of control strategy that sets a dynamic relationship between contact forces and the position of a robot arm, making it suitable for collaborative robots. 
+This project is an implementation of a Cartesian impedance controller. It is a type of control strategy that sets a dynamic relationship between contact forces and the position of a robot arm, making it suitable for collaborative robots. It is particularily useful when the interesting dimensions in the workspace are in the Cartesian space.
 
-The controller has been developed using the seven degree-of-freedom (DoF) robot arm called LBR iiwa by KUKA AG. It is, however, universal and should therefore work for other seven DoF robot arms, such as the Panda by Franka Emika.
+The controller is developed using the seven degree-of-freedom (DoF) robot arm called `LBR iiwa` by `KUKA AG`. It is, however, universal and should therefore work for other seven DoF robot arms, such as the `Panda` by `Franka Emika`.
+
+The implementation consists of a
+1. base library that has few dependencies and can e.g. be directly integrated into software such as the DART simulator and a
+2. ROS control integration on top of it.
+
+## Features
+
+- Configurable stiffness values along all Cartesian dimensions at runtime
+- Configurable damping factors along all Cartesian dimensions at runtime
+- Change reference pose at runtime
+- Apply Cartesian forces and torques at runtime
+- Optional filtering of stiffnesses, pose and wrenches for smoother operation
+- Handling of joint trajectories with nullspace configurations, e.g. from MoveIt
+- Jerk limitation
+- Separate base library that can be integrated in non-ROS environments
+- Interface to ROS messages and dynamic_reconfigure for easy runtime configuration
+
+![](./res/flowchart.png)
+
+## Limitations
+
+- Joint friction is not accounted for
+- Stiffness and damping values along the Cartesian dimensions are uncoupled
+- Only tested for the `LBR iiwa`
+- No built-in gravity compensation for tools or workpieces
+
 
 ## Prerequisites
 ### Required
@@ -12,58 +38,30 @@ The controller has been developed using the seven degree-of-freedom (DoF) robot 
 ### ROS Controller
 We use `RBDyn` to calculate forward kinematics and the Jacobian.
 
-- [RBDyn](https://github.com/jrl-umi3218/RBDyn)
-- mc_rbdyn_urdf (provide link)
-- SpaceVecAlg (provide link)
 - [ROS](https://www.ros.org/)
+- [RBDyn](https://github.com/jrl-umi3218/RBDyn) - using [this fork](https://github.com/costashatz/RBDyn.git)
+- mc_rbdyn_urdf - using [this fork](https://github.com/costashatz/mc_rbdyn_urdf.git)
+- SpaceVecAlg - using [this fork](https://github.com/costashatz/SpaceVecAlg.git)
 
-The below-mentioned installation steps are automated in `scripts/install_dependencies.sh`:
-
-**SpaceVecAlg**
-```bash
-cd /source/directory
-git clone --recursive https://github.com/costashatz/SpaceVecAlg.git
-cd SpaceVecAlg
-mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_SIMD=ON -DPYTHON_BINDING=OFF ..
-make -j
-sudo make install
-```
-
-**RBDyn**
-```
-cd /source/directory
-git clone --recursive https://github.com/costashatz/RBDyn.git
-cd RBDyn
-mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_SIMD=ON -DPYTHON_BINDING=OFF ..
-make -j
-sudo make install
-```
-
-**mc_rbdyn_urdf**
-```bash
-cd /source/directory
-git clone --recursive https://github.com/costashatz/mc_rbdyn_urdf.git
-cd mc_rbdyn_urdf
-mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_SIMD=ON -DPYTHON_BINDING=OFF ..
-make -j
-sudo make install
-```
+The installation steps are automated in `scripts/install_dependencies.sh`:
 
 ## Controller Usage in ROS
-For using this controller within ROS, a catkin workspace is needed:
+Assuming that there is an [initialized catkin workspace](https://catkin-tools.readthedocs.io/en/latest/quick_start.html#initializing-a-new-workspace) you can clone, install the dependencies and compile the controller with these commands:
 
 ```bash
-mkdir -p catkin_ws/src
-cd catkin_ws
-catkin init
-cd src
+cd catkin_ws/src
 git clone git@git.cs.lth.se:robotlab/cartesian_impedance_controller.git
+src/cartesian_impedance_controller/scripts/install_dependencies.sh
+rosdep install --from-paths src --ignore-src --rosdistro=${ROS_DISTRO} -y
+catkin build # or catkin_make
+source devel/setup.bash
 ```
 
+This allows you to add a controller configuration for the controller type `cartesian_impedance_controller/CartesianImpedanceController`.
+
 ### Configuration file
+When using the controller it is a good practice to describe the parameters in a `YAML` file and load it. Usually this is already done by your robot setup - e.g. for [iiwa_ros](https://github.com/epfl-lasa/iiwa_ros/) that is [here](https://github.com/epfl-lasa/iiwa_ros/blob/master/iiwa_control/config/iiwa_control.yaml).
+Here is a template that can be adapted:
 ```YAML
 CartesianImpedance_trajectory_controller:
   type: cartesian_impedance_controller/CartesianImpedanceController
@@ -94,146 +92,137 @@ CartesianImpedance_trajectory_controller:
     tf_frames: false                    # Extra tf frames
 ```
 
-## Features
+### Changing parameters with Dynamic Reconfigure
+If it is not deactivated, the controller can be configured with [dynamic_reconfigure](http://wiki.ros.org/dynamic_reconfigure) both with [command line tools](http://wiki.ros.org/dynamic_reconfigure#dynamic_reconfigure.2Fgroovy.dynparam_command-line_tool) as well as the graphical user interface [rqt_reconfigure](http://wiki.ros.org/rqt_reconfigure). To start the latter you can run:
+```bash
+rosrun rqt_reconfigure rqt_reconfigure
+```
 
-- Configurable stiffness values along all Cartesian dimensions
-- Configurable damping factors along all Cartesian dimensions
-- Change desired pose at runtime
-- Apply Cartesian forces and torques at runtime
-- Optional filtering of stiffnesses, pose and wrenches for smoother operation
-- Can handle joint trajectories with nullspace configurations, e.g. from MoveIt
-- Limit jerk
+There are several entries:
+- `cartesian_wrench_reconfigure`
+- `damping_factors_reconfigure`
+- `stiffness_reconfigure`
 
-![](./res/flowchart.png)
+All of them have an `apply` checkbox that needs to be ticked for the values to be used. Note that the end-effector reference pose can not be set since it usually should follow a smooth trajectory.
 
-## Limitations
+### Changing parameters with ROS messages
+In addition to the configuration with `dynamic_reconfigure`, the controller configuration can always be adapted by sending ROS messages. Outside prototyping this is the main way to parameterize it.
 
-- Friction is not accounted for
-- Stiffness and damping values along the Cartesian dimensions are uncoupled
-- Only tested for the LBR iiwa model
+The instructions below use `${controller_ns}` for the namespace of your controller. This can for example be `/cartesian_impedance_controller`. If you want to copy the example commands 1:1, you can set an environment variable with `export controller_ns=/<your_namespace>`.
 
-## Usage
+#### End-effector reference pose
+New reference poses can be sent to the topic `${controller_ns}/reference_pose`. They are expected to be in the root frame of the robot description which is often `world`. The root frame can be obtained from the parameter server with `rosparam get ${controller_ns}/root_frame`.
 
-Open two terminals:
+To send a new reference pose 0.6m above the root frame pointing into the z-direction of it, execute this:
 
-1. $ `roscore`
-2. $ `mon launch bh_robot bringup.launch run_moveit:=true`
-
-
-### Changing parameters in run-time (with ROS-topics)
-
-The controller uses some default values which can be configured during run-time. Some parameters that can be configured are stiffness values, damping factors, reference pose and Cartesian wrenches in the end-effector.
-
-#### Stiffness and null-space
-
-The stiffness and null-space can be configured by using the following command:
-
-$ `rostopic pub --once /bh/CartesianImpedance_trajectory_controller/set_stiffness cartesian_impedance_controller/CartesianImpedanceControlMode "cartesian_stiffness: {x: $1, y: $2, z: $3, a: $4, b: $5, c: $6}
-nullspace_stiffness: $7
-q_d_nullspace: {q1: 1.270, q2: 0.069, q3: 0.271, q4: -0.915, q5: 0.341, q6: 1.176, q7: 0.698}"`
-
-where the arguments 
-
-`$1` - translational stiffness along x-dimension  
-`$2` - translational stiffness along y-dimension  
-`$3` - translational stiffness along z-dimension  
-`$4` - rotational stiffness along x-dimension  
-`$5` - rotational stiffness along y-dimension  
-`$6` - rotational stiffness along z-dimension  
-`$7` - null-space stiffness  
-
-can be chosen to reasonable values. the desired null-space configuration `q_d_nullspace` is by default chosen to some configuration defined as "home" position, but can also be made configurable as the other parameters.
-
-#### Damping factors
-
-The damping factors can be configured using the following command: 
-
-$ `rostopic pub --once /bh/CartesianImpedance_trajectory_controller/set_damping_factors cartesian_impedance_controller/CartesianImpedanceControlMode "cartesian_damping: {x: $1, y: $2, z: $3, a: $4, b: $5, c: $6}
-nullspace_damping: $7"`
-
-where the arguments 
-
-`$1` - translational damping factor along x-dimension  
-`$2` - translational damping factor along y-dimension  
-`$3` - translational damping factor along z-dimension  
-`$4` - rotational damping factor along x-dimension  
-`$5` - rotational damping factor along y-dimension  
-`$6` - rotational damping factor along z-dimension  
-`$7` - null-space damping factor  
-
-can be chosen to reasonable values.
-
-#### End-effector pose
-
-A new reference pose can be sent using the following command:
-
-$ `rostopic pub --once /bh/CartesianImpedance_trajectory_controller/goal geometry_msgs/PoseStamped "header:
+```bash
+rostopic pub --once /${controller_ns}/reference_pose geometry_msgs/PoseStamped "header:
   seq: 0
-  stamp: 
+  stamp:
     secs: 0
     nsecs: 0
-  frame_id: 'world'
+  frame_id: ''
 pose:
-  position: 
-    x: $1
-    y: $2
-    z: $3
-  orientation: 
-    x: $4
-    y: $5
-    z: $6
-    w: $7"`
+  position:
+    x: 0.0
+    y: 0.0
+    z: 0.6
+  orientation:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 1.0"
+```
 
-where the arguments `$1`, `$2` and `$3` are the positional coordinates and `$4`, `$5`, `$6` and `$7` describe the orientation with unit-quaternions.
+Most often one wants to have a controlled way to set reference poses. Once can for example use a [trajectory generator for Cartesian trajectories](https://git.cs.lth.se/robotlab/cartesian_trajectory_generator).
 
+#### Cartesian Stiffness
 
-#### Cartesian wrenches
+In order to set only the Cartesian stiffnesses, once can send a `geometry_msgs/WrenchStamped` to `set_cartesian_stiffness`:
 
-A Cartesian wrench can be applied using the following command:
-
-`rostopic pub --once /bh/CartesianImpedance_trajectory_controller/set_cartesian_wrench geometry_msgs/WrenchStamped "
+```bash
+rostopic pub --once /${controller_ns}/set_cartesian_stiffness geometry_msgs/WrenchStamped "header:
+  seq: 0
+  stamp:
+    secs: 0
+    nsecs: 0
+  frame_id: ''
 wrench:
   force:
-    x: $1
-    y: $2
-    z: $3
+    x: 300.0
+    y: 300.0
+    z: 300.0
   torque:
-    x: $4
-    y: $5
-    z: $6"`
+    x: 30.0
+    y: 30.0
+    z: 30.0"
+```
 
-where the arguments
+#### Cartesian Damping factors
 
-`$1` - applied force along the x-axis  
-`$2` - applied force along the y-axis  
-`$3` - applied force along the z-axis  
-`$4` - applied torque along the x-axis  
-`$5` - applied torque along the y-axis  
-`$6` - applied torque along the z-axis  
+The damping factors can be configured with a `geometry_msgs/WrenchStamped` msg similar to the stiffnesses to the topic `${controller_ns}/set_damping_factors`. Damping factors are in the interval [0,1].
 
-can be chosen to reasonable values.
+#### Stiffnesses, damping and nullspace at once
+When also setting the nullspace stiffnes, a custom messages of the type `cartesian_impedance_controller/ControllerConfig` is to be sent to `set_config`:
 
+```bash
+rostopic pub --once /${controller_ns}/set_config cartesian_impedance_controller/ControllerConfig "cartesian_stiffness:
+  force: {x: 300.0, y: 300.0, z: 300.0}
+  torque: {x: 30.0, y: 30.0, z: 30.0}
+cartesian_damping:
+  force: {x: 0.0, y: 0.0, z: 0.0}
+  torque: {x: 0.0, y: 0.0, z: 0.0}
+nullspace_stiffness: 10.0
+nullspace_damping: 0.1
+q_d_nullspace: [0, 0, 0, 0, 0, 0, 0]" 
+```
 
-### Changing parameters in run-time (with dynamic_reconfigure)
+`q_d_nullspace` is the nullspace joint configuration, so the joint configuration that should be achieved if the nullspace allows it. Note that the end-effector pose would deviate if the forward kinematics of this joint configuration do not overlap with it.
 
-Open a new terminal and run:
+#### Cartesian Wrenches
 
-`rosrun rqt_reconfigure rqt_reconfigure`
+A Cartesian wrench can be commanded by sending a `geometry_msgs/WrenchStamped` to the topic `${controller_ns}/set_cartesian_wrench`.
+Internally the wrenches are applied in the root frame. Therefore wrench messages are transformed into the root frame using `tf`.<br>
+**Note:** An empty field `frame_id` is interpreted as end-effector frame since this is the most applicable one when working with a manipulator.<br>
+**Note:** The wrenches are transformed into the root frame when they arrive, but not after that. E.g. end-effector wrenches might need to get updated.
 
-In the GUI to the left there are multiple tabs to choose from.
+```bash
+rostopic pub --once /${controller_ns}/set_cartesian_wrench geometry_msgs/WrenchStamped "header:
+  seq: 0
+  stamp:
+    secs: 0
+    nsecs: 0
+  frame_id: ''
+wrench:
+  force:
+    x: 0.0
+    y: 0.0
+    z: 5.0
+  torque:
+    x: 0.0
+    y: 0.0
+    z: 0.0"
+```
 
-#### Stiffness
+### Trajectories and MoveIt
 
-The stiffness can be configured under the tab 'stiffness_reconfigure'. To update the newly selected stiffness, press the button 'apply_stiffness'.
+If `handle_trajectories` is not disabled, the controller can also execute trajectories. An action server is spun up at `${controller_ns}/follow_joint_trajectory` and a fire-and-forget topic for the message type `trajectory_msgs/JointTrajectory` is at `${controller_ns}/joint_trajectory`.
 
-#### Damping factors
+In order to use it with `MoveIt` its controller configuration ([example in iiwa_ros](https://github.com/epfl-lasa/iiwa_ros/blob/master/iiwa_moveit/config/EffortJointInterface_controllers.yaml)) needs to look somewhat like this:
+```yaml
+controller_list:
+  - name: ${controller_ns}
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    default: true
+    joints:
+      - iiwa_joint_1
+      - iiwa_joint_2
+      - iiwa_joint_3
+      - iiwa_joint_4
+      - iiwa_joint_5
+      - iiwa_joint_6
+      - iiwa_joint_7
+```
 
-The damping factors can be configured under the tab 'damping_factors_reconfigure'. To update the newly selected damping factors, press the button 'apply_damping_factors'.
-
-#### End-effector pose
-
-The desired end-effector pose can be selected under the tab 'cartesian_trajectory_generator/cartesian_trajectory_generator'. To update the newly selected pose, press the button 'ready_to_send'.
-
-#### Cartesiann wrenches
-
-A Cartesian wrench can be applied under the tab 'cartesian_wrench_reconfigure'. To apply the newly selected wrench press the button 'apply_wrench'.
+**Note:** A nullspace stiffness needs to be specified so that the arm also follows the joint configuration and not just the end-effector pose.
