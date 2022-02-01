@@ -299,6 +299,10 @@ namespace cartesian_impedance_controller
       }
       this->base_tools_->setNullspaceConfig(this->q_d_nullspace_);
     }
+    else
+    {
+      ROS_WARN_STREAM("Nullspace configuration does not have the correct amount of entries. Got " << msg->q_d_nullspace.size() << " expected " << this->n_joints_ << ". Ignoring.");
+    }
   }
 
   void CartesianImpedanceControllerRos::dampingCb(const geometry_msgs::WrenchConstPtr &msg)
