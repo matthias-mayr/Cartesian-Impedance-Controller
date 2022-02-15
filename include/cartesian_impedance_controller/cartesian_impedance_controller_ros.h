@@ -89,6 +89,7 @@ namespace cartesian_impedance_controller
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
     Eigen::Matrix<double, 6, 6> cartesian_damping_;
     double nullspace_stiffness_{0.0};
+    double nullspace_stiffness_target_{0.0};
     double nullspace_damping_{0.0};
     Eigen::VectorXd q_d_nullspace_;
     Eigen::VectorXd tau_J_d_;

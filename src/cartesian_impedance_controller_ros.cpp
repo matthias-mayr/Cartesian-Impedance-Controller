@@ -331,7 +331,7 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceControllerRos::stiffnessCb(const geometry_msgs::WrenchStampedConstPtr &msg)
   {
-    this->setStiffness(msg->wrench, this->nullspace_stiffness_);
+    this->setStiffness(msg->wrench, this->nullspace_stiffness_target_);
   }
 
   void CartesianImpedanceControllerRos::setDamping(const geometry_msgs::Wrench &cart_stiffness, double nullspace)
@@ -355,6 +355,7 @@ namespace cartesian_impedance_controller
     constexpr double rot_stf_max = 500;
     constexpr double ns_min = 0;
     constexpr double ns_max = 10000;
+    this->nullspace_stiffness_target_ = saturateValue(nullspace, ns_min, ns_max);
     this->base_tools_->setStiffness(saturateValue(cart_stiffness.force.x, trans_stf_min, trans_stf_max),
                                     saturateValue(cart_stiffness.force.y, trans_stf_min, trans_stf_max),
                                     saturateValue(cart_stiffness.force.z, trans_stf_min, trans_stf_max),
