@@ -19,13 +19,13 @@ namespace cartesian_impedance_controller
     void initNullspaceConfig(const Eigen::VectorXd &q_d_nullspace_target);
 
     // Set the desired diagonal stiffnessess + nullspace stiffness
-    void setStiffness(const Eigen::Matrix<double, 7, 1> &stiffness);
+    void setStiffness(const Eigen::Matrix<double, 7, 1> &stiffness, bool auto_damping = true);
 
     // Set the desired diagonal stiffnessess + nullspace stiffness
-    void setStiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z, double n);
+    void setStiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z, double n, bool auto_damping = true);
 
     // Set the desired diagonal stiffnessess
-    void setStiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z);
+    void setStiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z, bool auto_damping = true);
 
     // Set the desired damping factors
     void setDamping(double d_x, double d_y, double d_z, double d_a, double d_b, double d_c, double d_n);

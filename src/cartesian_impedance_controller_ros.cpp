@@ -289,7 +289,7 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceControllerRos::controllerConfigCb(const cartesian_impedance_controller::ControllerConfigConstPtr &msg)
   {
-    this->setStiffness(msg->cartesian_stiffness, msg->nullspace_stiffness);
+    this->setStiffness(msg->cartesian_stiffness, msg->nullspace_stiffness, false);
     this->setDamping(msg->cartesian_damping, msg->nullspace_damping);
 
     if (msg->q_d_nullspace.size() == this->n_joints_)
@@ -336,8 +336,8 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceControllerRos::setDamping(const geometry_msgs::Wrench &cart_stiffness, double nullspace)
   {
-    constexpr double dmp_min = 0.0;
-    constexpr double dmp_max = 1;
+    constexpr double dmp_min = -1.0;
+    constexpr double dmp_max = 1.0;
     this->base_tools_->setDamping(saturateValue(cart_stiffness.force.x, dmp_min, dmp_max),
                                   saturateValue(cart_stiffness.force.y, dmp_min, dmp_max),
                                   saturateValue(cart_stiffness.force.z, dmp_min, dmp_max),
@@ -347,7 +347,7 @@ namespace cartesian_impedance_controller
                                   saturateValue(nullspace, dmp_min, dmp_max));
   }
 
-  void CartesianImpedanceControllerRos::setStiffness(const geometry_msgs::Wrench &cart_stiffness, double nullspace)
+  void CartesianImpedanceControllerRos::setStiffness(const geometry_msgs::Wrench &cart_stiffness, double nullspace, bool auto_damping)
   {
     constexpr double trans_stf_min = 0;
     constexpr double trans_stf_max = 2000;
@@ -361,7 +361,7 @@ namespace cartesian_impedance_controller
                                     saturateValue(cart_stiffness.torque.x, rot_stf_min, rot_stf_max),
                                     saturateValue(cart_stiffness.torque.y, rot_stf_min, rot_stf_max),
                                     saturateValue(cart_stiffness.torque.z, rot_stf_min, rot_stf_max),
-                                    saturateValue(nullspace, ns_min, ns_max));
+                                    saturateValue(nullspace, ns_min, ns_max), auto_damping);
   }
 
   // Adds a wrench at the end-effector, using the root frame of the robot description

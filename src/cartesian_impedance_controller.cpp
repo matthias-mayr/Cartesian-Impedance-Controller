@@ -74,7 +74,7 @@ namespace cartesian_impedance_controller
     this->q_d_nullspace_ = this->q_d_nullspace_target_;
   }
 
-  void CartesianImpedanceController::setStiffness(const Eigen::Matrix<double, 7, 1> &stiffness)
+  void CartesianImpedanceController::setStiffness(const Eigen::Matrix<double, 7, 1> &stiffness, bool auto_damping)
   {
     for (int i = 0; i < 6; i++)
     {
@@ -84,31 +84,43 @@ namespace cartesian_impedance_controller
     }
     assert(stiffness(6) >= 0.0 && "Stiffness values need to be positive.");
     this->nullspace_stiffness_target_ = stiffness(6);
-    this->applyDamping();
+    if (auto_damping)
+    {
+      this->applyDamping();
+    }
   }
 
   // Set the desired diagonal stiffnessess + nullspace stiffness
   void CartesianImpedanceController::setStiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z,
-                                                  double n)
+                                                  double n, bool auto_damping)
   {
     Eigen::Matrix<double, 7, 1> stiffness_vector(7);
     stiffness_vector << t_x, t_y, t_z, r_x, r_y, r_z, n;
-    this->setStiffness(stiffness_vector);
+    this->setStiffness(stiffness_vector, auto_damping);
   }
 
   // Set the desired diagonal stiffnessess
-  void CartesianImpedanceController::setStiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z)
+  void CartesianImpedanceController::setStiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z, bool auto_damping)
   {
     Eigen::Matrix<double, 7, 1> stiffness_vector(7);
     stiffness_vector << t_x, t_y, t_z, r_x, r_y, r_z, this->nullspace_stiffness_target_;
-    this->setStiffness(stiffness_vector);
+    this->setStiffness(stiffness_vector, auto_damping);
   }
 
   // Set the desired damping factors and applies them
   void CartesianImpedanceController::setDamping(double d_x, double d_y, double d_z, double d_a, double d_b, double d_c,
                                                 double d_n)
   {
-    this->damping_factors_ << d_x, d_y, d_z, d_a, d_b, d_c, d_n;
+    Eigen::Matrix<double, 7, 1> damping_new;
+    damping_new << d_x, d_y, d_z, d_a, d_b, d_c, d_n;
+    for (size_t i = 0; i < damping_new.size(); i++)
+    {
+      if (damping_new(i) < 0)
+      {
+        damping_new(i) = this->damping_factors_(i);
+      }
+    }
+    this->damping_factors_ = damping_new;
     this->applyDamping();
   }
 
@@ -125,7 +137,7 @@ namespace cartesian_impedance_controller
 
   // Set the desired end-effector pose
   void CartesianImpedanceController::setReferencePose(const Eigen::Vector3d &position_d_target,
-                                                    const Eigen::Quaterniond &orientation_d_target)
+                                                      const Eigen::Quaterniond &orientation_d_target)
   {
     this->position_d_target_ << position_d_target;
     this->orientation_d_target_.coeffs() << orientation_d_target.coeffs();
