@@ -1,0 +1,77 @@
+# This file is a template, and might need editing before it works on your project.
+# To contribute improvements to CI/CD templates, please follow the Development guide at:
+# https://docs.gitlab.com/ee/development/cicd/templates.html
+# This specific template is located at:
+# https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Getting-Started.gitlab-ci.yml
+
+# This is a sample GitLab CI/CD configuration file that should run without any modifications.
+# It demonstrates a basic 3 stage CI/CD pipeline. Instead of real tests or scripts,
+# it uses echo commands to simulate the pipeline execution.
+#
+# A pipeline is composed of independent jobs that run scripts, grouped into stages.
+# Stages run in sequential order, but jobs within stages run in parallel.
+#
+# For more information, see: https://docs.gitlab.com/ee/ci/yaml/index.html#stages
+
+image: osrf/ros:melodic-desktop-full
+
+stages:          # List of stages for jobs, and their order of execution
+  - build
+
+variables:
+  DEBIAN_FRONTEND: noninteractive
+  TZ: Europe/Berlin
+  ROS_DISTRO: melodic
+
+
+before_script:
+  - echo "Before script section"
+  - echo "For example you might run an update here or install a build dependency"
+  - echo "Or perhaps you might print out some debugging details"
+  ##
+  ## Install ssh-agent if not already installed, it is required by Docker.
+  ## (change apt-get to yum if you use an RPM-based image)
+  ##
+  - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client -y )'
+
+  ##
+  ## Run ssh-agent (inside the build environment)
+  ##
+  - eval $(ssh-agent -s)
+
+  ##
+  ## Add the SSH key stored in SSH_PRIVATE_KEY variable to the agent store
+  ## We're using tr to fix line endings which makes ed25519 keys work
+  ## without extra base64 encoding.
+  ## https://gitlab.com/gitlab-examples/ssh-private-key/issues/1#note_48526556
+  ##
+  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+
+  ##
+  ## Create the SSH directory and give it the right permissions
+  ##
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+
+  # For Docker builds disable host key checking. Be aware that by adding that
+  # you are suspectible to man-in-the-middle attacks.
+  # WARNING: Use this only with the Docker executor, if you use it with shell
+  # you will overwrite your user's SSH config.
+  - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+
+
+build-job:       # This job runs in the build stage, which runs first.
+  stage: build
+  script:
+    - apt-get update
+    - mkdir -p ~/catkin_ws/src; cd ~/catkin_ws
+    - git clone --branch $CI_COMMIT_BRANCH git@git.cs.lth.se:robotlab/cartesian_impedance_controller.git ~/catkin_ws/src/cartesian_impedance_controller
+    - bash src/cartesian_impedance_controller/scripts/install_dependencies.sh
+    - apt-get install -y python-catkin-tools python-rosdep
+    - rosdep update
+    - source /opt/ros/$ROS_DISTRO/setup.bash
+    - rosdep install --from-paths src --ignore-src --rosdistro=$ROS_DISTRO -y
+    - catkin init
+    - catkin config --extend /opt/ros/$ROS_DISTRO
+    - catkin build
+    - echo "Compile complete."
