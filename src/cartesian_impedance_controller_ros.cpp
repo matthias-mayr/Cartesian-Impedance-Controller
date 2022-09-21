@@ -453,38 +453,35 @@ namespace cartesian_impedance_controller
       this->tf_br_transform_.setRotation(this->tf_rot_);
       tf_br_.sendTransform(tf::StampedTransform(this->tf_br_transform_, ros::Time::now(), this->root_frame_, this->end_effector_ + "_ee_ref_pose"));
     }
-    if (this->verbose_state_)
+    if (this->verbose_state_ && this->pub_state_.trylock())
     {
-      if (this->pub_state_.trylock())
+      this->pub_state_.msg_.header.stamp = ros::Time::now();
+      tf::pointEigenToMsg(this->position_, this->pub_state_.msg_.current_pose.position);
+      tf::quaternionEigenToMsg(this->orientation_, this->pub_state_.msg_.current_pose.orientation);
+      tf::pointEigenToMsg(this->position_d_, this->pub_state_.msg_.reference_pose.position);
+      tf::quaternionEigenToMsg(this->orientation_d_, this->pub_state_.msg_.reference_pose.orientation);
+      tf::pointEigenToMsg(error.head(3), this->pub_state_.msg_.pose_error.position);
+      Eigen::Quaterniond q = Eigen::AngleAxisd(error(3), Eigen::Vector3d::UnitX()) * Eigen::AngleAxisd(error(4), Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(error(5), Eigen::Vector3d::UnitZ());
+      tf::quaternionEigenToMsg(q, this->pub_state_.msg_.pose_error.orientation);
+
+      EigenVectorToWrench(this->cartesian_stiffness_.diagonal(), &this->pub_state_.msg_.cartesian_stiffness);
+      EigenVectorToWrench(this->cartesian_damping_.diagonal(), &this->pub_state_.msg_.cartesian_damping);
+      EigenVectorToWrench(this->base_tools_->getAppliedWrench(), &this->pub_state_.msg_.commanded_wrench);
+
+      for (size_t i = 0; i < this->n_joints_; i++)
       {
-        this->pub_state_.msg_.header.stamp = ros::Time::now();
-        tf::pointEigenToMsg(this->position_, this->pub_state_.msg_.current_pose.position);
-        tf::quaternionEigenToMsg(this->orientation_, this->pub_state_.msg_.current_pose.orientation);
-        tf::pointEigenToMsg(this->position_d_, this->pub_state_.msg_.reference_pose.position);
-        tf::quaternionEigenToMsg(this->orientation_d_, this->pub_state_.msg_.reference_pose.orientation);
-        tf::pointEigenToMsg(error.head(3), this->pub_state_.msg_.pose_error.position);
-        Eigen::Quaterniond q = Eigen::AngleAxisd(error(3), Eigen::Vector3d::UnitX()) * Eigen::AngleAxisd(error(4), Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(error(5), Eigen::Vector3d::UnitZ());
-        tf::quaternionEigenToMsg(q, this->pub_state_.msg_.pose_error.orientation);
-
-        EigenVectorToWrench(this->cartesian_stiffness_.diagonal(), &this->pub_state_.msg_.cartesian_stiffness);
-        EigenVectorToWrench(this->cartesian_damping_.diagonal(), &this->pub_state_.msg_.cartesian_damping);
-        EigenVectorToWrench(this->base_tools_->getAppliedWrench(), &this->pub_state_.msg_.commanded_wrench);
-
-        for (size_t i = 0; i < this->n_joints_; i++)
-        {
-          this->pub_state_.msg_.joint_state.position.at(i) = q_(i);
-          this->pub_state_.msg_.joint_state.velocity.at(i) = dq_(i);
-          this->pub_state_.msg_.joint_state.effort.at(i) = tau_J_d_(i);
-          this->pub_state_.msg_.nullspace_config.at(i) = q_d_nullspace_(i);
-        }
-        this->pub_state_.msg_.nullspace_stiffness = this->nullspace_stiffness_;
-        this->pub_state_.msg_.nullspace_damping = this->nullspace_damping_;
-        const Eigen::Matrix<double, 6, 1> dx = this->jacobian_ * this->dq_;
-        this->pub_state_.msg_.cartesian_velocity = sqrt(dx(0) * dx(0) + dx(1) * dx(1) + dx(2) * dx(2));
-
-        this->pub_state_.unlockAndPublish();
-        this->pub_state_.msg_.header.seq++;
+        this->pub_state_.msg_.joint_state.position.at(i) = q_(i);
+        this->pub_state_.msg_.joint_state.velocity.at(i) = dq_(i);
+        this->pub_state_.msg_.joint_state.effort.at(i) = tau_J_d_(i);
+        this->pub_state_.msg_.nullspace_config.at(i) = q_d_nullspace_(i);
       }
+      this->pub_state_.msg_.nullspace_stiffness = this->nullspace_stiffness_;
+      this->pub_state_.msg_.nullspace_damping = this->nullspace_damping_;
+      const Eigen::Matrix<double, 6, 1> dx = this->jacobian_ * this->dq_;
+      this->pub_state_.msg_.cartesian_velocity = sqrt(dx(0) * dx(0) + dx(1) * dx(1) + dx(2) * dx(2));
+
+      this->pub_state_.unlockAndPublish();
+      this->pub_state_.msg_.header.seq++;
     }
   }
 
