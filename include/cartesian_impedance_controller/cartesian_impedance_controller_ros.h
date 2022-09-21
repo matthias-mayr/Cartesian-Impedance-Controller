@@ -148,6 +148,7 @@ namespace cartesian_impedance_controller
     tf::Transform tf_br_transform_;
     tf::Vector3 tf_pos_;
     tf::Quaternion tf_rot_;
+    ros::Time tf_last_time_ = ros::Time::now();
   };
   PLUGINLIB_EXPORT_CLASS(cartesian_impedance_controller::CartesianImpedanceControllerRos,
                          controller_interface::ControllerBase);

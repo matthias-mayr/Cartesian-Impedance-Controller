@@ -438,7 +438,7 @@ namespace cartesian_impedance_controller
                                         << this->q_d_nullspace_ << "\ntau_d:\n"
                                         << this->tau_J_d_);
     }
-    if (this->verbose_tf_)
+    if (this->verbose_tf_ && ros::Time::now() > this->tf_last_time_)
     {
       // Publish result of forward kinematics
       tf::vectorEigenToTF(this->position_, this->tf_pos_);
@@ -452,6 +452,7 @@ namespace cartesian_impedance_controller
       tf::quaternionEigenToTF(this->orientation_d_, this->tf_rot_);
       this->tf_br_transform_.setRotation(this->tf_rot_);
       tf_br_.sendTransform(tf::StampedTransform(this->tf_br_transform_, ros::Time::now(), this->root_frame_, this->end_effector_ + "_ee_ref_pose"));
+      this->tf_last_time_ = ros::Time::now();
     }
     if (this->verbose_state_ && this->pub_state_.trylock())
     {
