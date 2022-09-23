@@ -99,6 +99,7 @@ namespace cartesian_impedance_controller
     Eigen::Quaterniond orientation_;
     Eigen::VectorXd q_;
     Eigen::VectorXd dq_;
+    Eigen::VectorXd q_tau_;
     Eigen::MatrixXd jacobian_;
 
     ros::Subscriber sub_cart_stiffness_;

@@ -4,7 +4,8 @@ geometry_msgs/Pose current_pose
 geometry_msgs/Pose reference_pose
 geometry_msgs/Pose pose_error
 
-sensor_msgs/JointState joint_state  # Effort are commanded efforts
+sensor_msgs/JointState joint_state
+float64[] commanded_torques
 
 # Stiffness values for the cartesian impedance, x, y, z in [N/m], x, y, z in [Nm/rad]. 
 geometry_msgs/Wrench cartesian_stiffness
