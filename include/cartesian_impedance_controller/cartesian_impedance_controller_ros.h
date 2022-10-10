@@ -92,13 +92,14 @@ namespace cartesian_impedance_controller
     double nullspace_stiffness_target_{0.0};
     double nullspace_damping_{0.0};
     Eigen::VectorXd q_d_nullspace_;
-    Eigen::VectorXd tau_J_d_;
     Eigen::Vector3d position_d_;
     Eigen::Quaterniond orientation_d_;
     Eigen::Vector3d position_;
     Eigen::Quaterniond orientation_;
     Eigen::VectorXd q_;
     Eigen::VectorXd dq_;
+    Eigen::VectorXd tau_m_;
+    Eigen::VectorXd tau_c_;
     Eigen::MatrixXd jacobian_;
 
     ros::Subscriber sub_cart_stiffness_;

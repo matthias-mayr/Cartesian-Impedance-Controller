@@ -92,6 +92,7 @@ namespace cartesian_impedance_controller
     this->pub_state_.msg_.joint_state.position = std::vector<double>(this->n_joints_);
     this->pub_state_.msg_.joint_state.velocity = std::vector<double>(this->n_joints_);
     this->pub_state_.msg_.joint_state.effort = std::vector<double>(this->n_joints_);
+    this->pub_state_.msg_.commanded_torques = std::vector<double>(this->n_joints_);
     this->pub_state_.msg_.nullspace_config = std::vector<double>(this->n_joints_);
     return true;
   }
@@ -189,6 +190,7 @@ namespace cartesian_impedance_controller
     }
     this->q_ = Eigen::VectorXd(this->n_joints_);
     this->dq_ = Eigen::VectorXd(this->n_joints_);
+    this->tau_m_ = Eigen::VectorXd(this->n_joints_);
     this->q_d_nullspace_ = Eigen::VectorXd(this->n_joints_);
     this->jacobian_ = Eigen::MatrixXd(6, this->n_joints_);
 
@@ -223,7 +225,7 @@ namespace cartesian_impedance_controller
     this->updateState();
 
     // Apply control law in base library
-    this->tau_J_d_ = this->base_tools_->calculateCommandedTorques(this->q_, this->dq_, this->position_, this->orientation_, this->jacobian_);
+    this->tau_c_ = this->base_tools_->calculateCommandedTorques(this->q_, this->dq_, this->position_, this->orientation_, this->jacobian_);
 
     // Get the updated internal controller state
     this->base_tools_->getState(&this->position_d_, &this->orientation_d_, &this->cartesian_stiffness_, &this->nullspace_stiffness_, &this->q_d_nullspace_,
@@ -232,7 +234,7 @@ namespace cartesian_impedance_controller
     // Write commands
     for (size_t i = 0; i < this->n_joints_; ++i)
     {
-      this->joint_handles_[i].setCommand(this->tau_J_d_(i));
+      this->joint_handles_[i].setCommand(this->tau_c_(i));
     }
 
     publish();
@@ -282,6 +284,7 @@ namespace cartesian_impedance_controller
     {
       this->q_[i] = this->joint_handles_[i].getPosition();
       this->dq_[i] = this->joint_handles_[i].getVelocity();
+      this->tau_m_[i] = this->joint_handles_[i].getEffort();
     }
     getJacobian(this->q_, this->dq_, &this->jacobian_);
     getFk(this->q_, &this->position_, &this->orientation_);
@@ -420,7 +423,7 @@ namespace cartesian_impedance_controller
     {
       for (size_t i = 0; i < this->n_joints_; i++)
       {
-        this->pub_torques_.msg_.data[i] = this->tau_J_d_[i];
+        this->pub_torques_.msg_.data[i] = this->tau_c_[i];
       }
       this->pub_torques_.unlockAndPublish();
     }
@@ -436,7 +439,7 @@ namespace cartesian_impedance_controller
                                         << this->cartesian_damping_ << "\nNullspace stiffness:\n"
                                         << this->nullspace_stiffness_ << "\nq_d_nullspace:\n"
                                         << this->q_d_nullspace_ << "\ntau_d:\n"
-                                        << this->tau_J_d_);
+                                        << this->tau_c_);
     }
     if (this->verbose_tf_ && ros::Time::now() > this->tf_last_time_)
     {
@@ -471,10 +474,11 @@ namespace cartesian_impedance_controller
 
       for (size_t i = 0; i < this->n_joints_; i++)
       {
-        this->pub_state_.msg_.joint_state.position.at(i) = q_(i);
-        this->pub_state_.msg_.joint_state.velocity.at(i) = dq_(i);
-        this->pub_state_.msg_.joint_state.effort.at(i) = tau_J_d_(i);
-        this->pub_state_.msg_.nullspace_config.at(i) = q_d_nullspace_(i);
+        this->pub_state_.msg_.joint_state.position.at(i) = this->q_(i);
+        this->pub_state_.msg_.joint_state.velocity.at(i) = this->dq_(i);
+        this->pub_state_.msg_.joint_state.effort.at(i) = this->tau_m_(i);
+        this->pub_state_.msg_.nullspace_config.at(i) = this->q_d_nullspace_(i);
+        this->pub_state_.msg_.commanded_torques.at(i) = this->tau_c_(i);
       }
       this->pub_state_.msg_.nullspace_stiffness = this->nullspace_stiffness_;
       this->pub_state_.msg_.nullspace_damping = this->nullspace_damping_;
