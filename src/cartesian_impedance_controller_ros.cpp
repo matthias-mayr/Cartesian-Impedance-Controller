@@ -64,11 +64,11 @@ namespace cartesian_impedance_controller
   bool CartesianImpedanceControllerRos::initMessaging(ros::NodeHandle *nh)
   {
     this->sub_cart_stiffness_ = nh->subscribe("set_cartesian_stiffness", 1,
-                                              &CartesianImpedanceControllerRos::stiffnessCb, this);
+                                              &CartesianImpedanceControllerRos::cartesianStiffnessCb, this);
     this->sub_cart_wrench_ = nh->subscribe("set_cartesian_wrench", 1,
                                            &CartesianImpedanceControllerRos::wrenchCommandCb, this);
     this->sub_damping_ = nh->subscribe("set_damping_factors", 1,
-                                       &CartesianImpedanceControllerRos::dampingCb, this);
+                                       &CartesianImpedanceControllerRos::cartesianDampingCb, this);
     this->sub_impedance_config_ =
         nh->subscribe("set_config", 1, &CartesianImpedanceControllerRos::controllerConfigCb, this);
     this->sub_reference_pose_ = nh->subscribe("reference_pose", 1, &CartesianImpedanceControllerRos::referencePoseCb, this);
@@ -225,7 +225,7 @@ namespace cartesian_impedance_controller
       this->joint_handles_[i].setCommand(this->tau_c_(i));
     }
 
-    publish();
+    publishMsgsAndTf();
   }
 
   bool CartesianImpedanceControllerRos::getFk(const Eigen::VectorXd &q, Eigen::Vector3d *position,
@@ -298,7 +298,7 @@ namespace cartesian_impedance_controller
     }
   }
 
-  void CartesianImpedanceControllerRos::dampingCb(const geometry_msgs::WrenchConstPtr &msg)
+  void CartesianImpedanceControllerRos::cartesianDampingCb(const geometry_msgs::WrenchConstPtr &msg)
   {
     this->setDamping(*msg, this->nullspace_damping_);
   }
@@ -321,7 +321,7 @@ namespace cartesian_impedance_controller
     this->setReferencePose(this->position_d_, this->orientation_d_);
   }
 
-  void CartesianImpedanceControllerRos::stiffnessCb(const geometry_msgs::WrenchStampedConstPtr &msg)
+  void CartesianImpedanceControllerRos::cartesianStiffnessCb(const geometry_msgs::WrenchStampedConstPtr &msg)
   {
     this->setStiffness(msg->wrench, this->nullspace_stiffness_target_);
   }
@@ -396,7 +396,7 @@ namespace cartesian_impedance_controller
     }
   }
 
-  void CartesianImpedanceControllerRos::publish()
+  void CartesianImpedanceControllerRos::publishMsgsAndTf()
   {
     // publish commanded torques
     if (this->pub_torques_.trylock())

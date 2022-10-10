@@ -56,16 +56,16 @@ namespace cartesian_impedance_controller
     bool getJacobian(const Eigen::VectorXd &q, const Eigen::VectorXd &dq, Eigen::MatrixXd *jacobian);
     void updateState();
     void setDamping(const geometry_msgs::Wrench &cart_stiffness, double nullspace);
-    void setStiffness(const geometry_msgs::Wrench &cart_stiffness, double nullspace, bool auto_dammping = true);
+    void setStiffness(const geometry_msgs::Wrench &cart_stiffness, double nullspace, bool auto_damping = true);
 
+    void cartesianDampingCb(const geometry_msgs::WrenchConstPtr &msg);
+    void cartesianStiffnessCb(const geometry_msgs::WrenchStampedConstPtr &msg);
     void controllerConfigCb(const cartesian_impedance_controller::ControllerConfigConstPtr &msg);
-    void dampingCb(const geometry_msgs::WrenchConstPtr &msg);
     void referencePoseCb(const geometry_msgs::PoseStampedConstPtr &msg);
-    void stiffnessCb(const geometry_msgs::WrenchStampedConstPtr &msg);
     void wrenchCommandCb(const geometry_msgs::WrenchStampedConstPtr &msg);
 
     bool transformWrench(Eigen::Matrix<double, 6, 1> *cartesian_wrench, const std::string &from_frame, const std::string &to_frame) const;
-    void publish();
+    void publishMsgsAndTf();
 
     void dynamicConfigCb(cartesian_impedance_controller::stiffnessConfig &config, uint32_t level);
     void dynamicDampingCb(cartesian_impedance_controller::dampingConfig &config, uint32_t level);
