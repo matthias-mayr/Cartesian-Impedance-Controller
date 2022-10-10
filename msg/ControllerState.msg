@@ -17,4 +17,4 @@ float64[] nullspace_config
 
 geometry_msgs/Wrench commanded_wrench
 
-float64 cartesian_velocity              # Calculated Cartesian velocity
+float64 cartesian_velocity              # Calculated Cartesian velocity [m/s]
