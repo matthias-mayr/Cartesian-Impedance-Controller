@@ -475,7 +475,7 @@ namespace cartesian_impedance_controller
   void CartesianImpedanceControllerRos::dynamicConfigCb(
       cartesian_impedance_controller::stiffnessConfig &config, uint32_t level)
   {
-    if (config.apply_stiffness)
+    if (config.update_stiffness)
     {
       CartesianImpedanceController::setStiffness(saturateValue(config.translation_x, trans_stf_min_, trans_stf_max_),
                                       saturateValue(config.translation_y, trans_stf_min_, trans_stf_max_),
