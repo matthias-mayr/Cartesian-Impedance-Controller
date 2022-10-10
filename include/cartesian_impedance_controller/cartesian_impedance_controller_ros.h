@@ -37,7 +37,7 @@
 namespace cartesian_impedance_controller
 {
   class CartesianImpedanceControllerRos
-      : public controller_interface::Controller<hardware_interface::EffortJointInterface>
+      : public controller_interface::Controller<hardware_interface::EffortJointInterface>, public CartesianImpedanceController
   {
 
   public:

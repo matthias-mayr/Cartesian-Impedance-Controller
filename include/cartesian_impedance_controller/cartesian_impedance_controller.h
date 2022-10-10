@@ -8,7 +8,7 @@ namespace cartesian_impedance_controller
   class CartesianImpedanceController
   {
   public:
-    CartesianImpedanceController(const size_t n_joints = 7);
+    CartesianImpedanceController();
     ~CartesianImpedanceController() = default;
 
     // Sets pose without using filtering
@@ -17,6 +17,9 @@ namespace cartesian_impedance_controller
 
     // Sets nullspace configuration without using filtering
     void initNullspaceConfig(const Eigen::VectorXd &q_d_nullspace_target);
+
+    // Sets the number of joints
+    void setNumberOfJoints(size_t n_joints);
 
     // Set the desired diagonal stiffnessess + nullspace stiffness
     void setStiffness(const Eigen::Matrix<double, 7, 1> &stiffness, bool auto_damping = true);
@@ -101,7 +104,7 @@ namespace cartesian_impedance_controller
     void updateFilteredWrench();
 
     // Robot variables
-    const size_t n_joints_{7};
+    size_t n_joints_{7};
     // End Effector
     Eigen::Vector3d position_{Eigen::Vector3d::Zero()};
     Eigen::Vector3d position_d_{Eigen::Vector3d::Zero()};

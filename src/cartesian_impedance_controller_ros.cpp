@@ -57,8 +57,7 @@ namespace cartesian_impedance_controller
         return false;
       }
     }
-    this->n_joints_ = joint_names.size();
-    ROS_INFO_STREAM("Number of joints specified in parameters: " << this->n_joints_);
+    ROS_INFO_STREAM("Number of joints specified in parameters: " << joint_names.size());
     return true;
   }
 
@@ -178,8 +177,8 @@ namespace cartesian_impedance_controller
     node_handle.setParam("root_frame", this->root_frame_);
 
     // Initialize base_tools and member variables
-    this->base_tools_ = std::make_unique<CartesianImpedanceController>(this->n_joints_);
-    this->base_tools_->setMaxTorqueDelta(delta_tau_max);
+    this->setNumberOfJoints(this->joint_handles_.size());
+    this->setMaxTorqueDelta(delta_tau_max);
     if (this->n_joints_ < 6)
     {
       ROS_WARN("Number of joints is below 6. Functions might be limited.");
@@ -199,7 +198,7 @@ namespace cartesian_impedance_controller
     {
       return false;
     }
-    this->base_tools_->setFiltering(this->update_frequency_, this->filtering_nullspace_config_, this->filtering_stiffness_, this->filtering_pose_, this->filtering_wrench_);
+    this->setFiltering(this->update_frequency_, this->filtering_nullspace_config_, this->filtering_stiffness_, this->filtering_pose_, this->filtering_wrench_);
 
     ROS_INFO("Finished initialization.");
     return true;
@@ -210,8 +209,8 @@ namespace cartesian_impedance_controller
     this->updateState();
 
     // set x_attractor and q_d_nullspace
-    this->base_tools_->initDesiredPose(this->position_, this->orientation_);
-    this->base_tools_->initNullspaceConfig(this->q_);
+    this->initDesiredPose(this->position_, this->orientation_);
+    this->initNullspaceConfig(this->q_);
     ROS_INFO("Started Cartesian Impedance Controller");
   }
 
@@ -225,10 +224,10 @@ namespace cartesian_impedance_controller
     this->updateState();
 
     // Apply control law in base library
-    this->tau_c_ = this->base_tools_->calculateCommandedTorques(this->q_, this->dq_, this->position_, this->orientation_, this->jacobian_);
+    this->tau_c_ = this->calculateCommandedTorques(this->q_, this->dq_, this->position_, this->orientation_, this->jacobian_);
 
     // Get the updated internal controller state
-    this->base_tools_->getState(&this->position_d_, &this->orientation_d_, &this->cartesian_stiffness_, &this->nullspace_stiffness_, &this->q_d_nullspace_,
+    this->getState(&this->position_d_, &this->orientation_d_, &this->cartesian_stiffness_, &this->nullspace_stiffness_, &this->q_d_nullspace_,
                                 &this->cartesian_damping_);
 
     // Write commands
@@ -301,7 +300,7 @@ namespace cartesian_impedance_controller
       {
         this->q_d_nullspace_(i) = msg->q_d_nullspace.at(i);
       }
-      this->base_tools_->setNullspaceConfig(this->q_d_nullspace_);
+      this->setNullspaceConfig(this->q_d_nullspace_);
     }
     else
     {
@@ -329,7 +328,7 @@ namespace cartesian_impedance_controller
     {
       this->orientation_d_.coeffs() << -this->orientation_d_.coeffs();
     }
-    this->base_tools_->setReferencePose(this->position_d_, this->orientation_d_);
+    this->setReferencePose(this->position_d_, this->orientation_d_);
   }
 
   void CartesianImpedanceControllerRos::stiffnessCb(const geometry_msgs::WrenchStampedConstPtr &msg)
@@ -341,7 +340,7 @@ namespace cartesian_impedance_controller
   {
     constexpr double dmp_min = -1.0;
     constexpr double dmp_max = 1.0;
-    this->base_tools_->setDamping(saturateValue(cart_stiffness.force.x, dmp_min, dmp_max),
+    CartesianImpedanceController::setDamping(saturateValue(cart_stiffness.force.x, dmp_min, dmp_max),
                                   saturateValue(cart_stiffness.force.y, dmp_min, dmp_max),
                                   saturateValue(cart_stiffness.force.z, dmp_min, dmp_max),
                                   saturateValue(cart_stiffness.torque.x, dmp_min, dmp_max),
@@ -359,7 +358,7 @@ namespace cartesian_impedance_controller
     constexpr double ns_min = 0;
     constexpr double ns_max = 10000;
     this->nullspace_stiffness_target_ = saturateValue(nullspace, ns_min, ns_max);
-    this->base_tools_->setStiffness(saturateValue(cart_stiffness.force.x, trans_stf_min, trans_stf_max),
+    CartesianImpedanceController::setStiffness(saturateValue(cart_stiffness.force.x, trans_stf_min, trans_stf_max),
                                     saturateValue(cart_stiffness.force.y, trans_stf_min, trans_stf_max),
                                     saturateValue(cart_stiffness.force.z, trans_stf_min, trans_stf_max),
                                     saturateValue(cart_stiffness.torque.x, rot_stf_min, rot_stf_max),
@@ -391,7 +390,7 @@ namespace cartesian_impedance_controller
         return;
       }
     }
-    this->base_tools_->applyWrench(F);
+    this->applyWrench(F);
   }
 
   // Transform a Cartesian wrench from "from_frame" to "to_frame". E.g. from_frame= "world" , to_frame = "bh_link_ee"
@@ -428,7 +427,7 @@ namespace cartesian_impedance_controller
       this->pub_torques_.unlockAndPublish();
     }
 
-    const Eigen::Matrix<double, 6, 1> error{this->base_tools_->getPoseError()};
+    const Eigen::Matrix<double, 6, 1> error{this->getPoseError()};
 
     if (this->verbose_print_)
     {
@@ -470,7 +469,7 @@ namespace cartesian_impedance_controller
 
       EigenVectorToWrench(this->cartesian_stiffness_.diagonal(), &this->pub_state_.msg_.cartesian_stiffness);
       EigenVectorToWrench(this->cartesian_damping_.diagonal(), &this->pub_state_.msg_.cartesian_damping);
-      EigenVectorToWrench(this->base_tools_->getAppliedWrench(), &this->pub_state_.msg_.commanded_wrench);
+      EigenVectorToWrench(this->getAppliedWrench(), &this->pub_state_.msg_.commanded_wrench);
 
       for (size_t i = 0; i < this->n_joints_; i++)
       {
@@ -501,7 +500,7 @@ namespace cartesian_impedance_controller
       double trans_stf_min = 0;
       double rot_stf_max = 300;
       double rot_stf_min = 0;
-      this->base_tools_->setStiffness(saturateValue(config.translation_x, trans_stf_min, trans_stf_max),
+      CartesianImpedanceController::setStiffness(saturateValue(config.translation_x, trans_stf_min, trans_stf_max),
                                       saturateValue(config.translation_y, trans_stf_min, trans_stf_max),
                                       saturateValue(config.translation_z, trans_stf_min, trans_stf_max),
                                       saturateValue(config.rotation_x, trans_stf_min, trans_stf_max),
@@ -517,7 +516,7 @@ namespace cartesian_impedance_controller
     double dmp_min = 0.1;
     if (config.apply_damping_factors)
     {
-      this->base_tools_->setDamping(
+      CartesianImpedanceController::setDamping(
           saturateValue(config.translation_x, dmp_min, dmp_max), saturateValue(config.translation_y, dmp_min, dmp_max),
           saturateValue(config.translation_z, dmp_min, dmp_max), saturateValue(config.rotation_x, dmp_min, dmp_max),
           saturateValue(config.rotation_y, dmp_min, dmp_max), saturateValue(config.rotation_z, dmp_min, dmp_max),
@@ -538,7 +537,7 @@ namespace cartesian_impedance_controller
         return;
       }
     }
-    this->base_tools_->applyWrench(F);
+    this->applyWrench(F);
   }
 
   void CartesianImpedanceControllerRos::trajStart(const trajectory_msgs::JointTrajectory &trajectory)
@@ -569,7 +568,7 @@ namespace cartesian_impedance_controller
       }
       // Update end-effector pose and nullspace
       getFk(q, &this->position_d_, &this->orientation_d_);
-      this->base_tools_->setNullspaceConfig(q);
+      this->setNullspaceConfig(q);
       this->traj_index_++;
     }
 

@@ -43,21 +43,12 @@ namespace cartesian_impedance_controller
     }
   }
 
-  CartesianImpedanceController::CartesianImpedanceController(const size_t n_joints) : n_joints_{n_joints}
+  CartesianImpedanceController::CartesianImpedanceController()
   {
-    this->q_ = Eigen::VectorXd::Zero(this->n_joints_);
-    this->dq_ = Eigen::VectorXd::Zero(this->n_joints_);
-    this->jacobian_ = Eigen::MatrixXd::Zero(6, this->n_joints_);
-
     // Default stiffness values
     this->setStiffness(200., 200., 200., 20., 20., 20., 0.);
     this->cartesian_stiffness_ = this->cartesian_stiffness_target_;
     this->cartesian_damping_ = this->cartesian_damping_target_;
-
-    this->q_d_nullspace_ = Eigen::VectorXd::Zero(this->n_joints_);
-    this->q_d_nullspace_target_ = this->q_d_nullspace_;
-
-    this->tau_commanded_ = Eigen::VectorXd::Zero(this->n_joints_);
   }
 
   void CartesianImpedanceController::initDesiredPose(const Eigen::Vector3d &position_d_target,
@@ -72,6 +63,17 @@ namespace cartesian_impedance_controller
   {
     this->setNullspaceConfig(q_d_nullspace_target);
     this->q_d_nullspace_ = this->q_d_nullspace_target_;
+  }
+
+  void CartesianImpedanceController::setNumberOfJoints(size_t n_joints)
+  {
+    this->n_joints_ = n_joints;
+    this->q_ = Eigen::VectorXd::Zero(this->n_joints_);
+    this->dq_ = Eigen::VectorXd::Zero(this->n_joints_);
+    this->jacobian_ = Eigen::MatrixXd::Zero(6, this->n_joints_);
+    this->q_d_nullspace_ = Eigen::VectorXd::Zero(this->n_joints_);
+    this->q_d_nullspace_target_ = this->q_d_nullspace_;
+    this->tau_commanded_ = Eigen::VectorXd::Zero(this->n_joints_);
   }
 
   void CartesianImpedanceController::setStiffness(const Eigen::Matrix<double, 7, 1> &stiffness, bool auto_damping)
