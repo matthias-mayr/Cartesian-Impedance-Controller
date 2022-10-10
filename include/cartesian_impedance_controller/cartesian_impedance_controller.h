@@ -53,6 +53,7 @@ namespace cartesian_impedance_controller
     void applyWrench(const Eigen::Matrix<double, 6, 1> &cartesian_wrench);
 
     // Returns the commanded torques. Performs a filtering step and updates internal state.
+    Eigen::VectorXd calculateCommandedTorques();
     Eigen::VectorXd calculateCommandedTorques(const Eigen::VectorXd &q, const Eigen::VectorXd &dq,
                                               const Eigen::Vector3d &position, Eigen::Quaterniond orientation,
                                               const Eigen::MatrixXd &jacobian);
@@ -76,6 +77,50 @@ namespace cartesian_impedance_controller
 
     Eigen::Matrix<double, 6, 1> getPoseError() const;
 
+  protected:
+    // Robot variables
+    size_t n_joints_{7};
+
+    // End effector control parameters
+    Eigen::Matrix<double, 6, 6> cartesian_stiffness_{Eigen::Matrix<double, 6, 6>::Identity()};
+    Eigen::Matrix<double, 6, 6> cartesian_damping_{Eigen::Matrix<double, 6, 6>::Identity()};
+
+    // Nullspace control
+    Eigen::VectorXd q_d_nullspace_;
+    Eigen::VectorXd q_d_nullspace_target_;
+    double nullspace_stiffness_{0.0};
+    double nullspace_stiffness_target_{0.0};
+    double nullspace_damping_{0.0};
+    double nullspace_damping_target_{0.0};
+
+    // Joint state
+    Eigen::VectorXd q_;
+    Eigen::VectorXd dq_;
+
+    // Jacobian. Row format: 3 translations, 3 rotation
+    Eigen::MatrixXd jacobian_;
+
+    // End Effector
+    Eigen::Vector3d position_{Eigen::Vector3d::Zero()};
+    Eigen::Vector3d position_d_{Eigen::Vector3d::Zero()};
+    Eigen::Vector3d position_d_target_{Eigen::Vector3d::Zero()};
+
+    Eigen::Quaterniond orientation_{Eigen::Quaterniond::Identity()};
+    Eigen::Quaterniond orientation_d_{Eigen::Quaterniond::Identity()};
+    Eigen::Quaterniond orientation_d_target_{Eigen::Quaterniond::Identity()};
+
+    // Last commanded torques
+    Eigen::VectorXd tau_c_;
+
+    // Filtering parameters
+    double update_frequency_{1000};
+    double filter_params_nullspace_config_{1.0};
+    double filter_params_stiffness_{1.0};
+    double filter_params_pose_{1.0};
+    double filter_params_wrench_{1.0};
+
+    double delta_tau_max_{1.0};
+
   private:
     // Implements the damping based on a stiffness
     double dampingRule(double stiffness) const;
@@ -86,10 +131,6 @@ namespace cartesian_impedance_controller
     void setUpdateFrequency(double freq);
 
     void setFilterValue(double val, double *saved_val);
-
-    // Update the robot state of the controller
-    void updateStates(const Eigen::VectorXd &q, const Eigen::VectorXd &dq, const Eigen::MatrixXd &jacobian,
-                      const Eigen::Vector3d &position, const Eigen::Quaterniond &orientation);
 
     // Adds a percental filtering effect to the nullspace configuration
     void updateFilteredNullspaceConfig();
@@ -103,49 +144,12 @@ namespace cartesian_impedance_controller
     // Adds a percental filtering effect to the applied Cartesian wrench
     void updateFilteredWrench();
 
-    // Robot variables
-    size_t n_joints_{7};
-    // End Effector
-    Eigen::Vector3d position_{Eigen::Vector3d::Zero()};
-    Eigen::Vector3d position_d_{Eigen::Vector3d::Zero()};
-    Eigen::Vector3d position_d_target_{Eigen::Vector3d::Zero()};
-
-    Eigen::Quaterniond orientation_{Eigen::Quaterniond::Identity()};
-    Eigen::Quaterniond orientation_d_{Eigen::Quaterniond::Identity()};
-    Eigen::Quaterniond orientation_d_target_{Eigen::Quaterniond::Identity()};
-
-    // Joint state
-    Eigen::VectorXd q_;
-    Eigen::VectorXd dq_;
-    // Jacobian. Row format: 3 translations, 3 rotation
-    Eigen::MatrixXd jacobian_;
     Eigen::Matrix<double, 6, 1> error_;
 
     // End effector control parameters
-    Eigen::Matrix<double, 6, 6> cartesian_stiffness_{Eigen::Matrix<double, 6, 6>::Identity()};
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_{Eigen::Matrix<double, 6, 6>::Identity()};
-    Eigen::Matrix<double, 6, 6> cartesian_damping_{Eigen::Matrix<double, 6, 6>::Identity()};
     Eigen::Matrix<double, 6, 6> cartesian_damping_target_{Eigen::Matrix<double, 6, 6>::Identity()};
     Eigen::Matrix<double, 7, 1> damping_factors_{Eigen::Matrix<double, 7, 1>::Ones()};
-
-    // Nullspace control
-    Eigen::VectorXd q_d_nullspace_;
-    Eigen::VectorXd q_d_nullspace_target_;
-    double nullspace_stiffness_{0.0};
-    double nullspace_stiffness_target_{0.0};
-    double nullspace_damping_{0.0};
-    double nullspace_damping_target_{0.0};
-
-    // Last commanded torques
-    Eigen::VectorXd tau_commanded_;
-    double delta_tau_max_{1.0};
-
-    // Filtering parameters
-    double update_frequency_{1000};
-    double filter_params_nullspace_config_{1.0};
-    double filter_params_stiffness_{1.0};
-    double filter_params_pose_{1.0};
-    double filter_params_wrench_{1.0};
 
     //  External applied forces
     Eigen::Matrix<double, 6, 1> cartesian_wrench_target_{Eigen::Matrix<double, 6, 1>::Zero()};

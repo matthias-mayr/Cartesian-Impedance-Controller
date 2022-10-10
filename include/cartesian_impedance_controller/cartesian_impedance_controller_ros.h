@@ -77,30 +77,13 @@ namespace cartesian_impedance_controller
     void trajUpdate();
     void trajCb(const trajectory_msgs::JointTrajectoryConstPtr &msg);
 
-    std::unique_ptr<CartesianImpedanceController> base_tools_;
-
     std::vector<hardware_interface::JointHandle> joint_handles_;
     rbdyn_wrapper rbdyn_wrapper_;
-    unsigned int n_joints_;
     std::string end_effector_;
     std::string robot_description_;
     std::string root_frame_;
 
-    Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
-    Eigen::Matrix<double, 6, 6> cartesian_damping_;
-    double nullspace_stiffness_{0.0};
-    double nullspace_stiffness_target_{0.0};
-    double nullspace_damping_{0.0};
-    Eigen::VectorXd q_d_nullspace_;
-    Eigen::Vector3d position_d_;
-    Eigen::Quaterniond orientation_d_;
-    Eigen::Vector3d position_;
-    Eigen::Quaterniond orientation_;
-    Eigen::VectorXd q_;
-    Eigen::VectorXd dq_;
     Eigen::VectorXd tau_m_;
-    Eigen::VectorXd tau_c_;
-    Eigen::MatrixXd jacobian_;
 
     ros::Subscriber sub_cart_stiffness_;
     ros::Subscriber sub_cart_wrench_;
@@ -111,11 +94,15 @@ namespace cartesian_impedance_controller
     tf::TransformListener tf_listener_;
     std::string wrench_ee_frame_;
 
-    double update_frequency_{500};
-    double filtering_nullspace_config_{0.1};
-    double filtering_stiffness_{0.1};
-    double filtering_pose_{0.1};
-    double filtering_wrench_{0.1};
+    // Limits
+    const double trans_stf_min_{0};
+    const double trans_stf_max_{2000};
+    const double rot_stf_min_{0};
+    const double rot_stf_max_{500};
+    const double ns_min_{0};
+    const double ns_max_{100};
+    const double dmp_min_{0.0};
+    const double dmp_max_{1.0};
 
     // The Jacobian of RBDyn comes with orientation in the first three lines. Needs to be interchanged.
     const Eigen::VectorXi perm_indices_ = (Eigen::Matrix<int, 6, 1>() << 3, 4, 5, 0, 1, 2).finished();
