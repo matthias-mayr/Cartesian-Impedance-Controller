@@ -329,23 +329,23 @@ namespace cartesian_impedance_controller
   void CartesianImpedanceControllerRos::setDamping(const geometry_msgs::Wrench &cart_stiffness, double nullspace)
   {
     CartesianImpedanceController::setDamping(saturateValue(cart_stiffness.force.x, dmp_min_, dmp_max_),
-                                  saturateValue(cart_stiffness.force.y, dmp_min_, dmp_max_),
-                                  saturateValue(cart_stiffness.force.z, dmp_min_, dmp_max_),
-                                  saturateValue(cart_stiffness.torque.x, dmp_min_, dmp_max_),
-                                  saturateValue(cart_stiffness.torque.y, dmp_min_, dmp_max_),
-                                  saturateValue(cart_stiffness.torque.z, dmp_min_, dmp_max_),
-                                  saturateValue(nullspace, dmp_min_, dmp_max_));
+                                             saturateValue(cart_stiffness.force.y, dmp_min_, dmp_max_),
+                                             saturateValue(cart_stiffness.force.z, dmp_min_, dmp_max_),
+                                             saturateValue(cart_stiffness.torque.x, dmp_min_, dmp_max_),
+                                             saturateValue(cart_stiffness.torque.y, dmp_min_, dmp_max_),
+                                             saturateValue(cart_stiffness.torque.z, dmp_min_, dmp_max_),
+                                             saturateValue(nullspace, dmp_min_, dmp_max_));
   }
 
   void CartesianImpedanceControllerRos::setStiffness(const geometry_msgs::Wrench &cart_stiffness, double nullspace, bool auto_damping)
   {
     CartesianImpedanceController::setStiffness(saturateValue(cart_stiffness.force.x, trans_stf_min_, trans_stf_max_),
-                                    saturateValue(cart_stiffness.force.y, trans_stf_min_, trans_stf_max_),
-                                    saturateValue(cart_stiffness.force.z, trans_stf_min_, trans_stf_max_),
-                                    saturateValue(cart_stiffness.torque.x, rot_stf_min_, rot_stf_max_),
-                                    saturateValue(cart_stiffness.torque.y, rot_stf_min_, rot_stf_max_),
-                                    saturateValue(cart_stiffness.torque.z, rot_stf_min_, rot_stf_max_),
-                                    saturateValue(nullspace, ns_min_, ns_max_), auto_damping);
+                                               saturateValue(cart_stiffness.force.y, trans_stf_min_, trans_stf_max_),
+                                               saturateValue(cart_stiffness.force.z, trans_stf_min_, trans_stf_max_),
+                                               saturateValue(cart_stiffness.torque.x, rot_stf_min_, rot_stf_max_),
+                                               saturateValue(cart_stiffness.torque.y, rot_stf_min_, rot_stf_max_),
+                                               saturateValue(cart_stiffness.torque.z, rot_stf_min_, rot_stf_max_),
+                                               saturateValue(nullspace, ns_min_, ns_max_), auto_damping);
   }
 
   // Adds a wrench at the end-effector, using the root frame of the robot description
@@ -478,11 +478,11 @@ namespace cartesian_impedance_controller
     if (config.update_stiffness)
     {
       CartesianImpedanceController::setStiffness(saturateValue(config.translation_x, trans_stf_min_, trans_stf_max_),
-                                      saturateValue(config.translation_y, trans_stf_min_, trans_stf_max_),
-                                      saturateValue(config.translation_z, trans_stf_min_, trans_stf_max_),
-                                      saturateValue(config.rotation_x, trans_stf_min_, trans_stf_max_),
-                                      saturateValue(config.rotation_y, trans_stf_min_, trans_stf_max_),
-                                      saturateValue(config.rotation_z, trans_stf_min_, trans_stf_max_), config.nullspace_stiffness);
+                                                 saturateValue(config.translation_y, trans_stf_min_, trans_stf_max_),
+                                                 saturateValue(config.translation_z, trans_stf_min_, trans_stf_max_),
+                                                 saturateValue(config.rotation_x, trans_stf_min_, trans_stf_max_),
+                                                 saturateValue(config.rotation_y, trans_stf_min_, trans_stf_max_),
+                                                 saturateValue(config.rotation_z, trans_stf_min_, trans_stf_max_), config.nullspace_stiffness);
     }
   }
 

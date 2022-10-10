@@ -200,7 +200,8 @@ namespace cartesian_impedance_controller
   }
 
   // Calculates and returns the commanded torques
-  Eigen::VectorXd CartesianImpedanceController::calculateCommandedTorques() {
+  Eigen::VectorXd CartesianImpedanceController::calculateCommandedTorques()
+  {
     Eigen::Quaterniond orientation{this->orientation_};
     // Perform a filtering step
     updateFilteredNullspaceConfig();
