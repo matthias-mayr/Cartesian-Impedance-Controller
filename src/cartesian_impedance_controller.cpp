@@ -43,21 +43,12 @@ namespace cartesian_impedance_controller
     }
   }
 
-  CartesianImpedanceController::CartesianImpedanceController(const size_t n_joints) : n_joints_{n_joints}
+  CartesianImpedanceController::CartesianImpedanceController()
   {
-    this->q_ = Eigen::VectorXd::Zero(this->n_joints_);
-    this->dq_ = Eigen::VectorXd::Zero(this->n_joints_);
-    this->jacobian_ = Eigen::MatrixXd::Zero(6, this->n_joints_);
-
     // Default stiffness values
     this->setStiffness(200., 200., 200., 20., 20., 20., 0.);
     this->cartesian_stiffness_ = this->cartesian_stiffness_target_;
     this->cartesian_damping_ = this->cartesian_damping_target_;
-
-    this->q_d_nullspace_ = Eigen::VectorXd::Zero(this->n_joints_);
-    this->q_d_nullspace_target_ = this->q_d_nullspace_;
-
-    this->tau_commanded_ = Eigen::VectorXd::Zero(this->n_joints_);
   }
 
   void CartesianImpedanceController::initDesiredPose(const Eigen::Vector3d &position_d_target,
@@ -72,6 +63,17 @@ namespace cartesian_impedance_controller
   {
     this->setNullspaceConfig(q_d_nullspace_target);
     this->q_d_nullspace_ = this->q_d_nullspace_target_;
+  }
+
+  void CartesianImpedanceController::setNumberOfJoints(size_t n_joints)
+  {
+    this->n_joints_ = n_joints;
+    this->q_ = Eigen::VectorXd::Zero(this->n_joints_);
+    this->dq_ = Eigen::VectorXd::Zero(this->n_joints_);
+    this->jacobian_ = Eigen::MatrixXd::Zero(6, this->n_joints_);
+    this->q_d_nullspace_ = Eigen::VectorXd::Zero(this->n_joints_);
+    this->q_d_nullspace_target_ = this->q_d_nullspace_;
+    this->tau_c_ = Eigen::VectorXd::Zero(this->n_joints_);
   }
 
   void CartesianImpedanceController::setStiffness(const Eigen::Matrix<double, 7, 1> &stiffness, bool auto_damping)
@@ -180,7 +182,7 @@ namespace cartesian_impedance_controller
     this->cartesian_wrench_target_ = cartesian_wrench_target;
   }
 
-  // Returns the desired control law
+  // Updates state; calculates and returns the commanded torques
   Eigen::VectorXd CartesianImpedanceController::calculateCommandedTorques(const Eigen::VectorXd &q,
                                                                           const Eigen::VectorXd &dq,
                                                                           const Eigen::Vector3d &position,
@@ -188,8 +190,19 @@ namespace cartesian_impedance_controller
                                                                           const Eigen::MatrixXd &jacobian)
   {
     // Update controller to the current robot state
-    updateStates(q, dq, jacobian, position, orientation);
+    this->q_ = q;
+    this->dq_ = dq;
+    this->position_ << position;
+    this->orientation_.coeffs() << orientation.coeffs();
+    this->jacobian_ << jacobian;
 
+    return this->calculateCommandedTorques();
+  }
+
+  // Calculates and returns the commanded torques
+  Eigen::VectorXd CartesianImpedanceController::calculateCommandedTorques()
+  {
+    Eigen::Quaterniond orientation{this->orientation_};
     // Perform a filtering step
     updateFilteredNullspaceConfig();
     updateFilteredStiffness();
@@ -202,22 +215,22 @@ namespace cartesian_impedance_controller
 
     // Kinematic pseuoinverse
     Eigen::MatrixXd jacobian_transpose_pinv;
-    pseudoInverse(jacobian.transpose(), &jacobian_transpose_pinv);
+    pseudoInverse(this->jacobian_.transpose(), &jacobian_transpose_pinv);
 
     Eigen::VectorXd tau_task(this->n_joints_), tau_nullspace(this->n_joints_), tau_ext(this->n_joints_);
 
     // Cartesian PD control with damping ratio = 1
-    tau_task << jacobian.transpose() * (-cartesian_stiffness_ * error_ - cartesian_damping_ * (jacobian * dq));
+    tau_task << this->jacobian_.transpose() * (-this->cartesian_stiffness_ * this->error_ - this->cartesian_damping_ * (this->jacobian_ * this->dq_));
     // Nullspace PD control with damping ratio = 1
-    tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) - jacobian.transpose() * jacobian_transpose_pinv) *
-                         (nullspace_stiffness_ * (q_d_nullspace_ - q) - nullspace_damping_ * dq);
+    tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) - this->jacobian_.transpose() * jacobian_transpose_pinv) *
+                         (this->nullspace_stiffness_ * (this->q_d_nullspace_ - this->q_) - this->nullspace_damping_ * this->dq_);
     // External wrench update
     tau_ext = this->jacobian_.transpose() * this->cartesian_wrench_;
 
     // Desired torque
     Eigen::VectorXd tau_d = tau_task + tau_nullspace + tau_ext;
-    saturateTorqueRate(tau_d, &this->tau_commanded_, this->delta_tau_max_);
-    return this->tau_commanded_;
+    saturateTorqueRate(tau_d, &this->tau_c_, this->delta_tau_max_);
+    return this->tau_c_;
   }
 
   // Get the state of the robot.Updates when "calculateCommandedTorques" is called
@@ -252,7 +265,7 @@ namespace cartesian_impedance_controller
   // Get the currently applied commands
   Eigen::VectorXd CartesianImpedanceController::getLastCommands() const
   {
-    return this->tau_commanded_;
+    return this->tau_c_;
   }
 
   // Get the currently applied Cartesian wrench
@@ -281,18 +294,6 @@ namespace cartesian_impedance_controller
   {
     assert(val > 0 && val <= 1.0 && "Filter params need to be between 0 and 1.");
     *saved_val = val;
-  }
-
-  // Update the state of the robot
-  void CartesianImpedanceController::updateStates(const Eigen::VectorXd &q, const Eigen::VectorXd &dq,
-                                                  const Eigen::MatrixXd &jacobian, const Eigen::Vector3d &position,
-                                                  const Eigen::Quaterniond &orientation)
-  {
-    this->q_ = q;
-    this->dq_ = dq;
-    this->position_ << position;
-    this->orientation_.coeffs() << orientation.coeffs();
-    this->jacobian_ << jacobian;
   }
 
   // Adds a percental filtering effect to the nullspace configuration
