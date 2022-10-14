@@ -517,6 +517,30 @@ namespace cartesian_impedance_controller
     this->applyWrench(F);
   }
 
+  void CartesianImpedanceControllerRos::trajCb(const trajectory_msgs::JointTrajectoryConstPtr &msg)
+  {
+    ROS_INFO("Got trajectory msg from trajectory topic.");
+    if (this->traj_as_->isActive())
+    {
+      this->traj_as_->setPreempted();
+      ROS_INFO("Preempted running action server goal.");
+    }
+    trajStart(*msg);
+  }
+
+  void CartesianImpedanceControllerRos::trajGoalCb()
+  {
+    this->traj_goal_ = this->traj_as_->acceptNewGoal();
+    ROS_INFO("Accepted new goal from action server.");
+    trajStart(this->traj_goal_->trajectory);
+  }
+
+  void CartesianImpedanceControllerRos::trajPreemptCb()
+  {
+    ROS_INFO("Actionserver got preempted.");
+    this->traj_as_->setPreempted();
+  }
+
   void CartesianImpedanceControllerRos::trajStart(const trajectory_msgs::JointTrajectory &trajectory)
   {
     this->traj_duration_ = trajectory.points[trajectory.points.size() - 1].time_from_start;
@@ -558,29 +582,5 @@ namespace cartesian_impedance_controller
       }
       this->traj_running_ = false;
     }
-  }
-
-  void CartesianImpedanceControllerRos::trajGoalCb()
-  {
-    this->traj_goal_ = this->traj_as_->acceptNewGoal();
-    ROS_INFO("Accepted new goal from action server.");
-    trajStart(this->traj_goal_->trajectory);
-  }
-
-  void CartesianImpedanceControllerRos::trajPreemptCb()
-  {
-    ROS_INFO("Actionserver got preempted.");
-    this->traj_as_->setPreempted();
-  }
-
-  void CartesianImpedanceControllerRos::trajCb(const trajectory_msgs::JointTrajectoryConstPtr &msg)
-  {
-    ROS_INFO("Got trajectory msg from trajectory topic.");
-    if (this->traj_as_->isActive())
-    {
-      this->traj_as_->setPreempted();
-      ROS_INFO("Preempted running action server goal.");
-    }
-    trajStart(*msg);
   }
 } // namespace cartesian_impedance_controller
