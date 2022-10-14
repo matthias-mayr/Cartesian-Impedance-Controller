@@ -36,46 +36,246 @@
 
 namespace cartesian_impedance_controller
 {
+  /*! \brief The ROS control implementation of the Cartesian impedance controller
+  * 
+  * It utilizes a list of joint names and the URDF description to control these joints.
+  */
   class CartesianImpedanceControllerRos
       : public controller_interface::Controller<hardware_interface::EffortJointInterface>, public CartesianImpedanceController
   {
 
   public:
+    /*! \brief Initializes the controller
+    *
+    * - Reads ROS parameters
+    * - Initializes
+    *   - joint handles
+    *   - ROS messaging
+    *   - RBDyn
+    *   - rqt_reconfigure
+    *   - Trajectory handling
+    * \param[in] hw           Hardware interface
+    * \param[in] node_handle  Node Handle
+    * \return             True on success, false on failure
+    */
     bool init(hardware_interface::EffortJointInterface *hw, ros::NodeHandle &node_handle) override;
+    
+    /*! \brief Starts the controller
+    *
+    * Updates the states and sets the desired pose and nullspace configuration to the current state.
+    * \param[in] time Not used
+    */
     void starting(const ros::Time &) override;
+
+    /*! \brief Periodically called update function
+    *
+    * Updates the state and the trajectory. Calculated new commands and sets them.
+    * Finally publishes ROS messages and tf transformations.
+    * \param[in] time   Not used
+    * \param[in] period Control period
+    */
     void update(const ros::Time &, const ros::Duration &period) override;
 
   private:
+    /*! \brief Initializes dynamic reconfigure
+    * 
+    * Initiliazes dynamic reconfigure for stiffness, damping and wrench.
+    * \param[in] nh Nodehandle
+    * \return True on success, false on failure. 
+    */
     bool initDynamicReconfigure(const ros::NodeHandle &nh);
+
+    /*! \brief Initializes the joint handles
+    *
+    * Fetches the joint names from the parameter server and initializes the joint handles.
+    * \param[in] hw Hardware interface to obtain handles
+    * \param[in] nh Nodehandle
+    * \return True on success, false on failure.
+    */
     bool initJointHandles(hardware_interface::EffortJointInterface *hw, const ros::NodeHandle &nh);
+
+    /*! \brief Initializes messaging
+    *
+    * Initializes realtime publishers and the subscribers.
+    * \param[in] nh Nodehandle
+    * \return True on success, false on failure.
+    */
     bool initMessaging(ros::NodeHandle *nh);
+
+    /*! \brief Initializes RBDyn
+    *
+    * Reads the robot URDF and initializes RBDyn.
+    * \param[in] nh Nodehandle
+    * \return True on success, false on failure.
+    */
     bool initRBDyn(const ros::NodeHandle &nh);
+
+    /*! \brief Initializes trajectory handling
+    *
+    * Subscribes to joint trajectory topic and starts the trajectory action server.
+    * \param[in] nh Nodehandle
+    * \return Always true.
+    */
     bool initTrajectories(ros::NodeHandle *nh);
 
+    /*! \brief Get forward kinematics solution.
+    *
+    * Calls RBDyn to get the forward kinematics solution.
+    * \param[in]  q            Joint position vector
+    * \param[out] position     End-effector position
+    * \param[out] orientation  End-effector orientation
+    * \return Always true.
+    */
     bool getFk(const Eigen::VectorXd &q, Eigen::Vector3d *position, Eigen::Quaterniond *rotation) const;
+
+    /*! \brief Get Jacobian from RBDyn
+    *
+    * Gets the Jacobian for given joint positions and joint velocities.
+    * \param[in]  q         Joint position vector        
+    * \param[in]  dq        Joint velocity vector
+    * \param[out] jacobian  Calculated Jacobian
+    * \return True on success, false on failure.
+    */
     bool getJacobian(const Eigen::VectorXd &q, const Eigen::VectorXd &dq, Eigen::MatrixXd *jacobian);
+
+    /*! \brief Updates the state based on the joint handles.
+    *
+    * Gets latest joint positions, velocities and efforts and updates the forward kinematics as well as the Jacobian. 
+    */
     void updateState();
+
+    /*! \brief Sets damping for Cartesian space and nullspace.
+    *
+    * Long
+    * \param[in] cart_damping   Cartesian damping [0,1]
+    * \param[in] nullspace      Nullspace damping [0,1]
+    */
     void setDamping(const geometry_msgs::Wrench &cart_damping, double nullspace);
+
+    /*! \brief Sets Cartesian and nullspace stiffness
+    *
+    * Sets Cartesian and nullspace stiffness. Allows to set if automatic damping should be applied.
+    * \param[in] cart_stiffness Cartesian stiffness
+    * \param[in] nullspace      Nullspace stiffness
+    * \param[in] auto_damping   Apply automatic damping 
+    */
     void setStiffness(const geometry_msgs::Wrench &cart_stiffness, double nullspace, bool auto_damping = true);
 
+    /*! \brief Message callback for Cartesian damping.
+    *
+    * Calls setDamping function.
+    * @sa setDamping.
+    * \param[in] msg Received message
+    */
     void cartesianDampingCb(const geometry_msgs::WrenchConstPtr &msg);
+
+    /*! \brief Message callback for Cartesian stiffness.
+    *
+    * Calls setStiffness function.
+    * @sa setStiffness
+    * \param[in] msg Received message
+    */
     void cartesianStiffnessCb(const geometry_msgs::WrenchStampedConstPtr &msg);
+
+    /*! \brief Message callback for the whole controller configuration.
+    *
+    * Sets stiffness, damping and nullspace.
+    * @sa setDamping, setStiffness
+    * \param[in] msg Received message
+    */
     void controllerConfigCb(const cartesian_impedance_controller::ControllerConfigConstPtr &msg);
+
+    /*! \brief Message callback for a Cartesian reference pose.
+    *
+    * Accepts new reference poses in the root frame - ignores them otherwise.
+    * Sets the reference target pose.
+    * @sa setReferencePose.
+    * \param[in] msg Received message
+    */
     void referencePoseCb(const geometry_msgs::PoseStampedConstPtr &msg);
+
+    /*! \brief Message callback for Cartesian wrench messages.
+    *
+    * If the wrench is not given in end-effector frame, it will be transformed in the root frame.
+    * Sets the wrench.
+    * @sa applyWrench.
+    * \param[in] msg Received message
+    */
     void wrenchCommandCb(const geometry_msgs::WrenchStampedConstPtr &msg);
 
+    /*! \brief Transforms the wrench in a target frame.
+    *
+    * Takes a vector with the wrench and transforms it to a given coordinate frame.
+    * @sa wrenchCommandCb
+    * \param[in] cartesian_wrench Vector with the Cartesian wrench
+    * \param[in] from_frame       Source frame
+    * \param[in] to_frame         Target frame
+    * \return True on success, false on failure.
+    */
     bool transformWrench(Eigen::Matrix<double, 6, 1> *cartesian_wrench, const std::string &from_frame, const std::string &to_frame) const;
+
+    /*! \brief Verbose printing; publishes ROS messages and tf frames.
+     *
+     * Always publishes commanded torques.
+     * Optional: request publishes tf frames for end-effector forward kinematics and the reference pose.
+     * Optional: verbose printing
+     * Optional: publishes state messages
+     */
     void publishMsgsAndTf();
 
+    /*! \brief Callback for stiffness dynamic reconfigure.
+    *
+    * Takes the dynamic reconfigure stiffness configuration, applies the limits and sets it.
+    * \param[in] config 
+    */
     void dynamicStiffnessCb(cartesian_impedance_controller::stiffnessConfig &config, uint32_t level);
+    
+    /*! \brief Callback for damping dynamic reconfigure.
+    *
+    * Takes the dynamic reconfigure configuration, applies limits and sets it.
+    * \param[in] config 
+    */
     void dynamicDampingCb(cartesian_impedance_controller::dampingConfig &config, uint32_t level);
+    
+    /*! \brief Callback for wrench dynamic reconfigure.
+    *
+    * Takes the dynamic reconfigure configuration, applies limits and sets it.
+    * \param[in] config 
+    */
     void dynamicWrenchCb(cartesian_impedance_controller::wrenchConfig &config, uint32_t level);
 
-    void trajGoalCb();
-    void trajPreemptCb();
-    void trajStart(const trajectory_msgs::JointTrajectory &trajectory);
-    void trajUpdate();
+    /*! \brief Callback for a joint trajectory message.
+    *
+    * Preempts the action server if that one has a running goal.
+    * \param[in] msg  Joint Trajectory Message
+    */
     void trajCb(const trajectory_msgs::JointTrajectoryConstPtr &msg);
+
+    /*! \brief Callback for a trajectory action goal.
+    *
+    * Accepts the new goal and starts the trajectory.
+    */
+    void trajGoalCb();
+
+    /*! \brief Preempt function of the action server.
+    *
+    * Sets the goal as preempted.
+    */
+    void trajPreemptCb();
+
+    /*! \brief Starts the trajectory.
+    *
+    * Resets the trajectory member variables. 
+    */
+    void trajStart(const trajectory_msgs::JointTrajectory &trajectory);
+
+    /*! \brief Updates the trajectory.
+    *
+    * Called periodically from the update function if a trajectory is running.
+    * A trajectory is run by going through it point by point, calculating forward kinematics and applying
+    * the joint configuration to the nullspace control.
+    */
+    void trajUpdate();
 
     std::vector<hardware_interface::JointHandle> joint_handles_;
     rbdyn_wrapper rbdyn_wrapper_;
