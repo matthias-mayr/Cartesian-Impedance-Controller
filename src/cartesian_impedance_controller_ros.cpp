@@ -25,7 +25,7 @@ namespace cartesian_impedance_controller
   {
     this->dynamic_server_compliance_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::stiffnessConfig>>(ros::NodeHandle(std::string(nh.getNamespace() + "/stiffness_reconfigure")));
     this->dynamic_server_compliance_param_->setCallback(
-        boost::bind(&CartesianImpedanceControllerRos::dynamicConfigCb, this, _1, _2));
+        boost::bind(&CartesianImpedanceControllerRos::dynamicStiffnessCb, this, _1, _2));
 
     this->dynamic_server_damping_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::dampingConfig>>(ros::NodeHandle(std::string(nh.getNamespace() + "/damping_factors_reconfigure")));
     dynamic_server_damping_param_->setCallback(
@@ -472,7 +472,7 @@ namespace cartesian_impedance_controller
 
   // Dynamic reconfigure
   // --------------------------------------------------------------------------------------------------------------------------------------
-  void CartesianImpedanceControllerRos::dynamicConfigCb(
+  void CartesianImpedanceControllerRos::dynamicStiffnessCb(
       cartesian_impedance_controller::stiffnessConfig &config, uint32_t level)
   {
     if (config.update_stiffness)
