@@ -310,15 +310,17 @@ namespace cartesian_impedance_controller
       ROS_WARN_STREAM("Reference poses need to be in the root frame '" << this->root_frame_ << "'. Ignoring.");
       return;
     }
-    this->position_d_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
+    Eigen::Vector3d position_d;
+    position_d << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
     const Eigen::Quaterniond last_orientation_d_target(this->orientation_d_);
-    this->orientation_d_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z,
+    Eigen::Quaterniond orientation_d;
+    orientation_d.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z,
         msg->pose.orientation.w;
     if (last_orientation_d_target.coeffs().dot(this->orientation_d_.coeffs()) < 0.0)
     {
       this->orientation_d_.coeffs() << -this->orientation_d_.coeffs();
     }
-    this->setReferencePose(this->position_d_, this->orientation_d_);
+    this->setReferencePose(position_d, orientation_d);
   }
 
   void CartesianImpedanceControllerRos::cartesianStiffnessCb(const geometry_msgs::WrenchStampedConstPtr &msg)
