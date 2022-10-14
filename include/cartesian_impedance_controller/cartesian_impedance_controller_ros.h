@@ -55,7 +55,7 @@ namespace cartesian_impedance_controller
     bool getFk(const Eigen::VectorXd &q, Eigen::Vector3d *position, Eigen::Quaterniond *rotation) const;
     bool getJacobian(const Eigen::VectorXd &q, const Eigen::VectorXd &dq, Eigen::MatrixXd *jacobian);
     void updateState();
-    void setDamping(const geometry_msgs::Wrench &cart_stiffness, double nullspace);
+    void setDamping(const geometry_msgs::Wrench &cart_damping, double nullspace);
     void setStiffness(const geometry_msgs::Wrench &cart_stiffness, double nullspace, bool auto_damping = true);
 
     void cartesianDampingCb(const geometry_msgs::WrenchConstPtr &msg);

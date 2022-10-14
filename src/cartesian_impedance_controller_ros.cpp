@@ -326,14 +326,14 @@ namespace cartesian_impedance_controller
     this->setStiffness(msg->wrench, this->nullspace_stiffness_target_);
   }
 
-  void CartesianImpedanceControllerRos::setDamping(const geometry_msgs::Wrench &cart_stiffness, double nullspace)
+  void CartesianImpedanceControllerRos::setDamping(const geometry_msgs::Wrench &cart_damping, double nullspace)
   {
-    CartesianImpedanceController::setDamping(saturateValue(cart_stiffness.force.x, dmp_min_, dmp_max_),
-                                             saturateValue(cart_stiffness.force.y, dmp_min_, dmp_max_),
-                                             saturateValue(cart_stiffness.force.z, dmp_min_, dmp_max_),
-                                             saturateValue(cart_stiffness.torque.x, dmp_min_, dmp_max_),
-                                             saturateValue(cart_stiffness.torque.y, dmp_min_, dmp_max_),
-                                             saturateValue(cart_stiffness.torque.z, dmp_min_, dmp_max_),
+    CartesianImpedanceController::setDamping(saturateValue(cart_damping.force.x, dmp_min_, dmp_max_),
+                                             saturateValue(cart_damping.force.y, dmp_min_, dmp_max_),
+                                             saturateValue(cart_damping.force.z, dmp_min_, dmp_max_),
+                                             saturateValue(cart_damping.torque.x, dmp_min_, dmp_max_),
+                                             saturateValue(cart_damping.torque.y, dmp_min_, dmp_max_),
+                                             saturateValue(cart_damping.torque.z, dmp_min_, dmp_max_),
                                              saturateValue(nullspace, dmp_min_, dmp_max_));
   }
 
