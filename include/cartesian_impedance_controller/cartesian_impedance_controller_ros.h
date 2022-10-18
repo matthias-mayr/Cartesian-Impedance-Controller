@@ -319,7 +319,7 @@ namespace cartesian_impedance_controller
     // Trajectory handling
     ros::Subscriber sub_trajectory_;
     std::unique_ptr<actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>> traj_as_;
-    boost::shared_ptr<const control_msgs::FollowJointTrajectoryGoal> traj_goal_;
+    boost::shared_ptr<const control_msgs::FollowJointTrajectoryGoal> traj_as_goal_;
     trajectory_msgs::JointTrajectory trajectory_;
     ros::Time traj_start_;
     ros::Duration traj_duration_;

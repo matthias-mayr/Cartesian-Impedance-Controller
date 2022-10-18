@@ -530,9 +530,9 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceControllerRos::trajGoalCb()
   {
-    this->traj_goal_ = this->traj_as_->acceptNewGoal();
+    this->traj_as_goal_ = this->traj_as_->acceptNewGoal();
     ROS_INFO("Accepted new goal from action server.");
-    trajStart(this->traj_goal_->trajectory);
+    trajStart(this->traj_as_goal_->trajectory);
   }
 
   void CartesianImpedanceControllerRos::trajPreemptCb()
