@@ -5,12 +5,24 @@
 
 namespace cartesian_impedance_controller
 {
-  // Saturate a variable x with the limits x_min and x_max
+  /*! \brief Saturate a variable x with the limits x_min and x_max
+    *
+    * \param[in] x Value
+    * \param[in] x_min Minimal value
+    * \param[in] x_max Maximum value
+    * \return Saturated value
+    */
   double saturateValue(double x, double x_min, double x_max)
   {
     return std::min(std::max(x, x_min), x_max);
   }
 
+  /*! \brief Populates a wrench msg with value from Eigen vector
+    *
+    * It is assumed that the vector has the form transl_x, transl_y, transl_z, rot_x, rot_y, rot_z
+    * \param[in] v Input vector
+    * \param[out] wrench Wrench message
+    */
   void EigenVectorToWrench(const Eigen::Matrix<double, 6, 1> &v, geometry_msgs::Wrench *wrench)
   {
     wrench->force.x = v(0);
@@ -63,6 +75,7 @@ namespace cartesian_impedance_controller
 
   bool CartesianImpedanceControllerRos::initMessaging(ros::NodeHandle *nh)
   {
+    // Queue size of 1 since we are only interested in the last message
     this->sub_cart_stiffness_ = nh->subscribe("set_cartesian_stiffness", 1,
                                               &CartesianImpedanceControllerRos::cartesianStiffnessCb, this);
     this->sub_cart_wrench_ = nh->subscribe("set_cartesian_wrench", 1,
@@ -73,6 +86,7 @@ namespace cartesian_impedance_controller
         nh->subscribe("set_config", 1, &CartesianImpedanceControllerRos::controllerConfigCb, this);
     this->sub_reference_pose_ = nh->subscribe("reference_pose", 1, &CartesianImpedanceControllerRos::referencePoseCb, this);
 
+    // Initializing the realtime publisher and the message
     this->pub_torques_.init(*nh, "commanded_torques", 20);
     this->pub_torques_.msg_.layout.dim.resize(1);
     this->pub_torques_.msg_.layout.data_offset = 0;
@@ -122,7 +136,7 @@ namespace cartesian_impedance_controller
       ROS_ERROR("Number of joints in the URDF is smaller than supplied number of joints. %i < %zu", this->rbdyn_wrapper_.n_joints(), this->n_joints_);
       return false;
     }
-    else if (this->rbdyn_wrapper_.n_joints() < this->n_joints_)
+    else if (this->rbdyn_wrapper_.n_joints() > this->n_joints_)
     {
       ROS_WARN("Number of joints in the URDF is greater than supplied number of joints: %i > %zu. Assuming that the actuated joints come first.", this->rbdyn_wrapper_.n_joints(), this->n_joints_);
     }
@@ -201,7 +215,7 @@ namespace cartesian_impedance_controller
   {
     this->updateState();
 
-    // set x_attractor and q_d_nullspace
+    // Set reference pose to current pose and q_d_nullspace
     this->initDesiredPose(this->position_, this->orientation_);
     this->initNullspaceConfig(this->q_);
     ROS_INFO("Started Cartesian Impedance Controller");
@@ -232,6 +246,7 @@ namespace cartesian_impedance_controller
                                               Eigen::Quaterniond *orientation) const
   {
     rbdyn_wrapper::EefState ee_state;
+    // If the URDF contains more joints than there are controlled, only the state of the controlled ones are known
     if (this->rbdyn_wrapper_.n_joints() != this->n_joints_)
     {
       Eigen::VectorXd q_rb = Eigen::VectorXd::Zero(this->rbdyn_wrapper_.n_joints());
@@ -250,6 +265,7 @@ namespace cartesian_impedance_controller
   bool CartesianImpedanceControllerRos::getJacobian(const Eigen::VectorXd &q, const Eigen::VectorXd &dq,
                                                     Eigen::MatrixXd *jacobian)
   {
+    // If the URDF contains more joints than there are controlled, only the state of the controlled ones are known
     if (this->rbdyn_wrapper_.n_joints() != this->n_joints_)
     {
       Eigen::VectorXd q_rb = Eigen::VectorXd::Zero(this->rbdyn_wrapper_.n_joints());
@@ -350,7 +366,6 @@ namespace cartesian_impedance_controller
                                                saturateValue(nullspace, ns_min_, ns_max_), auto_damping);
   }
 
-  // Adds a wrench at the end-effector, using the root frame of the robot description
   void CartesianImpedanceControllerRos::wrenchCommandCb(const geometry_msgs::WrenchStampedConstPtr &msg)
   {
     Eigen::Matrix<double, 6, 1> F;
@@ -376,7 +391,6 @@ namespace cartesian_impedance_controller
     this->applyWrench(F);
   }
 
-  // Transform a Cartesian wrench from "from_frame" to "to_frame". E.g. from_frame= "world" , to_frame = "bh_link_ee"
   bool CartesianImpedanceControllerRos::transformWrench(Eigen::Matrix<double, 6, 1> *cartesian_wrench,
                                                         const std::string &from_frame, const std::string &to_frame) const
   {

@@ -197,8 +197,8 @@ namespace cartesian_impedance_controller
 
     /*! \brief Message callback for Cartesian wrench messages.
     *
-    * If the wrench is not given in end-effector frame, it will be transformed in the root frame.
-    * Sets the wrench.
+    * If the wrench is not given in end-effector frame, it will be transformed in the root frame. Once when a new wrench message arrives.
+    * Sets the wrench using the base library.
     * @sa applyWrench.
     * \param[in] msg Received message
     */
@@ -206,7 +206,8 @@ namespace cartesian_impedance_controller
 
     /*! \brief Transforms the wrench in a target frame.
     *
-    * Takes a vector with the wrench and transforms it to a given coordinate frame.
+    * Takes a vector with the wrench and transforms it to a given coordinate frame. E.g. from_frame= "world" , to_frame = "bh_link_ee"
+
     * @sa wrenchCommandCb
     * \param[in] cartesian_wrench Vector with the Cartesian wrench
     * \param[in] from_frame       Source frame
