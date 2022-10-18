@@ -27,10 +27,11 @@
 #include <trajectory_msgs/JointTrajectory.h>
 
 #include <cartesian_impedance_controller/cartesian_impedance_controller.h>
+#include <cartesian_impedance_controller/rbdyn_wrapper.h>
+
 #include <cartesian_impedance_controller/ControllerConfig.h>
 #include <cartesian_impedance_controller/ControllerState.h>
 #include <cartesian_impedance_controller/dampingConfig.h>
-#include <cartesian_impedance_controller/rbdyn_wrapper.h>
 #include <cartesian_impedance_controller/stiffnessConfig.h>
 #include <cartesian_impedance_controller/wrenchConfig.h>
 
@@ -277,67 +278,71 @@ namespace cartesian_impedance_controller
     */
     void trajUpdate();
 
-    std::vector<hardware_interface::JointHandle> joint_handles_;
-    rbdyn_wrapper rbdyn_wrapper_;
-    std::string end_effector_;
-    std::string robot_description_;
-    std::string root_frame_;
+    std::vector<hardware_interface::JointHandle> joint_handles_; //!< Joint handles for states and commands
+    rbdyn_wrapper rbdyn_wrapper_;   //!< Wrapper for RBDyn library for kinematics 
+    std::string end_effector_;      //!< End-effector link name
+    std::string robot_description_; //!< URDF of the robot
+    std::string root_frame_;        //!< Base frame obtained from URDF
 
-    Eigen::VectorXd tau_m_;
+    Eigen::VectorXd tau_m_;         //!< Measured joint torques
 
-    ros::Subscriber sub_cart_stiffness_;
-    ros::Subscriber sub_cart_wrench_;
-    ros::Subscriber sub_damping_;
-    ros::Subscriber sub_impedance_config_;
-    ros::Subscriber sub_reference_pose_;
+    ros::Subscriber sub_cart_stiffness_;    //!< Cartesian stiffness subscriber
+    ros::Subscriber sub_cart_wrench_;       //!< Cartesian wrench subscriber
+    ros::Subscriber sub_damping_;           //!< Damping subscriber
+    ros::Subscriber sub_impedance_config_;  //!< Controller configuration subscriber
+    ros::Subscriber sub_reference_pose_;    //!< Cartesian reference pose subscriber
 
-    tf::TransformListener tf_listener_;
-    std::string wrench_ee_frame_;
+    tf::TransformListener tf_listener_;     //!< tf transformation listener
+    std::string wrench_ee_frame_;           //!< Frame for the application of the commanded wrench 
 
-    // Limits
-    const double trans_stf_min_{0};
-    const double trans_stf_max_{2000};
-    const double rot_stf_min_{0};
-    const double rot_stf_max_{500};
-    const double ns_min_{0};
-    const double ns_max_{100};
-    const double dmp_min_{0.0};
-    const double dmp_max_{1.0};
+    // Hard limits. They are enforced on input.
+    const double trans_stf_min_{0};     //!< Minimum translational stiffness
+    const double trans_stf_max_{1500};  //!< Maximum translational stiffness
+    const double rot_stf_min_{0};       //!< Minimum rotational stiffness
+    const double rot_stf_max_{100};     //!< Maximum rotational stiffness
+    const double ns_min_{0};            //!< Minimum nullspace stiffness
+    const double ns_max_{100};          //!< Maximum nullspace stiffness
+    const double dmp_min_{0.001};       //!< Minimum damping
+    const double dmp_max_{1.0};         //!< Maximum damping
 
     // The Jacobian of RBDyn comes with orientation in the first three lines. Needs to be interchanged.
-    const Eigen::VectorXi perm_indices_ = (Eigen::Matrix<int, 6, 1>() << 3, 4, 5, 0, 1, 2).finished();
-    const Eigen::PermutationMatrix<Eigen::Dynamic, 6> jacobian_perm_{Eigen::PermutationMatrix<Eigen::Dynamic, 6>(perm_indices_)};
+    const Eigen::VectorXi perm_indices_ =
+      (Eigen::Matrix<int, 6, 1>() << 3, 4, 5, 0, 1, 2).finished(); //!< Permutation indices to switch position and orientation
+    const Eigen::PermutationMatrix<Eigen::Dynamic, 6> jacobian_perm_ =
+      Eigen::PermutationMatrix<Eigen::Dynamic, 6>(perm_indices_); //!< Permutation matrix to switch position and orientation entries
 
     // Dynamic reconfigure
     std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::stiffnessConfig>>
-        dynamic_server_compliance_param_;
+        dynamic_server_compliance_param_; //!< Dybanic reconfigure server for stiffness
     std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::dampingConfig>>
-        dynamic_server_damping_param_;
+        dynamic_server_damping_param_;    //!< Dynamic reconfigure server for damping
     std::unique_ptr<dynamic_reconfigure::Server<cartesian_impedance_controller::wrenchConfig>>
-        dynamic_server_wrench_param_;
+        dynamic_server_wrench_param_;     //!< Dynamic reconfigure server for commanded wrench
 
     // Trajectory handling
-    ros::Subscriber sub_trajectory_;
-    std::unique_ptr<actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>> traj_as_;
-    boost::shared_ptr<const control_msgs::FollowJointTrajectoryGoal> traj_as_goal_;
-    trajectory_msgs::JointTrajectory trajectory_;
-    ros::Time traj_start_;
-    ros::Duration traj_duration_;
-    unsigned int traj_index_{0};
-    bool traj_running_{false};
+    ros::Subscriber sub_trajectory_;  //!< Subscriber for a single trajectory
+    std::unique_ptr<actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>> traj_as_; //!< Trajectory action server
+    boost::shared_ptr<const control_msgs::FollowJointTrajectoryGoal> traj_as_goal_;  //!< Trajectory action server goal
+    trajectory_msgs::JointTrajectory trajectory_; //!< Currently played trajectory
+    ros::Time traj_start_;          //!< Time the current trajectory is started 
+    ros::Duration traj_duration_;   //!< Duration of the current trajectory
+    unsigned int traj_index_{0};    //!< Index of the current trajectory point
+    bool traj_running_{false};      //!< True when running a trajectory 
 
     // Extra output
-    bool verbose_print_{false};
-    bool verbose_state_{false};
-    bool verbose_tf_{false};
-    tf::TransformBroadcaster tf_br_;
-    realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray> pub_torques_;
-    realtime_tools::RealtimePublisher<cartesian_impedance_controller::ControllerState> pub_state_;
-    tf::Transform tf_br_transform_;
-    tf::Vector3 tf_pos_;
-    tf::Quaternion tf_rot_;
-    ros::Time tf_last_time_ = ros::Time::now();
+    bool verbose_print_{false};       //!< Verbose printing enabled
+    bool verbose_state_{false};       //!< Verbose state messages enabled
+    bool verbose_tf_{false};          //!< Verbose tf pubishing enabled
+    tf::TransformBroadcaster tf_br_;  //!< tf transform broadcaster for verbose tf 
+    realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray> pub_torques_;  //!< Realtime publisher for commanded torques
+    realtime_tools::RealtimePublisher<cartesian_impedance_controller::ControllerState> pub_state_;  //!< Realtime publisher for controller state
+    tf::Transform tf_br_transform_;   //!< tf transform for publishing
+    tf::Vector3 tf_pos_;              //!< tf position for publishing
+    tf::Quaternion tf_rot_;           //!< tf orientation for publishing
+    ros::Time tf_last_time_ = ros::Time::now(); //!< Last published tf message
   };
+
+  // Declares this controller
   PLUGINLIB_EXPORT_CLASS(cartesian_impedance_controller::CartesianImpedanceControllerRos,
                          controller_interface::ControllerBase);
 
