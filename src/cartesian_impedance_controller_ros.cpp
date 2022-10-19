@@ -5,12 +5,24 @@
 
 namespace cartesian_impedance_controller
 {
-  // Saturate a variable x with the limits x_min and x_max
+  /*! \brief Saturate a variable x with the limits x_min and x_max
+    *
+    * \param[in] x Value
+    * \param[in] x_min Minimal value
+    * \param[in] x_max Maximum value
+    * \return Saturated value
+    */
   double saturateValue(double x, double x_min, double x_max)
   {
     return std::min(std::max(x, x_min), x_max);
   }
 
+  /*! \brief Populates a wrench msg with value from Eigen vector
+    *
+    * It is assumed that the vector has the form transl_x, transl_y, transl_z, rot_x, rot_y, rot_z
+    * \param[in] v Input vector
+    * \param[out] wrench Wrench message
+    */
   void EigenVectorToWrench(const Eigen::Matrix<double, 6, 1> &v, geometry_msgs::Wrench *wrench)
   {
     wrench->force.x = v(0);
@@ -25,7 +37,7 @@ namespace cartesian_impedance_controller
   {
     this->dynamic_server_compliance_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::stiffnessConfig>>(ros::NodeHandle(std::string(nh.getNamespace() + "/stiffness_reconfigure")));
     this->dynamic_server_compliance_param_->setCallback(
-        boost::bind(&CartesianImpedanceControllerRos::dynamicConfigCb, this, _1, _2));
+        boost::bind(&CartesianImpedanceControllerRos::dynamicStiffnessCb, this, _1, _2));
 
     this->dynamic_server_damping_param_ = std::make_unique<dynamic_reconfigure::Server<cartesian_impedance_controller::dampingConfig>>(ros::NodeHandle(std::string(nh.getNamespace() + "/damping_factors_reconfigure")));
     dynamic_server_damping_param_->setCallback(
@@ -63,6 +75,7 @@ namespace cartesian_impedance_controller
 
   bool CartesianImpedanceControllerRos::initMessaging(ros::NodeHandle *nh)
   {
+    // Queue size of 1 since we are only interested in the last message
     this->sub_cart_stiffness_ = nh->subscribe("set_cartesian_stiffness", 1,
                                               &CartesianImpedanceControllerRos::cartesianStiffnessCb, this);
     this->sub_cart_wrench_ = nh->subscribe("set_cartesian_wrench", 1,
@@ -73,6 +86,7 @@ namespace cartesian_impedance_controller
         nh->subscribe("set_config", 1, &CartesianImpedanceControllerRos::controllerConfigCb, this);
     this->sub_reference_pose_ = nh->subscribe("reference_pose", 1, &CartesianImpedanceControllerRos::referencePoseCb, this);
 
+    // Initializing the realtime publisher and the message
     this->pub_torques_.init(*nh, "commanded_torques", 20);
     this->pub_torques_.msg_.layout.dim.resize(1);
     this->pub_torques_.msg_.layout.data_offset = 0;
@@ -122,7 +136,7 @@ namespace cartesian_impedance_controller
       ROS_ERROR("Number of joints in the URDF is smaller than supplied number of joints. %i < %zu", this->rbdyn_wrapper_.n_joints(), this->n_joints_);
       return false;
     }
-    else if (this->rbdyn_wrapper_.n_joints() < this->n_joints_)
+    else if (this->rbdyn_wrapper_.n_joints() > this->n_joints_)
     {
       ROS_WARN("Number of joints in the URDF is greater than supplied number of joints: %i > %zu. Assuming that the actuated joints come first.", this->rbdyn_wrapper_.n_joints(), this->n_joints_);
     }
@@ -201,7 +215,7 @@ namespace cartesian_impedance_controller
   {
     this->updateState();
 
-    // set x_attractor and q_d_nullspace
+    // Set reference pose to current pose and q_d_nullspace
     this->initDesiredPose(this->position_, this->orientation_);
     this->initNullspaceConfig(this->q_);
     ROS_INFO("Started Cartesian Impedance Controller");
@@ -232,6 +246,7 @@ namespace cartesian_impedance_controller
                                               Eigen::Quaterniond *orientation) const
   {
     rbdyn_wrapper::EefState ee_state;
+    // If the URDF contains more joints than there are controlled, only the state of the controlled ones are known
     if (this->rbdyn_wrapper_.n_joints() != this->n_joints_)
     {
       Eigen::VectorXd q_rb = Eigen::VectorXd::Zero(this->rbdyn_wrapper_.n_joints());
@@ -250,6 +265,7 @@ namespace cartesian_impedance_controller
   bool CartesianImpedanceControllerRos::getJacobian(const Eigen::VectorXd &q, const Eigen::VectorXd &dq,
                                                     Eigen::MatrixXd *jacobian)
   {
+    // If the URDF contains more joints than there are controlled, only the state of the controlled ones are known
     if (this->rbdyn_wrapper_.n_joints() != this->n_joints_)
     {
       Eigen::VectorXd q_rb = Eigen::VectorXd::Zero(this->rbdyn_wrapper_.n_joints());
@@ -310,15 +326,17 @@ namespace cartesian_impedance_controller
       ROS_WARN_STREAM("Reference poses need to be in the root frame '" << this->root_frame_ << "'. Ignoring.");
       return;
     }
-    this->position_d_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
+    Eigen::Vector3d position_d;
+    position_d << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
     const Eigen::Quaterniond last_orientation_d_target(this->orientation_d_);
-    this->orientation_d_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z,
+    Eigen::Quaterniond orientation_d;
+    orientation_d.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z,
         msg->pose.orientation.w;
     if (last_orientation_d_target.coeffs().dot(this->orientation_d_.coeffs()) < 0.0)
     {
       this->orientation_d_.coeffs() << -this->orientation_d_.coeffs();
     }
-    this->setReferencePose(this->position_d_, this->orientation_d_);
+    this->setReferencePose(position_d, orientation_d);
   }
 
   void CartesianImpedanceControllerRos::cartesianStiffnessCb(const geometry_msgs::WrenchStampedConstPtr &msg)
@@ -326,14 +344,14 @@ namespace cartesian_impedance_controller
     this->setStiffness(msg->wrench, this->nullspace_stiffness_target_);
   }
 
-  void CartesianImpedanceControllerRos::setDamping(const geometry_msgs::Wrench &cart_stiffness, double nullspace)
+  void CartesianImpedanceControllerRos::setDamping(const geometry_msgs::Wrench &cart_damping, double nullspace)
   {
-    CartesianImpedanceController::setDamping(saturateValue(cart_stiffness.force.x, dmp_min_, dmp_max_),
-                                             saturateValue(cart_stiffness.force.y, dmp_min_, dmp_max_),
-                                             saturateValue(cart_stiffness.force.z, dmp_min_, dmp_max_),
-                                             saturateValue(cart_stiffness.torque.x, dmp_min_, dmp_max_),
-                                             saturateValue(cart_stiffness.torque.y, dmp_min_, dmp_max_),
-                                             saturateValue(cart_stiffness.torque.z, dmp_min_, dmp_max_),
+    CartesianImpedanceController::setDamping(saturateValue(cart_damping.force.x, dmp_min_, dmp_max_),
+                                             saturateValue(cart_damping.force.y, dmp_min_, dmp_max_),
+                                             saturateValue(cart_damping.force.z, dmp_min_, dmp_max_),
+                                             saturateValue(cart_damping.torque.x, dmp_min_, dmp_max_),
+                                             saturateValue(cart_damping.torque.y, dmp_min_, dmp_max_),
+                                             saturateValue(cart_damping.torque.z, dmp_min_, dmp_max_),
                                              saturateValue(nullspace, dmp_min_, dmp_max_));
   }
 
@@ -348,7 +366,6 @@ namespace cartesian_impedance_controller
                                                saturateValue(nullspace, ns_min_, ns_max_), auto_damping);
   }
 
-  // Adds a wrench at the end-effector, using the root frame of the robot description
   void CartesianImpedanceControllerRos::wrenchCommandCb(const geometry_msgs::WrenchStampedConstPtr &msg)
   {
     Eigen::Matrix<double, 6, 1> F;
@@ -374,7 +391,6 @@ namespace cartesian_impedance_controller
     this->applyWrench(F);
   }
 
-  // Transform a Cartesian wrench from "from_frame" to "to_frame". E.g. from_frame= "world" , to_frame = "bh_link_ee"
   bool CartesianImpedanceControllerRos::transformWrench(Eigen::Matrix<double, 6, 1> *cartesian_wrench,
                                                         const std::string &from_frame, const std::string &to_frame) const
   {
@@ -472,7 +488,7 @@ namespace cartesian_impedance_controller
 
   // Dynamic reconfigure
   // --------------------------------------------------------------------------------------------------------------------------------------
-  void CartesianImpedanceControllerRos::dynamicConfigCb(
+  void CartesianImpedanceControllerRos::dynamicStiffnessCb(
       cartesian_impedance_controller::stiffnessConfig &config, uint32_t level)
   {
     if (config.update_stiffness)
@@ -513,6 +529,30 @@ namespace cartesian_impedance_controller
       }
     }
     this->applyWrench(F);
+  }
+
+  void CartesianImpedanceControllerRos::trajCb(const trajectory_msgs::JointTrajectoryConstPtr &msg)
+  {
+    ROS_INFO("Got trajectory msg from trajectory topic.");
+    if (this->traj_as_->isActive())
+    {
+      this->traj_as_->setPreempted();
+      ROS_INFO("Preempted running action server goal.");
+    }
+    trajStart(*msg);
+  }
+
+  void CartesianImpedanceControllerRos::trajGoalCb()
+  {
+    this->traj_as_goal_ = this->traj_as_->acceptNewGoal();
+    ROS_INFO("Accepted new goal from action server.");
+    trajStart(this->traj_as_goal_->trajectory);
+  }
+
+  void CartesianImpedanceControllerRos::trajPreemptCb()
+  {
+    ROS_INFO("Actionserver got preempted.");
+    this->traj_as_->setPreempted();
   }
 
   void CartesianImpedanceControllerRos::trajStart(const trajectory_msgs::JointTrajectory &trajectory)
@@ -556,29 +596,5 @@ namespace cartesian_impedance_controller
       }
       this->traj_running_ = false;
     }
-  }
-
-  void CartesianImpedanceControllerRos::trajGoalCb()
-  {
-    this->traj_goal_ = this->traj_as_->acceptNewGoal();
-    ROS_INFO("Accepted new goal from action server.");
-    trajStart(this->traj_goal_->trajectory);
-  }
-
-  void CartesianImpedanceControllerRos::trajPreemptCb()
-  {
-    ROS_INFO("Actionserver got preempted.");
-    this->traj_as_->setPreempted();
-  }
-
-  void CartesianImpedanceControllerRos::trajCb(const trajectory_msgs::JointTrajectoryConstPtr &msg)
-  {
-    ROS_INFO("Got trajectory msg from trajectory topic.");
-    if (this->traj_as_->isActive())
-    {
-      this->traj_as_->setPreempted();
-      ROS_INFO("Preempted running action server goal.");
-    }
-    trajStart(*msg);
   }
 } // namespace cartesian_impedance_controller
