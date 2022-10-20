@@ -7,15 +7,15 @@
 
 namespace cartesian_impedance_controller
 {
-  Eigen::Vector3d calculateOrientationError(const Eigen::Quaterniond &orientation_d, Eigen::Quaterniond *orientation)
+  Eigen::Vector3d calculateOrientationError(const Eigen::Quaterniond &orientation_d, Eigen::Quaterniond orientation)
   {
     // Orientation error
-    if (orientation_d.coeffs().dot(orientation->coeffs()) < 0.0)
+    if (orientation_d.coeffs().dot(orientation.coeffs()) < 0.0)
     {
-      orientation->coeffs() << -orientation->coeffs();
+      orientation.coeffs() << -orientation.coeffs();
     }
     // "difference" quaternion
-    Eigen::Quaterniond error_quaternion(*orientation * orientation_d.inverse());
+    const Eigen::Quaterniond error_quaternion(orientation * orientation_d.inverse());
     // convert to axis angle
     Eigen::AngleAxisd error_quaternion_angle_axis(error_quaternion);
     return error_quaternion_angle_axis.axis() * error_quaternion_angle_axis.angle();
@@ -202,7 +202,6 @@ namespace cartesian_impedance_controller
   // Calculates and returns the commanded torques
   Eigen::VectorXd CartesianImpedanceController::calculateCommandedTorques()
   {
-    Eigen::Quaterniond orientation{this->orientation_};
     // Perform a filtering step
     updateFilteredNullspaceConfig();
     updateFilteredStiffness();
@@ -211,7 +210,7 @@ namespace cartesian_impedance_controller
 
     // Compute error term
     error_.head(3) << this->position_ - this->position_d_;
-    error_.tail(3) << calculateOrientationError(this->orientation_d_, &orientation);
+    error_.tail(3) << calculateOrientationError(this->orientation_d_, this->orientation_);
 
     // Kinematic pseuoinverse
     Eigen::MatrixXd jacobian_transpose_pinv;
