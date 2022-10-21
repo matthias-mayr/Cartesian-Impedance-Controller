@@ -3,7 +3,7 @@
 ## Description
 This project is an implementation of a Cartesian impedance controller. It is a type of control strategy that sets a dynamic relationship between contact forces and the position of a robot arm, making it suitable for collaborative robots. It is particularily useful when the interesting dimensions in the workspace are in the Cartesian space.
 
-The controller is developed using the seven degree-of-freedom (DoF) robot arm called `LBR iiwa` by `KUKA AG`. It is, however, universal and should therefore work for other seven DoF robot arms, such as the `Panda` by `Franka Emika`.
+The controller is developed using the seven degree-of-freedom (DoF) robot arm called `LBR iiwa` by `KUKA AG` and has also been tested `Panda` by `Franka Emika` both in reality and simulation.
 
 The implementation consists of a
 1. base library that has few dependencies and can e.g. be directly integrated into software such as the DART simulator and a
@@ -27,9 +27,7 @@ The implementation consists of a
 
 - Joint friction is not accounted for
 - Stiffness and damping values along the Cartesian dimensions are uncoupled
-- Only tested for the `LBR iiwa`
-- No built-in gravity compensation for tools or workpieces
-
+- No built-in gravity compensation for tools or workpieces (can be achieved by commanded a wrench)
 
 ## Prerequisites
 ### Required
@@ -46,12 +44,13 @@ We use `RBDyn` to calculate forward kinematics and the Jacobian.
 The installation steps are automated in `scripts/install_dependencies.sh`:
 
 ## Controller Usage in ROS
-Assuming that there is an [initialized catkin workspace](https://catkin-tools.readthedocs.io/en/latest/quick_start.html#initializing-a-new-workspace) you can clone, install the dependencies and compile the controller with these commands:
+Assuming that there is an [initialized catkin workspace](https://catkin-tools.readthedocs.io/en/latest/quick_start.html#initializing-a-new-workspace) you can clone this repository, install the dependencies and compile the controller.
+
+After cloning this repository in your catkin workspace, execute these commands:
 
 ```bash
 cd catkin_ws/src
-git clone git@git.cs.lth.se:robotlab/cartesian_impedance_controller.git
-src/cartesian_impedance_controller/scripts/install_dependencies.sh
+cartesian_impedance_controller/scripts/install_dependencies.sh
 rosdep install --from-paths src --ignore-src --rosdistro=${ROS_DISTRO} -y
 catkin build # or catkin_make
 source devel/setup.bash
@@ -103,7 +102,7 @@ There are several entries:
 - `damping_factors_reconfigure`
 - `stiffness_reconfigure`
 
-All of them have an `apply` checkbox that needs to be ticked for the values to be used. Note that the end-effector reference pose can not be set since it usually should follow a smooth trajectory.
+For applying wrench, the `apply` checkbox needs to be ticked for the values to be used. Damping and stiffness changes are only updated when the `update` checkbox is ticked, allowing to configure changes before applying them. Note that the end-effector reference pose can not be set since it usually should follow a smooth trajectory.
 
 ### Changing parameters with ROS messages
 In addition to the configuration with `dynamic_reconfigure`, the controller configuration can always be adapted by sending ROS messages. Outside prototyping this is the main way to parameterize it.
@@ -160,7 +159,7 @@ wrench:
 
 #### Cartesian Damping factors
 
-The damping factors can be configured with a `geometry_msgs/WrenchStamped` msg similar to the stiffnesses to the topic `${controller_ns}/set_damping_factors`. Damping factors are in the interval [0,1].
+The damping factors can be configured with a `geometry_msgs/WrenchStamped` msg similar to the stiffnesses to the topic `${controller_ns}/set_damping_factors`. Damping factors are in the interval [0.01,1].
 
 #### Stiffnesses, damping and nullspace at once
 When also setting the nullspace stiffnes, a custom messages of the type `cartesian_impedance_controller/ControllerConfig` is to be sent to `set_config`:
@@ -226,3 +225,10 @@ controller_list:
 ```
 
 **Note:** A nullspace stiffness needs to be specified so that the arm also follows the joint configuration and not just the end-effector pose.
+
+## Safety
+We have used the controller with Cartesian translational stiffnesses of up to 1000 N/m and experienced it as very stable. It is also stable in singularities.
+
+One additional measure can be to limit the maximum joint torques that can be applied by the robot arm in the URDF. On our KUKA iiwas we limit the maximum torque of each joint to 20 Nm, which allows a human operator to easily interfere at any time just by grabbing the arm and moving it.
+
+When using `iiwa_ros`, these limits can be applied [here](https://github.com/epfl-lasa/iiwa_ros/blob/master/iiwa_description/urdf/iiwa7.xacro#L53-L59). For the Panda they are applied [here](https://github.com/frankaemika/franka_ros/blob/develop/franka_description/robots/panda/joint_limits.yaml#L6). Both arms automatically apply gravity compensation, the limits are only used for the task-level torques on top of that.
