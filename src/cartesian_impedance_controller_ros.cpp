@@ -505,7 +505,7 @@ namespace cartesian_impedance_controller
   void CartesianImpedanceControllerRos::dynamicDampingCb(
       cartesian_impedance_controller::dampingConfig &config, uint32_t level)
   {
-    if (config.apply_damping_factors)
+    if (config.update_damping_factors)
     {
       CartesianImpedanceController::setDamping(
           saturateValue(config.translation_x, dmp_min_, dmp_max_), saturateValue(config.translation_y, dmp_min_, dmp_max_),
