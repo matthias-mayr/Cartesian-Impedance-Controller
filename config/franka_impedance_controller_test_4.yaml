@@ -1,0 +1,26 @@
+CartesianImpedance_trajectory_controller:
+  type: cartesian_impedance_controller/CartesianImpedanceController
+  arm_id: panda
+  joints:
+    - panda_joint1
+    - panda_joint2
+    - panda_joint3
+    - panda_joint4
+    - panda_joint5
+    - panda_joint6
+    - panda_joint7
+  end_effector: panda_hand_tcp            # Link to control arm in
+  dynamic_reconfigure: true             # Starts dynamic reconfigure server
+  handle_trajectories: false             # Accept traj., e.g. from MoveIt
+  wrench_ee_frame: panda_link0       # Default frame for wrench commands
+  delta_tau_max: 1.0                    # Max. commanded torque diff between steps in Nm
+  filtering:                            # Update existing values (0.0 1.0] per s
+    nullspace_config: 1.0               # Nullspace configuration filtering
+    pose: 1.0                           # Reference pose filtering
+    stiffness: 1.0                      # Cartesian and nullspace stiffness
+    wrench: 1.0                         # Commanded torque
+  verbosity:
+    verbose_print: false                # Enables additional prints
+    state_msgs: true                   # Messages of controller state
+    tf_frames: false                    # Extra tf frames
+

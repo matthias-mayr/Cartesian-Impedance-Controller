@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<launch>
+  <!-- ros_control-->
+  
+
+  <arg name="arm_id" default="panda" />
+  <arg name="use_gripper" default="true" />
+ 
+ <node pkg="controller_manager"
+        type="spawner"
+        name="$(arg arm_id)_gripper_spawner"
+        if="$(arg use_gripper)"
+        args="franka_gripper"
+        respawn="false"
+  	/>
+ 
+           <rosparam file="$(find franka_gazebo)/config/sim_controllers.yaml" subst_value="true" />
+            
+     <rosparam command="load" file="$(find cartesian_impedance_controller)/config/franka_impedance_controller_test_4.yaml" />
+
+
+<node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+	output="screen" args="franka_state_controller"/>
+
+<node name="controller_spawner2" pkg="controller_manager" type="spawner" respawn="false"
+	output="screen" args="CartesianImpedance_trajectory_controller"/>
+</launch>
