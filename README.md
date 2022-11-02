@@ -49,8 +49,8 @@ Assuming that there is an [initialized catkin workspace](https://catkin-tools.re
 After cloning this repository in your catkin workspace, execute these commands:
 
 ```bash
-cd catkin_ws/src
-cartesian_impedance_controller/scripts/install_dependencies.sh
+cd catkin_ws
+src/cartesian_impedance_controller/scripts/install_dependencies.sh
 rosdep install --from-paths src --ignore-src --rosdistro=${ROS_DISTRO} -y
 catkin build # or catkin_make
 source devel/setup.bash
@@ -232,3 +232,22 @@ We have used the controller with Cartesian translational stiffnesses of up to 10
 One additional measure can be to limit the maximum joint torques that can be applied by the robot arm in the URDF. On our KUKA iiwas we limit the maximum torque of each joint to 20 Nm, which allows a human operator to easily interfere at any time just by grabbing the arm and moving it.
 
 When using `iiwa_ros`, these limits can be applied [here](https://github.com/epfl-lasa/iiwa_ros/blob/master/iiwa_description/urdf/iiwa7.xacro#L53-L59). For the Panda they are applied [here](https://github.com/frankaemika/franka_ros/blob/develop/franka_description/robots/panda/joint_limits.yaml#L6). Both arms automatically apply gravity compensation, the limits are only used for the task-level torques on top of that.
+
+## Troubleshooting
+### Compilation - A required package was not found
+
+catkin build shows this CMake Error:
+```
+CMake Error at /usr/share/cmake-3.16/Modules/FindPkgConfig.cmake:463 (message):
+  A required package was not found
+Call Stack (most recent call first):
+  /usr/share/cmake-3.16/Modules/FindPkgConfig.cmake:643 (_pkg_check_modules_internal)
+  CMakeLists.txt:12 (pkg_check_modules)
+```
+
+There are missing dependencies. When replacing `catkin_ws` with your workspace, they can be resolved like this :
+```
+cd catkin_ws
+src/cartesian_impedance_controller/scripts/install_dependencies.sh
+rosdep install --from-paths src --ignore-src --rosdistro=${ROS_DISTRO} -y
+```
