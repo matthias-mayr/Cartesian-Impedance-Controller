@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cartesian_impedance_controller)
 
-# When turning SIMD off, make sure that all libraries used are also built without it.
-option(ENABLE_SIMD "Build with all SIMD instructions on the current local machine" ON)
-
 find_package(Boost 1.49 REQUIRED)
 find_package(PkgConfig)
 
@@ -40,7 +37,7 @@ add_message_files(FILES
 )
 
 generate_messages(
-  DEPENDENCIES
+DEPENDENCIES
   std_msgs
   geometry_msgs
   sensor_msgs
@@ -71,23 +68,9 @@ add_dependencies(
   ${catkin_EXPORTED_TARGETS}
 )
 
-if(ENABLE_SIMD)
-  if(CMAKE_COMPILER_IS_GNUCXX)
-    execute_process(
-      COMMAND ${CMAKE_CXX_COMPILER} -dumpfullversion -dumpversion OUTPUT_VARIABLE GCC_VERSION)
-    set(CXX_COMPILER_VERSION ${GCC_VERSION})
-    target_compile_options(${PROJECT_NAME} PUBLIC -march=native)
-    if(GCC_VERSION VERSION_GREATER 7.0)
-      target_compile_options(${PROJECT_NAME} PUBLIC -faligned-new)
-    endif()
-  elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-    target_compile_options(${PROJECT_NAME} PUBLIC -march=native -faligned-new)
-  endif()
-endif()
-
 target_compile_options(${PROJECT_NAME} PUBLIC -std=c++14)
 target_include_directories(${PROJECT_NAME} PUBLIC include ${catkin_INCLUDE_DIRS} ${Eigen3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${SpaceVecAlg_INCLUDE_DIRS} ${RBDyn_INCLUDE_DIRS} ${mc_rbdyn_urdf_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PUBLIC ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${SpaceVecAlg_LIBRARIES} ${RBDyn_LIBRARIES} ${mc_rbdyn_urdf_LIBRARIES} ${Eigen3_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${Eigen3_LIBRARIES})
 
 # ROS Integration
 add_library(${PROJECT_NAME}_ros src/cartesian_impedance_controller_ros.cpp)
@@ -98,23 +81,9 @@ add_dependencies(
   ${PROJECT_NAME}_gencfg
 )
 
-if(ENABLE_SIMD)
-  if(CMAKE_COMPILER_IS_GNUCXX)
-    execute_process(
-      COMMAND ${CMAKE_CXX_COMPILER} -dumpfullversion -dumpversion OUTPUT_VARIABLE GCC_VERSION)
-    set(CXX_COMPILER_VERSION ${GCC_VERSION})
-    target_compile_options(${PROJECT_NAME}_ros PUBLIC -march=native)
-    if(GCC_VERSION VERSION_GREATER 7.0)
-      target_compile_options(${PROJECT_NAME}_ros PUBLIC -faligned-new)
-    endif()
-  elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-    target_compile_options(${PROJECT_NAME}_ros PUBLIC -march=native -faligned-new)
-  endif()
-endif()
-
 target_compile_options(${PROJECT_NAME}_ros PUBLIC -std=c++14)
 target_include_directories(${PROJECT_NAME}_ros PUBLIC include ${catkin_INCLUDE_DIRS} ${Eigen3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${tinyxml2_INCLUDE_DIRS} ${SpaceVecAlg_INCLUDE_DIRS} ${RBDyn_INCLUDE_DIRS} ${mc_rbdyn_urdf_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME}_ros PUBLIC ${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${tinyxml2_LIBRARIES} ${SpaceVecAlg_LIBRARIES} ${RBDyn_LIBRARIES} ${mc_rbdyn_urdf_LIBRARIES} ${Eigen3_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_ros PUBLIC ${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${tinyxml2_LIBRARIES} RBDyn mc_rbdyn_urdf ${Eigen3_LIBRARIES})
 
 
 ## Install project namespaced headers
