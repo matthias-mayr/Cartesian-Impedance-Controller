@@ -37,9 +37,9 @@ The implementation consists of a
 We use `RBDyn` to calculate forward kinematics and the Jacobian.
 
 - [ROS](https://www.ros.org/)
-- [RBDyn](https://github.com/jrl-umi3218/RBDyn) - using [this fork](https://github.com/costashatz/RBDyn.git)
-- mc_rbdyn_urdf - using [this fork](https://github.com/costashatz/mc_rbdyn_urdf.git)
-- SpaceVecAlg - using [this fork](https://github.com/costashatz/SpaceVecAlg.git)
+- [RBDyn](https://github.com/jrl-umi3218/RBDyn)
+- [mc_rbdyn_urdf](https://github.com/jrl-umi3218/mc_rbdyn_urdf)
+- [SpaceVecAlg](https://github.com/jrl-umi3218/SpaceVecAlg)
 
 The installation steps are automated in `scripts/install_dependencies.sh`:
 
