@@ -13,7 +13,7 @@ CartesianImpedance_trajectory_controller:
   update_frequency: 1000                 # Controller update frequency in Hz
   dynamic_reconfigure: true             # Starts dynamic reconfigure server
   handle_trajectories: false             # Accept traj., e.g. from MoveIt
-  wrench_ee_frame: $(arg arm_id)_hand_tcp       # Default frame for wrench commands
+  wrench_ee_frame: $(arg arm_id)_hand_tcp       # Default frame for wrench commands. Replace for $(arg arm_id)_link0 if you want to command the forces in the frame of the base of the robot.
   delta_tau_max: 1.0                    # Max. commanded torque diff between steps in Nm
   filtering:                            # Update existing values (0.0 1.0] per s
     nullspace_config: 1.0               # Nullspace configuration filtering
