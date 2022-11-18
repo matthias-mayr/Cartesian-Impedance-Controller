@@ -9,7 +9,8 @@
   <arg name="rviz"        default="true" doc="Should RVIz be launched?" />
 
   <!-- Robot Customization -->
-  <arg name="arm_id"      default="panda" doc="Name of the panda robot to spawn" />
+    <arg name="robot"      default="panda" doc="Name of the panda robot to spawn" />
+  <arg name="arm_id"      default="$(arg robot)" doc="Name of the panda robot to spawn" />
   <arg name="use_gripper" default="true"  doc="Should a franka hand be mounted on the flange?" />
   <arg name="controller"  default=" "     doc="Which example controller should be started? (One of {cartesian_impedance,model,force,joint_position,joint_velocity}_example_controller)" />
   <arg name="x"           default="0"     doc="How far forward to place the base of the robot in [m]?" />
@@ -87,15 +88,4 @@
     <param name="rate" value="30"/>
   </node>
 
-  <!-- Start only if cartesian_impedance_example_controller -->
-  <node name="interactive_marker"
-        pkg="franka_example_controllers"
-        type="interactive_marker.py"
-        if="$(arg interactive_marker)">
-    <param name="link_name" value="$(arg arm_id)_link0" />
-    <remap to="CartesianImpedance_trajectory_controller/reference_pose" from="equilibrium_pose" />
-  </node>
-
-  <node  pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find franka_example_controllers)/launch/rviz/franka_description_with_marker.rviz" if="$(arg rviz)"/>
- <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" required="false" />
 </launch>
