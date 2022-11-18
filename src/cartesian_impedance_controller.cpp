@@ -50,7 +50,7 @@ namespace cartesian_impedance_controller
     this->jacobian_ = Eigen::MatrixXd::Zero(6, this->n_joints_);
 
     // Default stiffness values
-    this->setStiffness(200., 200., 200., 20., 20., 20., 0.);
+    this->setStiffness(200., 200., 200., 20., 20., 20., 1.);
     this->cartesian_stiffness_ = this->cartesian_stiffness_target_;
     this->cartesian_damping_ = this->cartesian_damping_target_;
 
