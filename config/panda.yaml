@@ -10,9 +10,10 @@ CartesianImpedance_trajectory_controller:
     - $(arg arm_id)_joint6
     - $(arg arm_id)_joint7
   end_effector: $(arg arm_id)_hand_tcp            # Link to control arm in
+  update_frequency: 1000                 # Controller update frequency in Hz
   dynamic_reconfigure: true             # Starts dynamic reconfigure server
   handle_trajectories: false             # Accept traj., e.g. from MoveIt
-  wrench_ee_frame: $(arg arm_id)_link0       # Default frame for wrench commands
+  wrench_ee_frame: $(arg arm_id)_hand_tcp       # Default frame for wrench commands
   delta_tau_max: 1.0                    # Max. commanded torque diff between steps in Nm
   filtering:                            # Update existing values (0.0 1.0] per s
     nullspace_config: 1.0               # Nullspace configuration filtering
@@ -21,7 +22,7 @@ CartesianImpedance_trajectory_controller:
     wrench: 1.0                         # Commanded torque
   verbosity:
     verbose_print: false                # Enables additional prints
-    state_msgs: true                   # Messages of controller state
+    state_msgs: false                  # Messages of controller state
     tf_frames: false                    # Extra tf frames
 
 
