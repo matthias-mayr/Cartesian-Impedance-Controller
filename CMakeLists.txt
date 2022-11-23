@@ -61,6 +61,12 @@ catkin_package(
 ## Build ##
 ###########
 
+# Sets build type to "Release" in case no build type has not been set before. This is necessary to run this controller at 1 kHz.
+# On our RT system with an i5 11th Gen processor this reduces update evaluations from about 800 to 300 microseconds
+if(NOT CMAKE_BUILD_TYPE) 
+    set(CMAKE_BUILD_TYPE Release)
+endif(NOT CMAKE_BUILD_TYPE)
+
 # Core library
 add_library(${PROJECT_NAME} src/cartesian_impedance_controller.cpp)
 add_dependencies(
