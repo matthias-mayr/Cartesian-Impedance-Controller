@@ -233,15 +233,15 @@ namespace cartesian_impedance_controller
 
     Eigen::VectorXd tau_task(this->n_joints_), tau_nullspace(this->n_joints_), tau_ext(this->n_joints_);
 
-    // Cartesian PD control with damping ratio = 1
+    // Torque calculated for Cartesian impedance control with respect to a Cartesian pose reference in the end, in the frame of the EE of the robot.
     tau_task << this->jacobian_.transpose() * (-this->cartesian_stiffness_ * this->error_ - this->cartesian_damping_ * (this->jacobian_ * this->dq_));
-    // Nullspace PD control with damping ratio = 1
+    // Torque for joint impedance control with respect to a desired configuration and projected in the null-space of the robot's Jacobian, so it should not affect the Cartesian motion of the robot's end-effector.
     tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) - this->jacobian_.transpose() * jacobian_transpose_pinv) *
                          (this->nullspace_stiffness_ * (this->q_d_nullspace_ - this->q_) - this->nullspace_damping_ * this->dq_);
-    // External wrench update
+    // Torque to achieve the desired external force command in the frame of the EE of the robot.
     tau_ext = this->jacobian_.transpose() * this->cartesian_wrench_;
 
-    // Desired torque
+    // Torque commanded to the joints of the robot is composed by the superposition of these three joint-torque signals:
     Eigen::VectorXd tau_d = tau_task + tau_nullspace + tau_ext;
     saturateTorqueRate(tau_d, &this->tau_c_, this->delta_tau_max_);
     return this->tau_c_;
