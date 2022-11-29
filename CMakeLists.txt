@@ -23,7 +23,6 @@ find_package(catkin REQUIRED COMPONENTS
   hardware_interface
   message_generation
   pluginlib
-  realtime_tools
   roscpp
   sensor_msgs
   std_msgs
@@ -52,7 +51,7 @@ generate_dynamic_reconfigure_options(
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS actionlib actionlib_msgs control_msgs controller_interface controller_manager dynamic_reconfigure eigen_conversions geometry_msgs hardware_interface message_runtime pluginlib realtime_tools roscpp sensor_msgs std_msgs tf tf_conversions trajectory_msgs
+  CATKIN_DEPENDS actionlib actionlib_msgs control_msgs controller_interface controller_manager dynamic_reconfigure eigen_conversions geometry_msgs hardware_interface message_runtime pluginlib roscpp sensor_msgs std_msgs tf tf_conversions trajectory_msgs
   DEPENDS Boost Eigen3 mc_rbdyn_urdf RBDyn SpaceVecAlg tinyxml2
   LIBRARIES ${PROJECT_NAME} ${PROJECT_NAME}_ros
 )

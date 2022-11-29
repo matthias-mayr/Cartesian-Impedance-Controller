@@ -86,7 +86,8 @@ namespace cartesian_impedance_controller
         nh->subscribe("set_config", 1, &CartesianImpedanceControllerRos::controllerConfigCb, this);
     this->sub_reference_pose_ = nh->subscribe("reference_pose", 1, &CartesianImpedanceControllerRos::referencePoseCb, this);
 
-    // Initializing the realtime publisher and the message
+//    this->sub_reference_pose_ = nh->subscribe("reference_pose", 1, &CartesianImpedanceControllerRos::referencePoseCb, this,      ros::TransportHints().reliable().tcpNoDelay()); Could replace L75,76 for a better connection.
+ 
     this->pub_torques_.init(*nh, "commanded_torques", 20);
     this->pub_torques_.msg_.layout.dim.resize(1);
     this->pub_torques_.msg_.layout.data_offset = 0;
