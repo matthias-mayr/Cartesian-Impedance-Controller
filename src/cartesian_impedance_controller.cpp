@@ -70,7 +70,7 @@ namespace cartesian_impedance_controller
   CartesianImpedanceController::CartesianImpedanceController()
   {
     // Default stiffness values
-    this->setStiffness(200., 200., 200., 20., 20., 20., 1.);
+    this->setStiffness(200., 200., 200., 20., 20., 20., 0.);
     this->cartesian_stiffness_ = this->cartesian_stiffness_target_;
     this->cartesian_damping_ = this->cartesian_damping_target_;
   }
