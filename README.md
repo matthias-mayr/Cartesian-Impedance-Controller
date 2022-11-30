@@ -27,7 +27,7 @@ The implementation consists of a
 ## Torques
 
 The torque signal commanded to the joints of the robot is composed by the superposition of three joint-torque signals:
-- The torque calculated for Cartesian impedance control with respect to a Cartesian pose reference in the end, in the frame of the EE of the robot (`tau_task`).
+- The torque calculated for Cartesian impedance control with respect to a Cartesian pose reference in the frame of the EE of the robot (`tau_task`).
 - The torque calculated for joint impedance control with respect to a desired configuration and projected in the null-space of the robot's Jacobian, so it should not affect the Cartesian motion of the robot's end-effector (`tau_ns`).
 - The torque necessary to achieve the desired external force command (`cartesian_wrench`), in the frame of the EE of the robot (`tau_ext`).
 
