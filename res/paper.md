@@ -1,5 +1,5 @@
 ---
-title: 'A C++ Implementation of a Cartesian Impedance Controller'
+title: 'A C++ Implementation of a Cartesian Impedance Controller for ROS'
 tags:
   - ROS
   - Compliant Control
@@ -11,11 +11,8 @@ authors:
     affiliation: "1, 2" # (Multiple affiliations must be quoted)
   - name: Julian M. Salt Ducaju
     orcid: 0000-0001-5256-8245 
-    equal-contrib: false # (This is how you can denote equal contributions between multiple authors)
-    affiliation: 2
-  - name: Author with no affiliation
-    corresponding: false # (This is how to denote the corresponding author)
-    affiliation: 3
+    equal-contrib: false
+    affiliation: "1, 2"
 affiliations:
  - name: Faculty of Engineering (LTH), Lund University, Sweden
    index: 1
@@ -89,11 +86,11 @@ where
         \tau_{\mathrm{c}}^\mathrm{ext} = J^{\mathrm{T}}(q)F_{\mathrm{c}}^\mathrm{ext}
     \end{equation}
 
-# Safety Measures
+## Safety Measures
 
 There are several safety measures that have been implemented to provide a smoother behavior of the controller:
 
-## Filtering  \label{sec:filt}
+### Filtering  \label{sec:filt}
 The proposed controller allows the online modification of relevant variables: $\xi^{\mathrm{D}}$, $K^\mathrm{ca}$ and $D^\mathrm{ca}$ in (\autoref{eq:tau_sup}), $q^{\mathrm{D}}$, $K^\mathrm{ns}$ and $D^\mathrm{ns}$ in (\autoref{eq:tau_0}), and $F_{\mathrm{c}}^\mathrm{ext}$ in (\autoref{eq:tau_ext}). However, for a smoother behavior of the controller, the value of these variables is low-pass filtered. For an example variable $\alpha$ is updated at each time-step $k$:
 \begin{equation}
     \alpha_{k+1} = (1-a)\alpha_k + a \alpha^\mathrm{D}
@@ -105,13 +102,13 @@ where $\alpha^\mathrm{D}$ is the desired new variable value and $a\in(0,1)$ is d
 \end{eqnarray}
 being $\delta t$ the time between samples of the controller, *i.e.*, the inverse of the sampling frequency of the controller.
 
-## Saturation
+### Saturation
 To increase safety in the controller, some of the filtered variables in \mbox{Sec. \autoref{sec:filt}} (the stiffness and damping factors $K^\mathrm{ca}$, $D^\mathrm{ca}$, $K^\mathrm{ns}$ and $D^\mathrm{ns}$, and the desired external force command $F_{\mathrm{c}}^\mathrm{ext}$) are saturated between user-defined maximum and minimum limits, *i.e.*, for an example variable $\alpha$.
 \begin{equation}
     \alpha_\mathrm{min} \leq \alpha \leq \alpha_\mathrm{max} 
 \end{equation}
 
-## Rate Limiter
+### Rate Limiter
 The rate of the commanded torque, $\tau_\mathrm{c}$ in (\autoref{eq:tau_c}), can be limited. For two consecutive commands at times $k$ and $k+1$:
 \begin{equation}
     \Delta \tau_\mathrm{max} \geq \|\tau_\mathrm{c,k+1} - \tau_\mathrm{c,k}\|
