@@ -9,7 +9,8 @@ authors:
     orcid: 0000-0002-8198-3154
     equal-contrib: false
     affiliation: "1, 2" # (Multiple affiliations must be quoted)
-  - name: Author Without ORCID
+  - name: Julian M. Salt Ducaju
+    orcid: 0000-0001-5256-8245 
     equal-contrib: false # (This is how you can denote equal contributions between multiple authors)
     affiliation: 2
   - name: Author with no affiliation
