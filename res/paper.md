@@ -1,5 +1,5 @@
 ---
-title: 'A C++ Implementation of a (Cartesian) Impedance Controller (for ROS)'
+title: 'A C++ Implementation of a (Cartesian) Impedance Controller for Robotic Manipulators'
 tags:
   - ROS
   - Compliant Control
@@ -46,9 +46,10 @@ A compliant control implementation for robotic manipulators is a valid solution 
 4. Command a joint configuration and apply it in the nullspace of the Cartesian robotic task.
 5. Execute joint-space trajectories.
 
-- TODO: Motivate use of ROS, highlight the shortcomings of FDCC package. Highlight our multi-robot support.
 
-Within the Robot Operating System (ROS) such a compliant control solution is available for position-controlled and velocity-controlled robot arms with the `cartesian_controllers` package [@FDCC]. However, if a robot arm such the `KUKA iiwa` or the `Franka Emika Robot (Panda)` supports to directly command joint torques, this is often the preferred control strategy. A complete implementation of such a solution is not available:
+Moreover, the Robot Operating System (ROS) is an open-source middleware that is widely used in the robotics community for the development of robotic sofware systems [@quigley:2009]. Within ROS, such a compliant control solution is available for position-commanded and velocity-commanded robotic manipulators with the `cartesian_controllers` package [@FDCC]. However, if a robotic manipulators supports to directly be commanded joint torques, *e.g.*, the `KUKA iiwa` or the `Franka Emika Robot (Panda)`, this is often the preferred control strategy, since a stable compliant behavior might be achieved for position-commanded and velocity-commanded robotic manipulators [@lawrence:1988]. 
+
+A complete implementation of compliance for torque-commanded robtics manipulators is not available, and the existing solutions can only be used for a single type of robotic manipulator:
 
 |                         | Reference<br> Pose<br> Update | Cartesian<br> Stiffness<br> Update | Cartesian<br> Wrench<br> Update | Nullspace<br> Control | Kinesthetic<br> Teaching | Trajectory<br> Execution | Multi-Robot<br> Support |
 |-------------------------|:-----------------------------:|:----------------------------------:|:-------------------------------:|:---------------------:|:------------------------:|:------------------------:|:-----------------------:|
@@ -105,21 +106,24 @@ where
 As described in \autoref{fig:flowchart}, there are several safety measures that have been implemented in the controller to achieve a smooth behavior of the robot:
 
 ### Filtering  \label{filt}
-The proposed controller allows the online modification of relevant variables: $\xi^{\mathrm{D}}$, $K^\mathrm{ca}$ and $D^\mathrm{ca}$ in (\autoref{eq:tau_sup}), $q^{\mathrm{D}}$, $K^\mathrm{ns}$ and $D^\mathrm{ns}$ in (\autoref{eq:tau_0}), and $F_{\mathrm{c}}^\mathrm{ext}$ in (\autoref{eq:tau_ext}). However, for a smoother behavior of the controller, the value of these variables is low-pass filtered. For an example variable $\alpha$ is updated at each time-step $k$:
+The proposed controller allows the online modification of relevant variables: $\xi^{\mathrm{D}}$, $K^\mathrm{ca}$ and $D^\mathrm{ca}$ in (\autoref{eq:tau_sup}), $q^{\mathrm{D}}$, $K^\mathrm{ns}$ and $D^\mathrm{ns}$ in (\autoref{eq:tau_0}), and $F_{\mathrm{c}}^\mathrm{ext}$ in (\autoref{eq:tau_ext}). However, for a smoother behavior of the controller, the value of these variables is low-pass filtered. The update law at each time-step $k$ is:
 \begin{equation}
     \alpha_{k+1} = (1-a)\alpha_k + a \alpha^\mathrm{D}
 \end{equation}
-where $\alpha^\mathrm{D}$ is the desired new variable value and $a\in(0,1)$ is defined in such a way that $p$ percent of the difference between the desired value $\alpha^\mathrm{D}$ and the initial variable value $\alpha_0$ is applied after $T$ seconds:
-\begin{eqnarray}
+where $\alpha^\mathrm{D}$ is the desired new variable value and $a\in(0,1)$ is defined in such a way that $p$ percent of the difference between the desired value $\alpha^\mathrm{D}$ and the variable value at the time of the online modification instruction, $\alpha_0$, is applied after a user-defined amount of time. 
+
+
+
+<!-- \begin{eqnarray}
    a & = & \frac{\delta t}{\kappa T + \delta t}\\
    \kappa & = & \frac{-1}{\log(1-p)}
 \end{eqnarray}
-being $\delta t$ the time between samples of the controller, *i.e.*, the inverse of the sampling frequency of the controller.
+being $\delta t$ the time between samples of the controller, *i.e.*, the inverse of the sampling frequency of the controller.) -->
 
 - TODISCUSS: we could omit the expresisions for a and kappa.
 
 ### Saturation
-To increase safety in the controller, some of the filtered variables (the stiffness and damping factors $K^\mathrm{ca}$, $D^\mathrm{ca}$, $K^\mathrm{ns}$ and $D^\mathrm{ns}$, and the desired external force command $F_{\mathrm{c}}^\mathrm{ext}$) cane be saturated between user-defined maximum and minimum limits, *i.e.*, for an example variable $\alpha$:
+To increase safety in the controller, some of the filtered variables (the stiffness and damping factors $K^\mathrm{ca}$, $D^\mathrm{ca}$, $K^\mathrm{ns}$ and $D^\mathrm{ns}$, and the desired external force command $F_{\mathrm{c}}^\mathrm{ext}$) can be saturated between user-defined maximum and minimum limits, *i.e.*, for an example variable $\alpha$:
 \begin{equation}
     \alpha_\mathrm{min} \leq \alpha \leq \alpha_\mathrm{max} 
 \end{equation}
