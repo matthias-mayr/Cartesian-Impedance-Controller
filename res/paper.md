@@ -1,5 +1,5 @@
 ---
-title: 'A C++ Implementation of a Cartesian Impedance Controller for ROS'
+title: 'A C++ Implementation of a (Cartesian) Impedance Controller (for ROS)'
 tags:
   - ROS
   - Compliant Control
@@ -23,29 +23,32 @@ bibliography: paper.bib
 
 ---
 
-# Introduction
-- TODO: Or make it a summary?
+# Summary
 
-Impedance control increases the safety in contact-rich environments where robots are present by establishing a mass-spring-damper relationship between external forces acting on the robot and variation of a set of coordinates that describe the motion of a robot from its reference. As a consequence, the controlled robot behaves in a compliant way with respect to its external forces, which has the added benefit of allowing that a human operator can physically guide the robot. 
+Impedance control increases the safety in contact-rich environments where robots are present by establishing a mass-spring-damper relationship between external forces acting on the robot and variation from its reference of a set of coordinates that describe the motion of a robot. As a consequence, the controlled robot behaves in a compliant way with respect to its external forces, which has the added benefit of allowing that a human operator can manually guide the robot. 
 
-In this package, we provide a controller that allows *several* 7-DOF collaborative robots:
+In this package, we provide a C++ implementation of a controller that allows collaborative robots:
 
 1. To achieve compliance in its, Cartesian, task-frame coordinates.
 2. To achieve joint compliance in the null-space of its task-frame coordinates.
 3. To be able to apply a desired force to the environment in a contact situation.
 
+This package can be used in any torque-controller robotic manipulator, as long as a URDF description of its geometry is provided.
 
-# Statement of need
+# Statement of Need
 Modern robotics is moving more and more past the traditional robot systems that have hard-coded paths and stiff manipulators. Many use-cases require the robots to work in semi-structured environments. These environments impose uncertainties that could cause collisions. Furthermore, many advanced assembly, manufacturing and household scenarios such as insertions or wiping motions require the robot to excert a controlled force on the environment. Finally, the robot workspace is becoming increasingly shared with human workers in order to leverage both agents and allow them to complement each other.
 
-All of them have in common that a compliant control implementation for the robot arm is one solution. This needs to fulfill the following criteria:
+A compliant control implementation for robotic manipulators is a valid solution for robots in contact-rich environments, since it fulfills the following criteria, allowing the robot to:
+
 1. Dynamically adapt the end-effector reference point.
 2. Dynamically adapt the Cartesian stiffnesses.
-3. Apply commanded forces and torques with the end effector.
-4. Command a nullspace configuration.
+3. Apply commanded forces and torques in the frame of the end-effector of the robot.
+4. Command a joint configuration and apply it in the nullspace of the Cartesian robotic task.
 5. Execute joint-space trajectories.
 
-Within the Robot Operating System (ROS) such a compliant control solution is available for position-controlled and velocity-controlled robot arms with the `cartesian_controllers` package [@FDCC]. However if a robot arm such the `KUKA iiwa` or the `Franka Emika Robot (Panda)` supports to directly command joint torques, this is often the preferred control strategy. A complete implementation of such a solution is not available:
+- TODO: Motivate use of ROS, highlight the shortcomings of FDCC package. Highlight our multi-robot support.
+
+Within the Robot Operating System (ROS) such a compliant control solution is available for position-controlled and velocity-controlled robot arms with the `cartesian_controllers` package [@FDCC]. However, if a robot arm such the `KUKA iiwa` or the `Franka Emika Robot (Panda)` supports to directly command joint torques, this is often the preferred control strategy. A complete implementation of such a solution is not available:
 
 |                         | Reference<br> Pose<br> Update | Cartesian<br> Stiffness<br> Update | Cartesian<br> Wrench<br> Update | Nullspace<br> Control | Kinesthetic<br> Teaching | Trajectory<br> Execution | Multi-Robot<br> Support |
 |-------------------------|:-----------------------------:|:----------------------------------:|:-------------------------------:|:---------------------:|:------------------------:|:------------------------:|:-----------------------:|
@@ -56,6 +59,8 @@ Within the Robot Operating System (ROS) such a compliant control solution is ava
 
 1: Reaching a joint limit triggers a safety stop<br>
 2: Can be implemented by setting the Cartesian stiffness to zero
+
+- TODISCUSS: When I compile the paper with the Docker I can't see the ticks. ??? Also, note 2 would also be applied for our package (regarding kinesthetic teaching).
 
 - TODO: Talk about RL use-case
 - TODO: Cite papers: @mayr22skireil and @mayr22priors @ahmad2022generalizing
@@ -111,6 +116,8 @@ where $\alpha^\mathrm{D}$ is the desired new variable value and $a\in(0,1)$ is d
 \end{eqnarray}
 being $\delta t$ the time between samples of the controller, *i.e.*, the inverse of the sampling frequency of the controller.
 
+- TODISCUSS: we could omit the expresisions for a and kappa.
+
 ### Saturation
 To increase safety in the controller, some of the filtered variables (the stiffness and damping factors $K^\mathrm{ca}$, $D^\mathrm{ca}$, $K^\mathrm{ns}$ and $D^\mathrm{ns}$, and the desired external force command $F_{\mathrm{c}}^\mathrm{ext}$) cane be saturated between user-defined maximum and minimum limits, *i.e.*, for an example variable $\alpha$:
 \begin{equation}
@@ -124,12 +131,16 @@ The rate of the commanded torque, $\tau_\mathrm{c}$ in (\autoref{eq:tau_c}), can
 \end{equation}
 
 
-![Block diagram of the safety measures implemented in the controller. \label{fig:flowchart}](flowchart.png){ width=80% }
+![Block diagram of the controller. \label{fig:flowchart}](flowchart.png){ width=80% }
 
 # Acknowledgements
 
 We thank Björn Olofsson and Anders Robertsson for the discussions and feedback. Furthermore, we thank Konstantinos Chatzilygeroudis for the permission to use the RBDyn wrapper code.
 
-This work was partially supported by the Wallenberg AI, Autonomous Systems and Software Program (WASP) funded by Knut and Alice Wallenberg Foundation.
+- TODO: Cite Konstantinos package as a Reference?
+
+This work was partially supported by the Wallenberg AI, Autonomous Systems and Software Program (WASP) funded by Knut and Alice Wallenberg Foundation. The authors are members of the ELLIIT Strategic Research Area at Lund University.
+
+- TODO: Are you part of ELLIT too?
 
 # References
