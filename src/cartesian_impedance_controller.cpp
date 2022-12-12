@@ -8,11 +8,11 @@
 namespace cartesian_impedance_controller
 {
   /*! \brief Calculates the orientation error between two quaternions
-  * 
-  * \param[in] orientation_d Reference orientation
-  * \param[in] orientation Current orientation
-  * \return Eigen Vector with the error
-  */
+   *
+   * \param[in] orientation_d Reference orientation
+   * \param[in] orientation Current orientation
+   * \return Eigen Vector with the error
+   */
   Eigen::Vector3d calculateOrientationError(const Eigen::Quaterniond &orientation_d, Eigen::Quaterniond orientation)
   {
     // Orientation error
@@ -28,49 +28,49 @@ namespace cartesian_impedance_controller
   }
 
   /*! \brief Calculates a filtered percental update
-  *
-  * \param[in] target Target value
-  * \param[in] current Current value
-  * \param[in] filter Percentage of the target value
-  * \return Calculated value
-  */
+   *
+   * \param[in] target Target value
+   * \param[in] current Current value
+   * \param[in] filter Percentage of the target value
+   * \return Calculated value
+   */
   template <typename T>
-  T filteredUpdate(T target, T current, double filter)
+  inline T filteredUpdate(T target, T current, double filter)
   {
     return (1.0 - filter) * current + filter * target;
   }
 
   /*! \brief Calculates the filter step
-  *
-  * \param[in] update_frequency   Update frequency in Hz
-  * \param[in] filter_percentage  Filter percentage
-  * \return Filter step
-  */
-  inline double filterStep(const double& update_frequency, const double& filter_percentage)
+   *
+   * \param[in] update_frequency   Update frequency in Hz
+   * \param[in] filter_percentage  Filter percentage
+   * \return Filter step
+   */
+  inline double filterStep(const double &update_frequency, const double &filter_percentage)
   {
     const double kappa = -1 / (std::log(1 - std::min(filter_percentage, 0.999999)));
     return 1.0 / (kappa * update_frequency + 1.0);
   }
 
-   /*! \brief Saturate a variable x with the limits x_min and x_max
-    *
-    * \param[in] x Value
-    * \param[in] x_min Minimal value
-    * \param[in] x_max Maximum value
-    * \return Saturated value
-    */
-  double saturateValue(double x, double x_min, double x_max)
+  /*! \brief Saturate a variable x with the limits x_min and x_max
+   *
+   * \param[in] x Value
+   * \param[in] x_min Minimal value
+   * \param[in] x_max Maximum value
+   * \return Saturated value
+   */
+  inline double saturateValue(double x, double x_min, double x_max)
   {
     return std::min(std::max(x, x_min), x_max);
   }
 
   /*! Saturate the torque rate to not stress the motors
-  *
-  * \param[in] tau_d_calculated Calculated input torques
-  * \param[out] tau_d_saturated Saturated torque values
-  * \param[in] delta_tau_max 
-  */
-  void saturateTorqueRate(const Eigen::VectorXd &tau_d_calculated, Eigen::VectorXd *tau_d_saturated, double delta_tau_max)
+   *
+   * \param[in] tau_d_calculated Calculated input torques
+   * \param[out] tau_d_saturated Saturated torque values
+   * \param[in] delta_tau_max
+   */
+  inline void saturateTorqueRate(const Eigen::VectorXd &tau_d_calculated, Eigen::VectorXd *tau_d_saturated, double delta_tau_max)
   {
     for (size_t i = 0; i < tau_d_calculated.size(); i++)
     {
