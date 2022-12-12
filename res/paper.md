@@ -1,5 +1,5 @@
 ---
-title: 'A C++ Implementation of a (Cartesian) Impedance Controller for Robotic Manipulators'
+title: 'A C++ Implementation of a Cartesian Impedance Controller for Robotic Manipulators'
 tags:
   - ROS
   - Compliant Control
@@ -61,8 +61,7 @@ A complete implementation of compliance for torque-commanded robtics manipulator
 1: Reaching a joint limit triggers a safety stop<br>
 2: Can be implemented by setting the Cartesian stiffness to zero
 
-- TODISCUSS: When I compile the paper with the Docker I can't see the ticks. ??? Also, note 2 would also be applied for our package (regarding kinesthetic teaching).
-
+- TODO: Commit updated table.
 - TODO: Talk about RL use-case
 - TODO: Cite papers: @mayr22skireil and @mayr22priors @ahmad2022generalizing
 
@@ -106,11 +105,11 @@ where
 As described in \autoref{fig:flowchart}, there are several safety measures that have been implemented in the controller to achieve a smooth behavior of the robot:
 
 ### Filtering  \label{filt}
-The proposed controller allows the online modification of relevant variables: $\xi^{\mathrm{D}}$, $K^\mathrm{ca}$ and $D^\mathrm{ca}$ in (\autoref{eq:tau_sup}), $q^{\mathrm{D}}$, $K^\mathrm{ns}$ and $D^\mathrm{ns}$ in (\autoref{eq:tau_0}), and $F_{\mathrm{c}}^\mathrm{ext}$ in (\autoref{eq:tau_ext}). However, for a smoother behavior of the controller, the value of these variables is low-pass filtered. The update law at each time-step $k$ is:
+The proposed controller allows the online modification of relevant variables: $\xi^{\mathrm{D}}$, $K^\mathrm{ca}$ and $D^\mathrm{ca}$ in (\autoref{eq:tau_sup}), $K^\mathrm{ns}$ and $D^\mathrm{ns}$ in (\autoref{eq:tau_0}), and $F_{\mathrm{c}}^\mathrm{ext}$ in (\autoref{eq:tau_ext}). However, for a smoother behavior of the controller, the value of these variables is low-pass filtered. The update law at each time-step $k$ is:
 \begin{equation}
     \alpha_{k+1} = (1-a)\alpha_k + a \alpha^\mathrm{D}
 \end{equation}
-where $\alpha^\mathrm{D}$ is the desired new variable value and $a\in(0,1)$ is defined in such a way that $p$ percent of the difference between the desired value $\alpha^\mathrm{D}$ and the variable value at the time of the online modification instruction, $\alpha_0$, is applied after a user-defined amount of time. 
+where $\alpha^\mathrm{D}$ is the desired new variable value and $a\in(0,1]$ is defined in such a way that $p$ percent of the difference between the desired value $\alpha^\mathrm{D}$ and the variable value at the time of the online modification instruction, $\alpha_0$, is applied after a user-defined amount of time. 
 
 
 
@@ -119,8 +118,6 @@ where $\alpha^\mathrm{D}$ is the desired new variable value and $a\in(0,1)$ is d
    \kappa & = & \frac{-1}{\log(1-p)}
 \end{eqnarray}
 being $\delta t$ the time between samples of the controller, *i.e.*, the inverse of the sampling frequency of the controller.) -->
-
-- TODISCUSS: we could omit the expresisions for a and kappa.
 
 ### Saturation
 To increase safety in the controller, some of the filtered variables (the stiffness and damping factors $K^\mathrm{ca}$, $D^\mathrm{ca}$, $K^\mathrm{ns}$ and $D^\mathrm{ns}$, and the desired external force command $F_{\mathrm{c}}^\mathrm{ext}$) can be saturated between user-defined maximum and minimum limits, *i.e.*, for an example variable $\alpha$:
@@ -141,10 +138,8 @@ The rate of the commanded torque, $\tau_\mathrm{c}$ in (\autoref{eq:tau_c}), can
 
 We thank Björn Olofsson and Anders Robertsson for the discussions and feedback. Furthermore, we thank Konstantinos Chatzilygeroudis for the permission to use the RBDyn wrapper code.
 
-- TODO: Cite Konstantinos package as a Reference?
-
 This work was partially supported by the Wallenberg AI, Autonomous Systems and Software Program (WASP) funded by Knut and Alice Wallenberg Foundation. The authors are members of the ELLIIT Strategic Research Area at Lund University.
 
-- TODO: Are you part of ELLIT too?
-
 # References
+
+- TODO: Add conference of ahmad2022generalizing.
