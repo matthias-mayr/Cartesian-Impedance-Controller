@@ -40,6 +40,18 @@ namespace cartesian_impedance_controller
     return (1.0 - filter) * current + filter * target;
   }
 
+  /*! \brief Calculates the filter step
+  *
+  * \param[in] update_frequency   Update frequency in Hz
+  * \param[in] filter_percentage  Filter percentage
+  * \return Filter step
+  */
+  inline double filterStep(const double& update_frequency, const double& filter_percentage)
+  {
+    const double kappa = -1 / (std::log(1 - std::min(filter_percentage, 0.999999)));
+    return 1.0 / (kappa * update_frequency + 1.0);
+  }
+
    /*! \brief Saturate a variable x with the limits x_min and x_max
     *
     * \param[in] x Value
@@ -298,28 +310,26 @@ namespace cartesian_impedance_controller
   void CartesianImpedanceController::setUpdateFrequency(double freq)
   {
     assert(freq >= 0.0 && "Update frequency needs to be greater or equal to zero");
-    this->update_frequency_ = freq;
+    this->update_frequency_ = std::max(freq, 0.0);
   }
 
   void CartesianImpedanceController::setFilterValue(double val, double *saved_val)
   {
     assert(val > 0 && val <= 1.0 && "Filter params need to be between 0 and 1.");
-    *saved_val = val;
+    *saved_val = saturateValue(val, 0.0000001, 1.0);
   }
 
   void CartesianImpedanceController::updateFilteredNullspaceConfig()
   {
-    // If statement to bound possible values of kappa
-    if (this->filter_params_nullspace_config_<= 0.0) {
-      this->filter_params_nullspace_config_ = 0.000001;
-    } else if (this->filter_params_nullspace_config_>= 1.0) {
-      this->filter_params_nullspace_config_ = 0.999999;
-    } 
-    const double kappa = -1/(std::log(1-this->filter_params_nullspace_config_));
-    const double step =  1.0/(kappa*this->update_frequency_ + 1.0);
-
-    // const double step = this->filter_params_nullspace_config_ / this->update_frequency_; // previous implementation
-    this->q_d_nullspace_ = filteredUpdate(this->q_d_nullspace_target_, this->q_d_nullspace_, step);
+    if (this->filter_params_nullspace_config_ == 1.0)
+    {
+      this->q_d_nullspace_ = this->q_d_nullspace_target_;
+    }
+    else
+    {
+      const double step = filterStep(this->update_frequency_, this->filter_params_nullspace_config_);
+      this->q_d_nullspace_ = filteredUpdate(this->q_d_nullspace_target_, this->q_d_nullspace_, step);
+    }
   }
 
   void CartesianImpedanceController::updateFilteredStiffness()
@@ -334,16 +344,8 @@ namespace cartesian_impedance_controller
     }
     else
     {
-      // If statement to bound possible values of kappa
-      if (this->filter_params_stiffness_<= 0.0) {
-        this->filter_params_stiffness_ = 0.000001;
-      } else if (this->filter_params_stiffness_>= 1.0) {
-        this->filter_params_stiffness_ = 0.999999;
-      } 
-      const double kappa = -1/(std::log(1-this->filter_params_stiffness_));
-      const double step =  1.0/(kappa*this->update_frequency_ + 1.0);
+      const double step = filterStep(this->update_frequency_, this->filter_params_stiffness_);
 
-      // const double step = this->filter_params_stiffness_ / this->update_frequency_; // previous implementation
       this->cartesian_stiffness_ = filteredUpdate(this->cartesian_stiffness_target_, this->cartesian_stiffness_, step);
       this->cartesian_damping_ = filteredUpdate(this->cartesian_damping_target_, this->cartesian_damping_, step);
       this->nullspace_stiffness_ = filteredUpdate(this->nullspace_stiffness_target_, this->nullspace_stiffness_, step);
@@ -353,23 +355,15 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceController::updateFilteredPose()
   {
-    if (filter_params_pose_ == 1.0)
+    if (this->filter_params_pose_ == 1.0)
     {
       position_d_ << position_d_target_;
       orientation_d_.coeffs() << orientation_d_target_.coeffs();
     }
     else
     {
-      // If statement to bound possible values of kappa
-      if (this->filter_params_pose_<= 0.0) {
-        this->filter_params_pose_ = 0.000001;
-      } else if (this->filter_params_pose_>= 1.0) {
-        this->filter_params_pose_ = 0.999999;
-      } 
-      const double kappa = -1/(std::log(1-this->filter_params_pose_));
-      const double step =  1.0/(kappa*this->update_frequency_ + 1.0);
+      const double step = filterStep(this->update_frequency_, this->filter_params_pose_);
 
-      // const double step = this->filter_params_pose_ / this->update_frequency_; // previous implementation
       this->position_d_ = filteredUpdate(this->position_d_target_, this->position_d_, step);
       this->orientation_d_ = this->orientation_d_.slerp(step, this->orientation_d_target_);
     }
@@ -377,17 +371,15 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceController::updateFilteredWrench()
   {
-    // If statement to bound possible values of kappa
-    if (this->filter_params_wrench_<= 0.0) {
-      this->filter_params_wrench_ = 0.000001;
-    } else if (this->filter_params_wrench_>= 1.0) {
-      this->filter_params_wrench_ = 0.999999;
-    } 
-    const double kappa = -1/(std::log(1-this->filter_params_wrench_));
-    const double step =  1.0/(kappa*this->update_frequency_ + 1.0);
-
-    // const double step = this->filter_params_wrench_ / this->update_frequency_; // previous implementation
-    this->cartesian_wrench_ = filteredUpdate(this->cartesian_wrench_target_, this->cartesian_wrench_, step);
+    if (this->filter_params_wrench_ == 1.0)
+    {
+      this->cartesian_wrench_ = this->cartesian_wrench_target_;
+    }
+    else
+    {
+      const double step = filterStep(this->update_frequency_, this->filter_params_wrench_);
+      this->cartesian_wrench_ = filteredUpdate(this->cartesian_wrench_target_, this->cartesian_wrench_, step);
+    }
   }
 
 } // namespace cartesian_impedance_controller
