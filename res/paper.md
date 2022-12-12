@@ -24,46 +24,45 @@ bibliography: paper.bib
 ---
 
 # Summary
-
-Impedance control increases the safety in contact-rich environments where robots are present by establishing a mass-spring-damper relationship between external forces acting on the robot and variation from its reference of a set of coordinates that describe the motion of a robot. As a consequence, the controlled robot behaves in a compliant way with respect to its external forces, which has the added benefit of allowing that a human operator can manually guide the robot. 
+A Cartesian impedance controller is a type of control algorithm that is used in robotics to regulate the motion of robot manipulators. This type of controller is designed to provide a robot with the ability to interact with its environment in a stable and compliant manner. Impedance control increases the safety in contact-rich environments by establishing a mass-spring-damper relationship between external forces acting on the robot and variation from its reference coordinates. As a consequence, the controlled robot behaves in a compliant way with respect to its external forces, which has the added benefit of allowing that a human operator can interact with the robot or manually guide it.
 
 In this package, we provide a C++ implementation of a controller that allows collaborative robots:
 
-1. To achieve compliance in its, Cartesian, task-frame coordinates.
-2. To achieve joint compliance in the null-space of its task-frame coordinates.
-3. To be able to apply a desired force to the environment in a contact situation.
+1. To achieve compliance in its Cartesian task-frame coordinates.
+2. To allow for joint compliance in the nullspace of its task-frame coordinates.
+3. To be able to apply desired forces and torques, e.g. for force control.
 
-This package can be used in any torque-controller robotic manipulator, as long as a URDF description of its geometry is provided.
+This package can be used in any torque-controlled robotic manipulator. Its Robot-Operating-System (ROS) implementation integrates it into `ros_control` [@ros_control] and can automatically utilize the URDF description of the robot's geometry.
 
 # Statement of Need
 Modern robotics is moving more and more past the traditional robot systems that have hard-coded paths and stiff manipulators. Many use-cases require the robots to work in semi-structured environments. These environments impose uncertainties that could cause collisions. Furthermore, many advanced assembly, manufacturing and household scenarios such as insertions or wiping motions require the robot to excert a controlled force on the environment. Finally, the robot workspace is becoming increasingly shared with human workers in order to leverage both agents and allow them to complement each other.
 
-A compliant control implementation for robotic manipulators is a valid solution for robots in contact-rich environments, since it fulfills the following criteria, allowing the robot to:
+A compliant control implementation for robotic manipulators is a valid solution for robots in contact-rich environments. To cover the wide variety of tasks and scenarios, we think that it needs to fulfill the following criteria:
 
 1. Dynamically adapt the end-effector reference point.
-2. Dynamically adapt the Cartesian stiffnesses.
-3. Apply commanded forces and torques in the frame of the end-effector of the robot.
+2. Dynamically adjust the robot's impedance (i.e. its ability to resist or comply with external forces).
+3. Apply commanded forces and torques (i.e. a wrench) with the end-effector of the robot.
 4. Command a joint configuration and apply it in the nullspace of the Cartesian robotic task.
 5. Execute joint-space trajectories.
 
+A complete implementation of compliance for torque-commanded robotics manipulators is not available, and the existing solutions can only be used for a single type of robotic manipulator:
 
-Moreover, the Robot Operating System (ROS) is an open-source middleware that is widely used in the robotics community for the development of robotic sofware systems [@quigley:2009]. Within ROS, such a compliant control solution is available for position-commanded and velocity-commanded robotic manipulators with the `cartesian_controllers` package [@FDCC]. However, if a robotic manipulators supports to directly be commanded joint torques, *e.g.*, the `KUKA iiwa` or the `Franka Emika Robot (Panda)`, this is often the preferred control strategy, since a stable compliant behavior might be achieved for position-commanded and velocity-commanded robotic manipulators [@lawrence:1988]. 
-
-A complete implementation of compliance for torque-commanded robtics manipulators is not available, and the existing solutions can only be used for a single type of robotic manipulator:
-
-|                         | Reference<br> Pose<br> Update | Cartesian<br> Stiffness<br> Update | Cartesian<br> Wrench<br> Update | Nullspace<br> Control | Kinesthetic<br> Teaching | Trajectory<br> Execution | Multi-Robot<br> Support |
-|-------------------------|:-----------------------------:|:----------------------------------:|:-------------------------------:|:---------------------:|:------------------------:|:------------------------:|:-----------------------:|
-| **KUKA FRI**<br>**Cart. Imp.** |                              |                                   | ?                               | ?                     | (x)1                     | ?                        |                        |
-| **franka_ros**          | x                         |                                   | x                               | x                     | x                        |                         |                        |
-|  **libfranka**          |                              |                                   |                                |                      | (x)2                     |                         |                        |
-| **This package**        | x                             |                  x                 | x                               | x                     | x                        | x                        | x                       |
+|                            | KUKA FRI controller | franka_ros | libfranka | **This package** |
+|----------------------------|:-------------------:|:----------:|:---------:|:------------:|
+|    Reference Pose Update   |                     |      x     |           |     **x**    |
+| Cartesian Stiffness Update |                     |            |           |     **x**    |
+|   Cartesian Wrench Update  |          ?          |      x     |           |     **x**    |
+|      Nullspace Control     |          ?          |      x     |           |     **x**    |
+|    Kinesthetic Teaching    |         (x)1        |      x     |    (x)2   |     **x**    |
+|    Trajectory Execution    |          ?          |            |           |     **x**    |
+|     Multi-Robot Support    |                     |            |           |     **x**    |
 
 1. Reaching a joint limit triggers a safety stop<br>
 2. Can be implemented by setting the Cartesian stiffness to zero
 
-- TODO: Commit updated table.
-- TODO: Talk about RL use-case
-- TODO: Cite papers: @mayr22skireil and @mayr22priors @ahmad2022generalizing
+This implementation offers a base library that can be easily integrated into other software and also implements a `ros_control` controller on top of that for the popular ROS middleware. The base library can be used with simulation software such as DART [@Lee2018]. It is utilized in several research papers such as @mayr22skireil, @mayr22priors and @ahmad2022generalizing that explore reinforcement learning as a strategy to accomplish contact-rich industrial robot tasks.
+
+The Robot Operating System (ROS) is an open-source middleware that is widely used in the robotics community for the development of robotic sofware systems [@quigley:2009]. Within ROS, such a compliant control solution is available for position-commanded and velocity-commanded robotic manipulators with the `cartesian_controllers` package [@FDCC]. However, if a robotic manipulators supports direct control of the joint torques, *e.g.*, the `KUKA LBR iiwa` or the `Franka Emika Robot (Panda)`, Cartesian impedance control is often the preferred control strategy.
 
 # Control Implementation
 
@@ -71,7 +70,7 @@ The gravity-compensated rigid-body dynamics of the controlled robot can be descr
 \begin{equation}\label{eq:rigbod_q}
     M(q)\ddot{q} + C(q,\dot{q})\dot{q} = \tau_{\mathrm{c}} + \tau^{\mathrm{ext}}
 \end{equation}
-where $M(q)\in  \mathbb{R}^{n\times n}$ is the generalized inertia matrix, $C(q,\dot{q})\in  \mathbb{R}^{n\times n}$ captures the effects of Coriolis and centripetal forces, $\tau_{\mathrm{c}}\in  \mathbb{R}^{n}$ represents the input torques, and $\tau^{\mathrm{ext}}\in  \mathbb{R}^{n}$ represents the external torques, $n$ being the number of joints of the robot. The gravity-induced torques have been ignored in (\autoref{eq:rigbod_q}), since the studied robots (`KUKA LBR iiwa robot` and `Franka Emika Panda robot`) are automatically gravity-compensated.
+where $M(q)\in  \mathbb{R}^{n\times n}$ is the generalized inertia matrix, $C(q,\dot{q})\in  \mathbb{R}^{n\times n}$ captures the effects of Coriolis and centripetal forces, $\tau_{\mathrm{c}}\in  \mathbb{R}^{n}$ represents the input torques, and $\tau^{\mathrm{ext}}\in  \mathbb{R}^{n}$ represents the external torques, $n$ being the number of joints of the robot. The gravity-induced torques have been ignored in (\autoref{eq:rigbod_q}), since the studied robots (`KUKA LBR iiwa` and `Franka Emika Robot (Panda)`) are automatically gravity-compensated.
 
 Moreover, the torque signal commanded by the proposed controller to the robot, $\tau_{\mathrm{c}}$ in (\autoref{eq:rigbod_q}), is composed by the superposition of three joint-torque signals:
 \begin{equation}\label{eq:tau_c}
@@ -131,7 +130,6 @@ The rate of the commanded torque, $\tau_\mathrm{c}$ in (\autoref{eq:tau_c}), can
     \Delta \tau_\mathrm{max} \geq \|\tau_\mathrm{c,k+1} - \tau_\mathrm{c,k}\|
 \end{equation}
 
-
 ![Block diagram of the controller. \label{fig:flowchart}](flowchart.png){ width=80% }
 
 # Acknowledgements
@@ -141,5 +139,3 @@ We thank Björn Olofsson and Anders Robertsson for the discussions and feedback.
 This work was partially supported by the Wallenberg AI, Autonomous Systems and Software Program (WASP) funded by Knut and Alice Wallenberg Foundation. The authors are members of the ELLIIT Strategic Research Area at Lund University.
 
 # References
-
-- TODO: Add conference of ahmad2022generalizing.
