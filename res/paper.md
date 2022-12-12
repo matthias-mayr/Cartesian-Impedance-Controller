@@ -40,13 +40,13 @@ Within the Robot Operating System (ROS) such a compliant control solution is ava
 
 |                         | Reference<br> Pose<br> Update | Cartesian<br> Stiffness<br> Update | Cartesian<br> Wrench<br> Update | Nullspace<br> Control | Kinesthetic<br> Teaching | Trajectory<br> Execution | Multi-Robot<br> Support |
 |-------------------------|:-----------------------------:|:----------------------------------:|:-------------------------------:|:---------------------:|:------------------------:|:------------------------:|:-----------------------:|
-| **KUKA FRI Cart. Imp.** | x                             |                  x                 | ?                               | ?                     | (✓)1                     | ?                        | x                       |
-| **franka_ros**          | ✓                             |                  x                 | ✓                               | ✓                     | ✓                        | x                        | x                       |
-|  **libfranka**          | x                             |                  x                 | x                               | x                     | (✓)2                     | x                        | x                       |
-| **This package**        | ✓                             |                  ✓                 | ✓                               | ✓                     | ✓                        | ✓                        | ✓                       |
+| **KUKA FRI**<br>**Cart. Imp.** |                              |                                   | ?                               | ?                     | (x)1                     | ?                        |                        |
+| **franka_ros**          | x                         |                                   | x                               | x                     | x                        |                         |                        |
+|  **libfranka**          |                              |                                   |                                |                      | (x)2                     |                         |                        |
+| **This package**        | x                             |                  x                 | x                               | x                     | x                        | x                        | x                       |
 
-1: Reaching a joint limit triggers a safety stop<br>
-2: Can be implemented by setting the Cartesian stiffness to zero
+1. Reaching a joint limit triggers a safety stop<br>
+2. Can be implemented by setting the Cartesian stiffness to zero
 
 - TODO: Talk about RL use-case
 - TODO: Cite papers: @mayr22skireil and @mayr22priors @ahmad2022generalizing
@@ -154,7 +154,7 @@ Figure sizes can be customized by adding an optional second parameter:
 
 # Acknowledgements
 
-We thank Björn Olofsson and Anders Robertsson for the discussions and feedback. Furthermore, we thank Konstantinos Chatzilygeroudis for the permission to use the RBDyn wrapper code.
+We thank Björn Olofsson and Anders Robertsson for the discussions and feedback. Furthermore, we thank Konstantinos Chatzilygeroudis for the permission to use the `RBDyn` wrapper code.
 
 This work was partially supported by the Wallenberg AI, Autonomous Systems and Software Program (WASP) funded by Knut and Alice Wallenberg Foundation.
 
