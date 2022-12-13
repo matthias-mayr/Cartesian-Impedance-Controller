@@ -24,15 +24,15 @@ bibliography: paper.bib
 ---
 
 # Summary
-A Cartesian impedance controller is a type of control algorithm that is used in robotics to regulate the motion of robot manipulators. This type of controller is designed to provide a robot with the ability to interact with its environment in a stable and compliant manner. Impedance control increases the safety in contact-rich environments by establishing a mass-spring-damper relationship between external forces acting on the robot and variation from its reference coordinates. As a consequence, the controlled robot behaves in a compliant way with respect to its external forces, which has the added benefit of allowing that a human operator can interact with the robot or manually guide it.
+A Cartesian impedance controller is a type of control strategy that is used in robotics to regulate the motion of robot manipulators. This type of controller is designed to provide a robot with the ability to interact with its environment in a stable and compliant manner. Impedance control increases the safety in contact-rich environments by establishing a mass-spring-damper relationship between the external forces acting on the robot and the variation from its reference of a set of coordinates that describe the motion of a robot As a consequence, the controlled robot behaves in a compliant way with respect to its external forces, which has the added benefit of allowing that a human operator can interact with the robot, *e.g.*, by manually guiding it.
 
 In this package, we provide a C++ implementation of a controller that allows collaborative robots:
 
 1. To achieve compliance in its Cartesian task-frame coordinates.
 2. To allow for joint compliance in the nullspace of its task-frame coordinates.
-3. To be able to apply desired forces and torques, e.g. for force control.
+3. To be able to apply desired forces and torques to the environment of the robot, e.g. for direct force control.
 
-This package can be used in any torque-controlled robotic manipulator. Its Robot-Operating-System (ROS) implementation integrates it into `ros_control` [@ros_control] and can automatically utilize the URDF description of the robot's geometry.
+This package can be used in any torque-controlled robotic manipulator. Its implementation in Robot-Operating-System (ROS) integrates it into `ros_control` [@ros_control] and can automatically utilize the URDF description of the robot's geometry.
 
 # Statement of Need
 Modern robotics is moving more and more past the traditional robot systems that have hard-coded paths and stiff manipulators. Many use-cases require the robots to work in semi-structured environments. These environments impose uncertainties that could cause collisions. Furthermore, many advanced assembly, manufacturing and household scenarios such as insertions or wiping motions require the robot to excert a controlled force on the environment. Finally, the robot workspace is becoming increasingly shared with human workers in order to leverage both agents and allow them to complement each other.
@@ -62,7 +62,7 @@ A complete implementation of compliance for torque-commanded robotics manipulato
 
 This implementation offers a base library that can be easily integrated into other software and also implements a `ros_control` controller on top of that for the popular ROS middleware. The base library can be used with simulation software such as DART [@Lee2018]. It is utilized in several research papers such as @mayr22skireil, @mayr22priors and @ahmad2022generalizing that explore reinforcement learning as a strategy to accomplish contact-rich industrial robot tasks.
 
-The Robot Operating System (ROS) is an open-source middleware that is widely used in the robotics community for the development of robotic sofware systems [@quigley:2009]. Within ROS, such a compliant control solution is available for position-commanded and velocity-commanded robotic manipulators with the `cartesian_controllers` package [@FDCC]. However, if a robotic manipulators supports direct control of the joint torques, *e.g.*, the `KUKA LBR iiwa` or the `Franka Emika Robot (Panda)`, Cartesian impedance control is often the preferred control strategy.
+The Robot Operating System (ROS) is an open-source middleware that is widely used in the robotics community for the development of robotic sofware systems [@quigley:2009]. Within ROS, such a compliant control solution is available for position-commanded and velocity-commanded robotic manipulators with the `cartesian_controllers` package [@FDCC]. However, if a robotic manipulator supports direct control of the joint torques, *e.g.*, the `KUKA LBR iiwa` or the `Franka Emika Robot (Panda)`, torque-commanded Cartesian impedance control is often the preferred control strategy, since a stable compliant behavior might not be achieved for position-commanded and velocity-commanded robotic manipulators [@lawrence:1988]. 
 
 # Control Implementation
 
