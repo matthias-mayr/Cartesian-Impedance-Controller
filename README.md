@@ -233,6 +233,15 @@ One additional measure can be to limit the maximum joint torques that can be app
 
 When using `iiwa_ros`, these limits can be applied [here](https://github.com/epfl-lasa/iiwa_ros/blob/master/iiwa_description/urdf/iiwa7.xacro#L53-L59). For the Panda they are applied [here](https://github.com/frankaemika/franka_ros/blob/develop/franka_description/robots/panda/joint_limits.yaml#L6). Both arms automatically apply gravity compensation, the limits are only used for the task-level torques on top of that.
 
+## Documentation
+The source code comes with Doxygen documentation. In a `catkin` workspace it can be built with:
+```bash
+sudo apt-get install ros-$ROS_DISTRO-rosdoc-lite
+roscd cartesian_impedance_controller
+rosdoc_lite .
+```
+It can then be found in the `doc` folder with `doc/html/index.html` being the entry point.
+
 ## Troubleshooting
 ### Compilation - A required package was not found
 
