@@ -9,6 +9,9 @@ The implementation consists of a
 1. base library that has few dependencies and can e.g. be directly integrated into software such as the DART simulator and a
 2. ROS control integration on top of it.
 
+### Short Pitch at ROSCon:
+[![IMAGE ALT TEXT](http://img.youtube.com/vi/Q4aPm4O_9fY/0.jpg)](http://www.youtube.com/watch?v=Q4aPm4O_9fY "Cartesian Impedance Controller ROSCon 2022 Lightning Talk")
+
 ## Features
 
 - Configurable stiffness values along all Cartesian dimensions at runtime
