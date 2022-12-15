@@ -130,7 +130,9 @@ The rate of the commanded torque, $\tau_\mathrm{c}$ in (\autoref{eq:tau_c}), can
     \Delta \tau_\mathrm{max} \geq \|\tau_\mathrm{c,k+1} - \tau_\mathrm{c,k}\|
 \end{equation}
 
-![Block diagram of the controller. \label{fig:flowchart}](flowchart.png){ width=80% }
+# Block Diagram
+
+![Block diagram of the controller. \label{fig:flowchart}](flowchart.pdf){ width=80% }
 
 # Acknowledgements
 
