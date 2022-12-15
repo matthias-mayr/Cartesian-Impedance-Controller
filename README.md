@@ -242,6 +242,9 @@ rosdoc_lite .
 ```
 It can then be found in the `doc` folder with `doc/html/index.html` being the entry point.
 
+The documentation for the public Github repository is automatically built and is deployed at:<br>
+https://matthias-mayr.github.io/Cartesian-Impedance-Controller/
+
 ## Troubleshooting
 ### Compilation - A required package was not found
 
