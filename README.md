@@ -1,5 +1,5 @@
 # Cartesian Impedance Controller
-
+[![CI](https://github.com/matthias-mayr/Cartesian-Impedance-Controller/actions/workflows/build_code.yml/badge.svg?branch=master)](https://github.com/matthias-mayr/Cartesian-Impedance-Controller/actions/workflows/build_code.yml)  [![rosdoc](https://github.com/matthias-mayr/Cartesian-Impedance-Controller/actions/workflows/build_docs.yml/badge.svg)](https://matthias-mayr.github.io/Cartesian-Impedance-Controller/)
 ## Description
 This project is an implementation of a Cartesian impedance controller. It is a type of control strategy that sets a dynamic relationship between contact forces and the position of a robot arm, making it suitable for collaborative robots. It is particularily useful when the interesting dimensions in the workspace are in the Cartesian space.
 
@@ -11,6 +11,7 @@ The implementation consists of a
 
 ### Short Pitch at ROSCon:
 [![IMAGE ALT TEXT](http://img.youtube.com/vi/Q4aPm4O_9fY/0.jpg)](http://www.youtube.com/watch?v=Q4aPm4O_9fY "Cartesian Impedance Controller ROSCon 2022 Lightning Talk")
+http://www.youtube.com/watch?v=Q4aPm4O_9fY
 
 ## Features
 
