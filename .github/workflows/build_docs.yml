@@ -1,0 +1,23 @@
+name: rosdoc
+on:
+  push:
+    branches:
+      - master
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v1
+      - name: Generate ROSdoc
+        id: rosdoc
+        uses: AutoModality/action-rosdoc@v1
+      - name: Attach Artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: doc
+          path: ${{ steps.rosdoc.outputs.docs-path }}
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./doc/html

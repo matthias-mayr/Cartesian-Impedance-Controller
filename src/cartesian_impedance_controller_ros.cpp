@@ -582,7 +582,7 @@ namespace cartesian_impedance_controller
         ROS_INFO_STREAM("Index " << this->traj_index_ << " q_nullspace: " << q.transpose());
       }
       // Update end-effector pose and nullspace
-      getFk(q, &this->position_d_, &this->orientation_d_);
+      getFk(q, &this->position_d_target_, &this->orientation_d_target_);
       this->setNullspaceConfig(q);
       this->traj_index_++;
     }

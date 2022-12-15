@@ -1,5 +1,5 @@
 # Cartesian Impedance Controller
-
+[![CI](https://github.com/matthias-mayr/Cartesian-Impedance-Controller/actions/workflows/build_code.yml/badge.svg?branch=master)](https://github.com/matthias-mayr/Cartesian-Impedance-Controller/actions/workflows/build_code.yml)  [![rosdoc](https://github.com/matthias-mayr/Cartesian-Impedance-Controller/actions/workflows/build_docs.yml/badge.svg)](https://matthias-mayr.github.io/Cartesian-Impedance-Controller/)
 ## Description
 This project is an implementation of a Cartesian impedance controller. It is a type of control strategy that sets a dynamic relationship between contact forces and the position of a robot arm, making it suitable for collaborative robots. It is particularily useful when the interesting dimensions in the workspace are in the Cartesian space.
 
@@ -8,6 +8,10 @@ The controller is developed using the seven degree-of-freedom (DoF) robot arm ca
 The implementation consists of a
 1. base library that has few dependencies and can e.g. be directly integrated into software such as the DART simulator and a
 2. ROS control integration on top of it.
+
+### Short Pitch at ROSCon:
+[![IMAGE ALT TEXT](http://img.youtube.com/vi/Q4aPm4O_9fY/0.jpg)](http://www.youtube.com/watch?v=Q4aPm4O_9fY "Cartesian Impedance Controller ROSCon 2022 Lightning Talk")
+http://www.youtube.com/watch?v=Q4aPm4O_9fY
 
 ## Features
 
@@ -21,7 +25,15 @@ The implementation consists of a
 - Separate base library that can be integrated in non-ROS environments
 - Interface to ROS messages and dynamic_reconfigure for easy runtime configuration
 
+
 ![](./res/flowchart.png)
+
+## Torques
+
+The torque signal commanded to the joints of the robot is composed by the superposition of three joint-torque signals:
+- The torque calculated for Cartesian impedance control with respect to a Cartesian pose reference in the frame of the EE of the robot (`tau_task`).
+- The torque calculated for joint impedance control with respect to a desired configuration and projected in the null-space of the robot's Jacobian, so it should not affect the Cartesian motion of the robot's end-effector (`tau_ns`).
+- The torque necessary to achieve the desired external force command (`cartesian_wrench`), in the frame of the EE of the robot (`tau_ext`).
 
 ## Limitations
 
@@ -60,7 +72,7 @@ This allows you to add a controller configuration for the controller type `carte
 
 ### Configuration file
 When using the controller it is a good practice to describe the parameters in a `YAML` file and load it. Usually this is already done by your robot setup - e.g. for [iiwa_ros](https://github.com/epfl-lasa/iiwa_ros/) that is [here](https://github.com/epfl-lasa/iiwa_ros/blob/master/iiwa_control/config/iiwa_control.yaml).
-Here is a template that can be adapted:
+Here is a template of what needs to be in that YAML file that can be adapted:
 ```YAML
 CartesianImpedance_trajectory_controller:
   type: cartesian_impedance_controller/CartesianImpedanceController
@@ -78,7 +90,7 @@ CartesianImpedance_trajectory_controller:
   dynamic_reconfigure: true             # Starts dynamic reconfigure server
   handle_trajectories: true             # Accept traj., e.g. from MoveIt
   robot_description: /robot_description # In case of a varying name
-  wrench_ee_frame: <end_effector>       # Default frame for wrench commands
+  wrench_ee_frame: iiwa_link_ee         # Default frame for wrench commands
   delta_tau_max: 1.0                    # Max. commanded torque diff between steps in Nm
   filtering:                            # Update existing values (0.0 1.0] per s
     nullspace_config: 0.1               # Nullspace configuration filtering
@@ -89,6 +101,14 @@ CartesianImpedance_trajectory_controller:
     verbose_print: false                # Enables additional prints
     state_msgs: false                   # Messages of controller state
     tf_frames: false                    # Extra tf frames
+```
+
+### Startup
+
+To start up with this controller, eventually the controller spawner needs to load the controller. Typically this is baked into the robot driver. For example if using the YAML example above, with [iiwa_ros](https://github.com/epfl-lasa/iiwa_ros/), this can be achieved with command:
+
+```bash
+roslaunch iiwa_gazebo iiwa_gazebo.launch controller:=CartesianImpedance_trajectory_controller
 ```
 
 ### Changing parameters with Dynamic Reconfigure

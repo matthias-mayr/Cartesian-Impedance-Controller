@@ -1,0 +1,32 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build-code:
+    runs-on: ubuntu-latest
+    container:
+      image: osrf/ros:noetic-desktop-full
+    
+    steps:
+    - name: Create catkin workspace
+      shell: bash
+      run: |
+        mkdir -p ~/catkin_ws/src
+    - uses: actions/checkout@v3
+      with:
+        path: 'catkin_ws/src/Cartesian-Impedance-Controller'
+    - name: Build in catkin_ws
+      shell: bash
+      run: |
+        apt-get update
+        apt-get install -y python3-catkin-tools  python3-rosdep git
+        cd catkin_ws
+        bash src/Cartesian-Impedance-Controller/scripts/install_dependencies.sh
+        rosdep update
+        source /opt/ros/$ROS_DISTRO/setup.bash
+        rosdep install --from-paths src --ignore-src --rosdistro=$ROS_DISTRO -y
+        catkin init
+        catkin config --extend /opt/ros/$ROS_DISTRO
+        catkin build
+        echo "Compile complete."
