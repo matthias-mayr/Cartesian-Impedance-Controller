@@ -1,0 +1,18 @@
+name: rosdoc
+on:
+  push:
+    branches-ignore:
+      - master
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v1
+      - name: Generate ROSdoc
+        id: rosdoc
+        uses: AutoModality/action-rosdoc@v1
+      - name: Attach Artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: doc
+          path: ${{ steps.rosdoc.outputs.docs-path }}
