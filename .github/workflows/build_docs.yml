@@ -1,7 +1,7 @@
 name: rosdoc
 on:
   push:
-    branches-ignore:
+    branches:
       - master
 jobs:
   build:
