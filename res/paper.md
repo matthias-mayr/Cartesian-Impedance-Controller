@@ -72,7 +72,7 @@ The gravity-compensated rigid-body dynamics of the controlled robot can be descr
 \begin{equation}\label{eq:rigbod_q}
     M(q)\ddot{q} + C(q,\dot{q})\dot{q} = \tau_{\mathrm{c}} + \tau^{\mathrm{ext}}
 \end{equation}
-where $M(q)\in  \mathbb{R}^{n\times n}$ is the generalized inertia matrix, $C(q,\dot{q})\in  \mathbb{R}^{n\times n}$ captures the effects of Coriolis and centripetal forces, $\tau_{\mathrm{c}}\in  \mathbb{R}^{n}$ represents the input torques, and $\tau^{\mathrm{ext}}\in  \mathbb{R}^{n}$ represents the external torques, with $n$ being the number of joints of the robot. The gravity-induced torques have been ignored in (\autoref{eq:rigbod_q}), since the studied robots (`KUKA LBR iiwa` and `Franka Emika Robot (Panda)`) are automatically gravity-compensated.
+where $M(q)\in  \mathbb{R}^{n\times n}$ is the generalized inertia matrix, $C(q,\dot{q})\in  \mathbb{R}^{n\times n}$ captures the effects of Coriolis and centripetal forces, $\tau_{\mathrm{c}}\in  \mathbb{R}^{n}$ represents the input torques, and $\tau^{\mathrm{ext}}\in  \mathbb{R}^{n}$ represents the external torques, with $n$ being the number of joints of the robot. Since the proposed controller was evaluated using robots that are automatically gravity-compensated (`KUKA LBR iiwa` and `Franka Emika Robot (Panda)`), the gravity-induced torques have not been included in (\autoref{eq:rigbod_q}). However, the proposed controller can be used in robots that are not automatically gravity-compensated by adding a gravity-compensation term to the commanded torque signal, $\tau_{\mathrm{c}}$.
 
 Moreover, the torque signal commanded by the proposed controller to the robot, $\tau_{\mathrm{c}}$ in (\autoref{eq:rigbod_q}), is composed by the superposition of three joint-torque signals:
 \begin{equation}\label{eq:tau_c}
@@ -90,7 +90,7 @@ where
     \begin{equation}\label{eq:tau_ns}
         \tau_{\mathrm{c}}^\mathrm{ns} = \left(I_n-J^{\mathrm{T}}(q)(J^{\mathrm{T}}(q))^\mathrm{\dagger}\right)\tau_0
     \end{equation}
-    with the superscript $^\mathrm{\dagger}$ denoting the Moore-Penrose pseudoinverse matrix\footnote{The Moore-Penrose pseudoinverse is computationally cheap and allows a null-space projection disregarding the dynamics of the robot. However, the use of this matrix for null-space projection may cause that a non-zero arbitrary torque, $\tau_0$ in (\autoref{eq:tau_ns}), generates interfering forces in the Cartesian space if the joint of the robot are not in a static equilibrium ($\dot{q} = \ddot{q} = 0$).}[@khatib:1995] given by \mbox{$J^\dagger = (J^\mathrm{T}J)^{-1}J^\mathrm{T}$} [@ben:2003], and $\tau_0$ being an arbitrary joint torque formulated to achieve joint compliance, 
+    with the superscript $^\mathrm{\dagger}$ denoting the Moore-Penrose pseudoinverse matrix [@khatib:1995]\footnote{The Moore-Penrose pseudoinverse is computationally cheap and allows a null-space projection disregarding the dynamics of the robot. However, not using the dynamics of the robot to fomulate a pseudoinverse matrix for null-space projection may cause that a non-zero arbitrary torque, $\tau_0$ in (\autoref{eq:tau_ns}), generates interfering forces in the Cartesian space if the joint of the robot are not in a static equilibrium ($\dot{q} = \ddot{q} = 0$).} given by \mbox{$J^\dagger = (J^\mathrm{T}J)^{-1}J^\mathrm{T}$} [@ben:2003], and $\tau_0$ being an arbitrary joint torque formulated to achieve joint compliance, 
     \begin{equation}\label{eq:tau_0}
         \tau_0 = -K^\mathrm{ns}(q-q^{\mathrm{D}}) - D^\mathrm{ns} \dot{q}
     \end{equation}
@@ -110,7 +110,7 @@ The proposed controller allows the online modification of relevant variables: $\
 \begin{equation}
     \alpha_{k+1} = (1-a)\alpha_k + a \alpha^\mathrm{D}
 \end{equation}
-where $\alpha^\mathrm{D}$ is the desired new variable value and $a\in(0,1]$ is defined in such a way that $p$ percent of the difference between the desired value $\alpha^\mathrm{D}$ and the variable value at the time of the online modification instruction, $\alpha_0$, is applied after a user-defined amount of time. 
+where $\alpha^\mathrm{D}$ is the desired new variable value and $a\in(0,1]$ is defined in such a way that a user-defined percentage of the difference between the desired value $\alpha^\mathrm{D}$ and the variable value at the time of the online modification instruction, $\alpha_0$, is applied after a user-defined amount of time. 
 
 
 
