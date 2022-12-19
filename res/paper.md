@@ -12,40 +12,42 @@ authors:
   - name: Julian M. Salt-Ducaju
     orcid: 0000-0001-5256-8245 
     equal-contrib: false
-    affiliation: "1, 2"
+    affiliation: "2, 3"
 affiliations:
- - name: Faculty of Engineering (LTH), Lund University, Sweden
+ - name: Department of Computer Science, Faculty of Engineering (LTH), Lund University, Sweden
    index: 1
  - name: Wallenberg AI, Autonomous Systems and Software Program (WASP), Sweden
    index: 2
-date: 8 December 2022
+ - name: Department of Automatic Control, Faculty of Engineering (LTH), Lund University, Sweden
+   index: 3
+date: 19 December 2022
 bibliography: paper.bib
 
 ---
 
 # Summary
-A Cartesian impedance controller is a type of control strategy that is used in robotics to regulate the motion of robot manipulators. This type of controller is designed to provide a robot with the ability to interact with its environment in a stable and compliant manner. Impedance control increases the safety in contact-rich environments by establishing a mass-spring-damper relationship between the external forces acting on the robot and the variation from its reference of a set of coordinates that describe the motion of a robot. As a consequence, the controlled robot behaves in a compliant way with respect to its external forces, which has the added benefit of allowing that a human operator can interact with the robot, such as manually guiding it.
+A Cartesian impedance controller is a type of control strategy that is used in robotics to regulate the motion of robot manipulators. This type of controller is designed to provide a robot with the ability to interact with its environment in a stable and compliant manner. Impedance control increases the safety in contact-rich environments by establishing a mass-spring-damper relationship between the external forces acting on the robot and the variation from its reference defined by a set of coordinates that describe the motion of a robot. As a consequence, the controlled robot behaves in a compliant way with respect to its external forces, which has the added benefit of allowing a human operator to interact with the robot, such as manually guiding it.
 
 In this package, we provide a C++ implementation of a controller that allows collaborative robots:
 
 1. To achieve compliance in its Cartesian task-frame coordinates.
 2. To allow for joint compliance in the nullspace of its task-frame coordinates.
-3. To be able to apply desired forces and torques to the environment of the robot, e.g. for direct force control.
+3. To be able to apply desired forces and torques to the environment of the robot, *e.g.*, for direct force control.
 
-This package can be used in any torque-controlled robotic manipulator. Its implementation in Robot-Operating-System (ROS) integrates it into `ros_control` [@ros_control] and can automatically utilize the URDF description of the robot's geometry.
+This package can be used in any torque-controlled robotic manipulator. Its implementation in Robot Operating System (ROS) integrates it into `ros_control` [@ros_control] and can automatically utilize the URDF description of the robot's geometry.
 
 # Statement of Need
 Modern robotics is moving more and more past the traditional robot systems that have hard-coded paths and stiff manipulators. Many use-cases require the robots to work in semi-structured environments. These environments impose uncertainties that could cause collisions. Furthermore, many advanced assembly, manufacturing and household scenarios such as insertions or wiping motions require the robot to excert a controlled force on the environment. Finally, the robot workspace is becoming increasingly shared with human workers in order to leverage both agents and allow them to complement each other.
 
-A compliant control implementation for robotic manipulators is a valid solution for robots in contact-rich environments. To cover the wide variety of tasks and scenarios, we think that it needs to fulfill the following criteria:
+An implementation of compliant control for robotic manipulators is an attractive solution for robots in contact-rich environments. To cover the wide variety of tasks and scenarios, we think that it needs to fulfill the following criteria:
 
 1. Dynamically adapt the end-effector reference point.
-2. Dynamically adjust the robot's impedance (i.e. its ability to resist or comply with external forces).
-3. Apply commanded forces and torques (i.e. a wrench) with the end-effector of the robot.
+2. Dynamically adjust the robot's impedance (*i.e.*, its ability to resist or comply with external forces).
+3. Apply commanded forces and torques (*i.e.*, a wrench) with the end-effector of the robot.
 4. Command a joint configuration and apply it in the nullspace of the Cartesian robotic task.
 5. Execute joint-space trajectories.
 
-A complete implementation of compliance for torque-commanded robotics manipulators is not available, and the existing solutions can only be used for a single type of robotic manipulator:
+A complete implementation with respect to items 1-5 above of compliance for torque-commanded robotic manipulators is not available, and the existing solutions can only be used for a single type of robotic manipulator:
 
 |                            | KUKA FRI controller | franka_ros | libfranka | **This package** |
 |----------------------------|:-------------------:|:----------:|:---------:|:------------:|
@@ -60,9 +62,9 @@ A complete implementation of compliance for torque-commanded robotics manipulato
 1. Reaching a joint limit triggers a safety stop<br>
 2. Can be implemented by setting the Cartesian stiffness to zero
 
-This implementation offers a base library that can be easily integrated into other software and also implements a `ros_control` controller on top of that for the popular ROS middleware. The base library can be used with simulation software such as DART [@Lee2018]. It is utilized in several research papers such as @mayr22skireil, @mayr22priors and @ahmad2022generalizing that explore reinforcement learning as a strategy to accomplish contact-rich industrial robot tasks.
+This implementation offers a base library that can easily be integrated into other software and also implements a `ros_control` controller on top of the base library for the popular ROS middleware. The base library can be used with simulation software such as DART [@Lee2018]. It is utilized in several research papers such as @mayr22skireil, @mayr22priors and @ahmad2022generalizing that explore reinforcement learning as a strategy to accomplish contact-rich industrial robot tasks.
 
-The Robot Operating System (ROS) is an open-source middleware that is widely used in the robotics community for the development of robotic sofware systems [@quigley:2009]. Within ROS, such a compliant control solution is available for position-commanded and velocity-commanded robotic manipulators with the `cartesian_controllers` package [@FDCC]. However, if a robotic manipulator supports direct control of the joint torques, *e.g.*, the `KUKA LBR iiwa` or the `Franka Emika Robot (Panda)`, torque-commanded Cartesian impedance control is often the preferred control strategy, since a stable compliant behavior might not be achieved for position-commanded and velocity-commanded robotic manipulators [@lawrence:1988].
+The Robot Operating System (ROS) is an open-source middleware that is widely used in the robotics community for the development of robotic software systems [@quigley:2009]. Within ROS, an implementation of compliant control is available for position-commanded and velocity-commanded robotic manipulators with the `cartesian_controllers` package [@FDCC]. However, if a robotic manipulator supports direct control of the joint torques, *e.g.*, the `KUKA LBR iiwa` or the `Franka Emika Robot (Panda)`, torque-commanded Cartesian impedance control is often the preferred control strategy, since a stable compliant behavior might not be achieved for position-commanded and velocity-commanded robotic manipulators [@lawrence:1988].
 
 # Control Implementation
 
@@ -70,7 +72,7 @@ The gravity-compensated rigid-body dynamics of the controlled robot can be descr
 \begin{equation}\label{eq:rigbod_q}
     M(q)\ddot{q} + C(q,\dot{q})\dot{q} = \tau_{\mathrm{c}} + \tau^{\mathrm{ext}}
 \end{equation}
-where $M(q)\in  \mathbb{R}^{n\times n}$ is the generalized inertia matrix, $C(q,\dot{q})\in  \mathbb{R}^{n\times n}$ captures the effects of Coriolis and centripetal forces, $\tau_{\mathrm{c}}\in  \mathbb{R}^{n}$ represents the input torques, and $\tau^{\mathrm{ext}}\in  \mathbb{R}^{n}$ represents the external torques, $n$ being the number of joints of the robot. The gravity-induced torques have been ignored in (\autoref{eq:rigbod_q}), since the studied robots (`KUKA LBR iiwa` and `Franka Emika Robot (Panda)`) are automatically gravity-compensated.
+where $M(q)\in  \mathbb{R}^{n\times n}$ is the generalized inertia matrix, $C(q,\dot{q})\in  \mathbb{R}^{n\times n}$ captures the effects of Coriolis and centripetal forces, $\tau_{\mathrm{c}}\in  \mathbb{R}^{n}$ represents the input torques, and $\tau^{\mathrm{ext}}\in  \mathbb{R}^{n}$ represents the external torques, with $n$ being the number of joints of the robot. The gravity-induced torques have been ignored in (\autoref{eq:rigbod_q}), since the studied robots (`KUKA LBR iiwa` and `Franka Emika Robot (Panda)`) are automatically gravity-compensated.
 
 Moreover, the torque signal commanded by the proposed controller to the robot, $\tau_{\mathrm{c}}$ in (\autoref{eq:rigbod_q}), is composed by the superposition of three joint-torque signals:
 \begin{equation}\label{eq:tau_c}
@@ -80,7 +82,7 @@ where
 
 *  $\tau_{\mathrm{c}}^\mathrm{ca}$ is the torque commanded to achieve a Cartesian impedance behavior [@hogan:1985] with respect to a Cartesian pose reference in the $m$-dimensional task space, $\xi^{\mathrm{D}}\in\mathbb{R}^{m}$, in the frame of the end-effector of the robot:
     \begin{equation}\label{eq:tau_sup}
-        \tau_{\mathrm{c}}^\mathrm{ca} = J^{\mathrm{T}}(q)\left[-K^\mathrm{ca}\Delta \xi-D^\mathrm{ca}(J(q) \dot{q})\right]
+        \tau_{\mathrm{c}}^\mathrm{ca} = J^{\mathrm{T}}(q)\left[-K^\mathrm{ca}\Delta \xi-D^\mathrm{ca}J(q) \dot{q}\right]
     \end{equation}
     with $J(q)\in \mathbb{R}^{m \times n}$ being the Jacobian relative to the end-effector (task) frame of the robot, and $K^\mathrm{ca}\in \mathbb{R}^{m \times m}$ and $D^\mathrm{ca}\in \mathbb{R}^{m \times m}$ being the virtual Cartesian stiffness and damping matrices, respectively. Also, the Cartesian pose error, $\Delta \xi$ in (\autoref{eq:tau_sup}) is defined as $\Delta \xi_{\mathrm{tr}} = \xi_{\mathrm{tr}}-\xi_{\mathrm{tr}}^{\mathrm{D}}$ for the translational degrees of freedom of the Cartesian pose and as \mbox{$\Delta \xi_{\mathrm{ro}} = \xi_{\mathrm{ro}}\left(\xi_{\mathrm{ro}}^{\mathrm{D}}\right)^{-1}$} for the rotational degrees of freedom.
 
@@ -88,7 +90,7 @@ where
     \begin{equation}\label{eq:tau_ns}
         \tau_{\mathrm{c}}^\mathrm{ns} = \left(I_n-J^{\mathrm{T}}(q)(J^{\mathrm{T}}(q))^\mathrm{\dagger}\right)\tau_0
     \end{equation}
-    with the superscript $^\mathrm{\dagger}$ denoting the Moore-Penrose pseudoinverse matrix\footnote{The Moore-Penrose pseudoinverse is computationally cheap and allows a null-space projection disregarding the dynamics of the robot. However, the use of this matrix for null-space projection may cause that a non-zero arbitrary torque, $\tau_0$ in (\autoref{eq:tau_ns}), generates interfering forces in the Cartesian space if the joint of the robot are not in static equilibrium ($\dot{q} = \ddot{q} = 0$).}[@khatib:1995] given by \mbox{$J^\dagger = (J^\mathrm{T}J)^{-1}J^\mathrm{T}$} [@ben:2003], and $\tau_0$ being the arbitrary joint torque formulated to achieve joint compliance, 
+    with the superscript $^\mathrm{\dagger}$ denoting the Moore-Penrose pseudoinverse matrix\footnote{The Moore-Penrose pseudoinverse is computationally cheap and allows a null-space projection disregarding the dynamics of the robot. However, the use of this matrix for null-space projection may cause that a non-zero arbitrary torque, $\tau_0$ in (\autoref{eq:tau_ns}), generates interfering forces in the Cartesian space if the joint of the robot are not in a static equilibrium ($\dot{q} = \ddot{q} = 0$).}[@khatib:1995] given by \mbox{$J^\dagger = (J^\mathrm{T}J)^{-1}J^\mathrm{T}$} [@ben:2003], and $\tau_0$ being an arbitrary joint torque formulated to achieve joint compliance, 
     \begin{equation}\label{eq:tau_0}
         \tau_0 = -K^\mathrm{ns}(q-q^{\mathrm{D}}) - D^\mathrm{ns} \dot{q}
     \end{equation}
@@ -104,7 +106,7 @@ where
 As described in \autoref{fig:flowchart}, there are several safety measures that have been implemented in the controller to achieve a smooth behavior of the robot:
 
 ### Filtering  \label{filt}
-The proposed controller allows the online modification of relevant variables: $\xi^{\mathrm{D}}$, $K^\mathrm{ca}$ and $D^\mathrm{ca}$ in (\autoref{eq:tau_sup}), $K^\mathrm{ns}$ and $D^\mathrm{ns}$ in (\autoref{eq:tau_0}), and $F_{\mathrm{c}}^\mathrm{ext}$ in (\autoref{eq:tau_ext}). However, for a smoother behavior of the controller, the value of these variables is low-pass filtered. The update law at each time-step $k$ is:
+The proposed controller allows the online modification of relevant variables: $\xi^{\mathrm{D}}$, $K^\mathrm{ca}$ and $D^\mathrm{ca}$ in (\autoref{eq:tau_sup}), $K^\mathrm{ns}$ and $D^\mathrm{ns}$ in (\autoref{eq:tau_0}), and $F_{\mathrm{c}}^\mathrm{ext}$ in (\autoref{eq:tau_ext}). However, for a smoother behavior of the controller, the values of these variables are low-pass filtered. The update law at each time-step $k$ is:
 \begin{equation}
     \alpha_{k+1} = (1-a)\alpha_k + a \alpha^\mathrm{D}
 \end{equation}
@@ -127,7 +129,7 @@ To increase safety in the controller, some of the filtered variables (the stiffn
 ### Rate Limiter
 The rate of the commanded torque, $\tau_\mathrm{c}$ in (\autoref{eq:tau_c}), can be limited. For two consecutive commands at times $k$ and $k+1$:
 \begin{equation}
-    \Delta \tau_\mathrm{max} \geq \|\tau_\mathrm{c,k+1} - \tau_\mathrm{c,k}\|
+    \Delta \tau_\mathrm{max} \geq \|\tau_{\mathrm{c},k+1} - \tau_{\mathrm{c},k}\|
 \end{equation}
 
 # Block Diagram
