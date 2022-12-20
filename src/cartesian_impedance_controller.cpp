@@ -8,11 +8,11 @@
 namespace cartesian_impedance_controller
 {
   /*! \brief Calculates the orientation error between two quaternions
-  * 
-  * \param[in] orientation_d Reference orientation
-  * \param[in] orientation Current orientation
-  * \return Eigen Vector with the error
-  */
+   *
+   * \param[in] orientation_d Reference orientation
+   * \param[in] orientation Current orientation
+   * \return Eigen Vector with the error
+   */
   Eigen::Vector3d calculateOrientationError(const Eigen::Quaterniond &orientation_d, Eigen::Quaterniond orientation)
   {
     // Orientation error
@@ -28,37 +28,49 @@ namespace cartesian_impedance_controller
   }
 
   /*! \brief Calculates a filtered percental update
-  *
-  * \param[in] target Target value
-  * \param[in] current Current value
-  * \param[in] filter Percentage of the target value
-  * \return Calculated value
-  */
+   *
+   * \param[in] target Target value
+   * \param[in] current Current value
+   * \param[in] filter Percentage of the target value
+   * \return Calculated value
+   */
   template <typename T>
-  T filteredUpdate(T target, T current, double filter)
+  inline T filteredUpdate(T target, T current, double filter)
   {
     return (1.0 - filter) * current + filter * target;
   }
 
-   /*! \brief Saturate a variable x with the limits x_min and x_max
-    *
-    * \param[in] x Value
-    * \param[in] x_min Minimal value
-    * \param[in] x_max Maximum value
-    * \return Saturated value
-    */
-  double saturateValue(double x, double x_min, double x_max)
+  /*! \brief Calculates the filter step
+   *
+   * \param[in] update_frequency   Update frequency in Hz
+   * \param[in] filter_percentage  Filter percentage
+   * \return Filter step
+   */
+  inline double filterStep(const double &update_frequency, const double &filter_percentage)
+  {
+    const double kappa = -1 / (std::log(1 - std::min(filter_percentage, 0.999999)));
+    return 1.0 / (kappa * update_frequency + 1.0);
+  }
+
+  /*! \brief Saturate a variable x with the limits x_min and x_max
+   *
+   * \param[in] x Value
+   * \param[in] x_min Minimal value
+   * \param[in] x_max Maximum value
+   * \return Saturated value
+   */
+  inline double saturateValue(double x, double x_min, double x_max)
   {
     return std::min(std::max(x, x_min), x_max);
   }
 
   /*! Saturate the torque rate to not stress the motors
-  *
-  * \param[in] tau_d_calculated Calculated input torques
-  * \param[out] tau_d_saturated Saturated torque values
-  * \param[in] delta_tau_max 
-  */
-  void saturateTorqueRate(const Eigen::VectorXd &tau_d_calculated, Eigen::VectorXd *tau_d_saturated, double delta_tau_max)
+   *
+   * \param[in] tau_d_calculated Calculated input torques
+   * \param[out] tau_d_saturated Saturated torque values
+   * \param[in] delta_tau_max
+   */
+  inline void saturateTorqueRate(const Eigen::VectorXd &tau_d_calculated, Eigen::VectorXd *tau_d_saturated, double delta_tau_max)
   {
     for (size_t i = 0; i < tau_d_calculated.size(); i++)
     {
@@ -298,19 +310,26 @@ namespace cartesian_impedance_controller
   void CartesianImpedanceController::setUpdateFrequency(double freq)
   {
     assert(freq >= 0.0 && "Update frequency needs to be greater or equal to zero");
-    this->update_frequency_ = freq;
+    this->update_frequency_ = std::max(freq, 0.0);
   }
 
   void CartesianImpedanceController::setFilterValue(double val, double *saved_val)
   {
     assert(val > 0 && val <= 1.0 && "Filter params need to be between 0 and 1.");
-    *saved_val = val;
+    *saved_val = saturateValue(val, 0.0000001, 1.0);
   }
 
   void CartesianImpedanceController::updateFilteredNullspaceConfig()
   {
-    const double step = this->filter_params_nullspace_config_ / this->update_frequency_;
-    this->q_d_nullspace_ = filteredUpdate(this->q_d_nullspace_target_, this->q_d_nullspace_, step);
+    if (this->filter_params_nullspace_config_ == 1.0)
+    {
+      this->q_d_nullspace_ = this->q_d_nullspace_target_;
+    }
+    else
+    {
+      const double step = filterStep(this->update_frequency_, this->filter_params_nullspace_config_);
+      this->q_d_nullspace_ = filteredUpdate(this->q_d_nullspace_target_, this->q_d_nullspace_, step);
+    }
   }
 
   void CartesianImpedanceController::updateFilteredStiffness()
@@ -325,7 +344,8 @@ namespace cartesian_impedance_controller
     }
     else
     {
-      const double step = this->filter_params_stiffness_ / this->update_frequency_;
+      const double step = filterStep(this->update_frequency_, this->filter_params_stiffness_);
+
       this->cartesian_stiffness_ = filteredUpdate(this->cartesian_stiffness_target_, this->cartesian_stiffness_, step);
       this->cartesian_damping_ = filteredUpdate(this->cartesian_damping_target_, this->cartesian_damping_, step);
       this->nullspace_stiffness_ = filteredUpdate(this->nullspace_stiffness_target_, this->nullspace_stiffness_, step);
@@ -335,14 +355,15 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceController::updateFilteredPose()
   {
-    if (filter_params_pose_ == 1.0)
+    if (this->filter_params_pose_ == 1.0)
     {
       position_d_ << position_d_target_;
       orientation_d_.coeffs() << orientation_d_target_.coeffs();
     }
     else
     {
-      const double step = this->filter_params_pose_ / this->update_frequency_;
+      const double step = filterStep(this->update_frequency_, this->filter_params_pose_);
+
       this->position_d_ = filteredUpdate(this->position_d_target_, this->position_d_, step);
       this->orientation_d_ = this->orientation_d_.slerp(step, this->orientation_d_target_);
     }
@@ -350,8 +371,15 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceController::updateFilteredWrench()
   {
-    const double step = this->filter_params_wrench_ / this->update_frequency_;
-    this->cartesian_wrench_ = filteredUpdate(this->cartesian_wrench_target_, this->cartesian_wrench_, step);
+    if (this->filter_params_wrench_ == 1.0)
+    {
+      this->cartesian_wrench_ = this->cartesian_wrench_target_;
+    }
+    else
+    {
+      const double step = filterStep(this->update_frequency_, this->filter_params_wrench_);
+      this->cartesian_wrench_ = filteredUpdate(this->cartesian_wrench_target_, this->cartesian_wrench_, step);
+    }
   }
 
 } // namespace cartesian_impedance_controller

@@ -1,0 +1,37 @@
+{
+  "@context": "https://raw.githubusercontent.com/codemeta/codemeta/master/codemeta.jsonld",
+  "@type": "Code",
+  "author": [
+    {
+      "@id": "0000-0002-8198-3154",
+      "@type": "Person",
+      "email": "matthias.mayr@cs.lth.se",
+      "name": "Matthias Mayr",
+      "affiliation": "Lund University, WASP"
+    },
+    {
+      "@id": "0000-0001-5256-8245",
+      "@type": "Person",
+      "email": "julian.salt_ducaju@control.lth.se",
+      "name": "Julian M. Salt-Ducaju",
+      "affiliation": "Lund University"
+    },
+    {
+      "@id": "",
+      "@type": "Person",
+      "email": "",
+      "name": "Oussama Chouman",
+      "affiliation": "Lund University"
+    }
+  ],
+  "identifier": "",
+  "codeRepository": "https://github.com/matthias-mayr/Cartesian-Impedance-Controller",
+  "datePublished": "2022-12-15",
+  "dateModified": "2022-12-15",
+  "dateCreated": "2022-12-15",
+  "description": "A C++ implementation of a Cartesian impedance controller that works cross plattforms.",
+  "keywords": "Compliant Control, ROS, Cartesian Impedance Controller, Compliance, Torque Control",
+  "license": "BSD",
+  "title": "Cartesian Impedance Controller",
+  "version": "v1.0.0"
+}
