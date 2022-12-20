@@ -269,7 +269,7 @@ https://matthias-mayr.github.io/Cartesian-Impedance-Controller/
 ## Repository and Contributions
 The main public code repository is at: https://github.com/matthias-mayr/Cartesian-Impedance-Controller
 
-Issues and pull requests are welcome. Feel free to contact the main author at <firstname>.<lastname>@cs.lth.se if you are using this implementation.
+Issues and pull requests are welcome. Feel free to contact the main author at `firstname.lastname@cs.lth.se` if you are using this implementation.
 
 ## Troubleshooting
 ### Compilation - A required package was not found
