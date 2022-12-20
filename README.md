@@ -1,9 +1,9 @@
 # Cartesian Impedance Controller
 [![CI](https://github.com/matthias-mayr/Cartesian-Impedance-Controller/actions/workflows/build_code.yml/badge.svg?branch=master)](https://github.com/matthias-mayr/Cartesian-Impedance-Controller/actions/workflows/build_code.yml)  [![rosdoc](https://github.com/matthias-mayr/Cartesian-Impedance-Controller/actions/workflows/build_docs.yml/badge.svg)](https://matthias-mayr.github.io/Cartesian-Impedance-Controller/)
 ## Description
-This project is an implementation of a Cartesian impedance controller. It is a type of control strategy that sets a dynamic relationship between contact forces and the position of a robot arm, making it suitable for collaborative robots. It is particularily useful when the interesting dimensions in the workspace are in the Cartesian space.
+This project is an implementation of Cartesian impedance control for robotic manipulators. It is a type of control strategy that sets a dynamic relationship between contact forces and the position of a robot arm, making it suitable for collaborative robots. It is particularily useful when the interesting dimensions in the workspace are in the Cartesian space.
 
-The controller is developed using the seven degree-of-freedom (DoF) robot arm called `LBR iiwa` by `KUKA AG` and has also been tested `Panda` by `Franka Emika` both in reality and simulation.
+The controller is developed using the seven degree-of-freedom (DoF) robot arm `LBR iiwa` by `KUKA AG` and has also been tested `Franka Emika Robot (Panda)` both in reality and simulation.
 
 The implementation consists of a
 1. base library that has few dependencies and can e.g. be directly integrated into software such as the DART simulator and a
@@ -11,6 +11,7 @@ The implementation consists of a
 
 ### Short Pitch at ROSCon:
 [![IMAGE ALT TEXT](http://img.youtube.com/vi/Q4aPm4O_9fY/0.jpg)](http://www.youtube.com/watch?v=Q4aPm4O_9fY "Cartesian Impedance Controller ROSCon 2022 Lightning Talk")
+
 http://www.youtube.com/watch?v=Q4aPm4O_9fY
 
 ## Features
@@ -264,6 +265,11 @@ It can then be found in the `doc` folder with `doc/html/index.html` being the en
 
 The documentation for the public Github repository is automatically built and is deployed at:<br>
 https://matthias-mayr.github.io/Cartesian-Impedance-Controller/
+
+## Repository and Contributions
+The main public code repository is at: https://github.com/matthias-mayr/Cartesian-Impedance-Controller
+
+Issues and pull requests are welcome. Feel free to contact the main author at <firstname>.<lastname>@cs.lth.se if you are using this implementation.
 
 ## Troubleshooting
 ### Compilation - A required package was not found
