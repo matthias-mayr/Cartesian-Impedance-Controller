@@ -47,20 +47,17 @@ An implementation of compliant control for robotic manipulators is an attractive
 4. Command a joint configuration and apply it in the nullspace of the Cartesian robotic task.
 5. Execute joint-space trajectories.
 
-A complete implementation with respect to items 1-5 above of compliance for torque-commanded robotic manipulators is not available, and the existing solutions can only be used for a single type of robotic manipulator:
+A complete implementation with respect to items 1-5 above of compliance for torque-commanded robotic manipulators is not available, and the existing solutions `franka_ros` [@franka_ros] and `libfranka` [@libfranka] as well as the `KUKA` FRI Cartesian impedance controller can only be used for a single type of robotic manipulator:
 
 |                            | KUKA FRI controller | franka_ros | libfranka | **This package** |
 |----------------------------|:-------------------:|:----------:|:---------:|:------------:|
-|    Reference Pose Update   |                     |      x     |           |     **x**    |
-| Cartesian Stiffness Update |                     |            |           |     **x**    |
-|   Cartesian Wrench Update  |          ?          |      x     |           |     **x**    |
+|    Reference Pose Update   |          (x)\footnote{\label{fri}An FRI connection can send either joint position updates or wrench updates}           |      x     |           |     **x**    |
+| Cartesian Stiffness Update |                     |      x     |           |     **x**    |
+|   Cartesian Wrench Update  |          (x)\textsuperscript{\ref{fri}}          |           |           |     **x**    |
 |      Nullspace Control     |          ?          |      x     |           |     **x**    |
-|    Kinesthetic Teaching    |         (x)1        |      x     |    (x)2   |     **x**    |
-|    Trajectory Execution    |          ?          |            |           |     **x**    |
+|    Kinesthetic Teaching    |         (x)\footnote{Reaching a joint limit triggers a safety stop}\textsuperscript{,}\footnote{\label{stiffness}Can be implemented by setting the Cartesian stiffness to zero}        |      x     |    (x)\textsuperscript{\ref{stiffness}}   |     **x**    |
+|    Trajectory Execution    |                     |            |           |     **x**    |
 |     Multi-Robot Support    |                     |            |           |     **x**    |
-
-1. Reaching a joint limit triggers a safety stop<br>
-2. Can be implemented by setting the Cartesian stiffness to zero
 
 This implementation offers a base library that can easily be integrated into other software and also implements a `ros_control` controller on top of the base library for the popular ROS middleware. The base library can be used with simulation software such as DART [@Lee2018]. It is utilized in several research papers such as @mayr22skireil, @mayr22priors and @ahmad2022generalizing that explore reinforcement learning as a strategy to accomplish contact-rich industrial robot tasks.
 
