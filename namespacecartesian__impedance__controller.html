@@ -44,6 +44,9 @@ Functions</h2></td></tr>
 <tr class="memitem:acb4e0503bf6fb9cf2eaecab71abab82c"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacecartesian__impedance__controller.html#acb4e0503bf6fb9cf2eaecab71abab82c">filteredUpdate</a> (T target, T current, double filter)</td></tr>
 <tr class="memdesc:acb4e0503bf6fb9cf2eaecab71abab82c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates a filtered percental update.  <a href="#acb4e0503bf6fb9cf2eaecab71abab82c">More...</a><br /></td></tr>
 <tr class="separator:acb4e0503bf6fb9cf2eaecab71abab82c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac6217aa2271c3fd2bd10f0a7c761f17a"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacecartesian__impedance__controller.html#ac6217aa2271c3fd2bd10f0a7c761f17a">filterStep</a> (const double &amp;update_frequency, const double &amp;filter_percentage)</td></tr>
+<tr class="memdesc:ac6217aa2271c3fd2bd10f0a7c761f17a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the filter step.  <a href="#ac6217aa2271c3fd2bd10f0a7c761f17a">More...</a><br /></td></tr>
+<tr class="separator:ac6217aa2271c3fd2bd10f0a7c761f17a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab19e1fc3d14d06d8a422301a9ed64e34"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacecartesian__impedance__controller.html#ab19e1fc3d14d06d8a422301a9ed64e34">PLUGINLIB_EXPORT_CLASS</a> (<a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceControllerRos.html">cartesian_impedance_controller::CartesianImpedanceControllerRos</a>, controller_interface::ControllerBase)</td></tr>
 <tr class="separator:ab19e1fc3d14d06d8a422301a9ed64e34"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5459fb46873e9551b8186f2caa7b0d72"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacecartesian__impedance__controller.html#a5459fb46873e9551b8186f2caa7b0d72">saturateTorqueRate</a> (const Eigen::VectorXd &amp;tau_d_calculated, Eigen::VectorXd *tau_d_saturated, double delta_tau_max)</td></tr>
@@ -139,6 +142,9 @@ Functions</h2></td></tr>
 <div class="memproto">
 <div class="memtemplate">
 template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">T cartesian_impedance_controller::filteredUpdate </td>
@@ -164,6 +170,11 @@ template&lt;typename T &gt; </div>
           <td></td><td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>Calculates a filtered percental update. </p>
@@ -178,6 +189,54 @@ template&lt;typename T &gt; </div>
 <dl class="section return"><dt>Returns</dt><dd>Calculated value </dd></dl>
 
 <p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00038">38</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+
+</div>
+</div>
+<a id="ac6217aa2271c3fd2bd10f0a7c761f17a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac6217aa2271c3fd2bd10f0a7c761f17a">&#9670;&nbsp;</a></span>filterStep()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">double cartesian_impedance_controller::filterStep </td>
+          <td>(</td>
+          <td class="paramtype">const double &amp;&#160;</td>
+          <td class="paramname"><em>update_frequency</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const double &amp;&#160;</td>
+          <td class="paramname"><em>filter_percentage</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Calculates the filter step. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">update_frequency</td><td>Update frequency in Hz </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">filter_percentage</td><td>Filter percentage </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Filter step </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00049">49</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -214,6 +273,9 @@ template&lt;typename T &gt; </div>
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">void cartesian_impedance_controller::saturateTorqueRate </td>
@@ -239,6 +301,11 @@ template&lt;typename T &gt; </div>
           <td></td><td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 <p>Saturate the torque rate to not stress the motors</p>
 <dl class="params"><dt>Parameters</dt><dd>
@@ -250,7 +317,7 @@ template&lt;typename T &gt; </div>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00061">61</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00073">73</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -259,6 +326,9 @@ template&lt;typename T &gt; </div>
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">double cartesian_impedance_controller::saturateValue </td>
@@ -284,6 +354,11 @@ template&lt;typename T &gt; </div>
           <td></td><td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>Saturate a variable x with the limits x_min and x_max. </p>
@@ -297,7 +372,7 @@ template&lt;typename T &gt; </div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Saturated value </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00050">50</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00062">62</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -307,7 +382,7 @@ template&lt;typename T &gt; </div>
 <hr size="1"><div style="align: right;">
 <a href="http://wiki.ros.org/workspace">workspace</a><br />
 Author(s): Matthias Mayr, Oussama Chouman</br />
-<small>autogenerated on Fri Dec 16 2022 10:04:08</small>
+<small>autogenerated on Tue Dec 20 2022 10:49:35</small>
 </div>
 </body>
 </html>
