@@ -10,4 +10,6 @@ docker run --rm \
     --volume $PWD/res:/data \
     --user $(id -u):$(id -g) \
     --env JOURNAL=joss \
-    openjournals/inara
+    openjournals/inara \
+    -o preprint,pdf,crossref \
+    paper.md
