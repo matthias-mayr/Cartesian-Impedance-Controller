@@ -22,7 +22,7 @@ $(function() {
 <div class="contents">
 <div class="textblock"><p><a href="https://github.com/matthias-mayr/Cartesian-Impedance-Controller/actions/workflows/build_code.yml"></a> <a href="https://matthias-mayr.github.io/Cartesian-Impedance-Controller/"></a> </p><h2>Description</h2>
 <p>This project is an implementation of Cartesian impedance control for robotic manipulators. It is a type of control strategy that sets a dynamic relationship between contact forces and the position of a robot arm, making it suitable for collaborative robots. It is particularily useful when the interesting dimensions in the workspace are in the Cartesian space.</p>
-<p>The controller is developed using the seven degree-of-freedom (DoF) robot arm <code>LBR iiwa</code> by <code>KUKA AG</code> and has also been tested <code>Franka Emika Robot (Panda)</code> both in reality and simulation.</p>
+<p>The controller is developed using the seven degree-of-freedom (DoF) robot arm <code>LBR iiwa</code> by <code>KUKA AG</code> and has also been tested with the <code>Franka Emika Robot (Panda)</code> both in reality and simulation.</p>
 <p>The implementation consists of a</p><ol type="1">
 <li>base library that has few dependencies and can e.g. be directly integrated into software such as the DART simulator and a</li>
 <li>ROS control integration on top of it.</li>
@@ -48,14 +48,14 @@ $(function() {
 <h2>Torques</h2>
 <p>The torque signal commanded to the joints of the robot is composed by the superposition of three joint-torque signals:</p><ul>
 <li>The torque calculated for Cartesian impedance control with respect to a Cartesian pose reference in the frame of the EE of the robot (<code>tau_task</code>).</li>
-<li>The torque calculated for joint impedance control with respect to a desired configuration and projected in the null-space of the robot's Jacobian, so it should not affect the Cartesian motion of the robot's end-effector (<code>tau_ns</code>).</li>
+<li>The torque calculated for joint impedance control with respect to a desired configuration and projected in the nullspace of the robot's Jacobian, so it should not affect the Cartesian motion of the robot's end-effector (<code>tau_ns</code>).</li>
 <li>The torque necessary to achieve the desired external force command (<code>cartesian_wrench</code>), in the frame of the EE of the robot (<code>tau_ext</code>).</li>
 </ul>
 <h2>Limitations</h2>
 <ul>
 <li>Joint friction is not accounted for</li>
 <li>Stiffness and damping values along the Cartesian dimensions are uncoupled</li>
-<li>No built-in gravity compensation for tools or workpieces (can be achieved by commanded a wrench)</li>
+<li>No built-in gravity compensation for tools or workpieces (can be achieved by commanding a wrench)</li>
 </ul>
 <h2>Prerequisites</h2>
 <h3>Required</h3>
@@ -70,11 +70,11 @@ $(function() {
 <li><a href="https://github.com/jrl-umi3218/mc_rbdyn_urdf">mc_rbdyn_urdf</a></li>
 <li><a href="https://github.com/jrl-umi3218/SpaceVecAlg">SpaceVecAlg</a></li>
 </ul>
-<p>The installation steps are automated in <code>scripts/install_dependencies.sh</code>:</p>
+<p>The installation steps for the installation of the non-ROS dependencies are automated in <code>scripts/install_dependencies.sh</code>.</p>
 <h2>Controller Usage in ROS</h2>
 <p>Assuming that there is an <a href="https://catkin-tools.readthedocs.io/en/latest/quick_start.html#initializing-a-new-workspace">initialized catkin workspace</a> you can clone this repository, install the dependencies and compile the controller.</p>
-<p>After cloning this repository in your catkin workspace, execute these commands:</p>
-<div class="fragment"><div class="line">cd catkin_ws</div><div class="line">src/cartesian_impedance_controller/scripts/install_dependencies.sh</div><div class="line">rosdep install --from-paths src --ignore-src --rosdistro=${ROS_DISTRO} -y</div><div class="line">catkin build # or catkin_make</div><div class="line">source devel/setup.bash</div></div><!-- fragment --><p>This allows you to add a controller configuration for the controller type <code>cartesian_impedance_controller/CartesianImpedanceController</code>.</p>
+<p>Here are the steps:</p>
+<div class="fragment"><div class="line">cd catkin_ws</div><div class="line">git clone https://github.com/matthias-mayr/Cartesian-Impedance-Controller src/Cartesian-Impedance-Controller</div><div class="line">src/Cartesian-Impedance-Controller/scripts/install_dependencies.sh</div><div class="line">rosdep install --from-paths src --ignore-src --rosdistro=${ROS_DISTRO} -y</div><div class="line">catkin build # or catkin_make</div><div class="line">source devel/setup.bash</div></div><!-- fragment --><p>This allows you to add a controller configuration for the controller type <code>cartesian_impedance_controller/CartesianImpedanceController</code> in your <code>ros_control</code> configuration.</p>
 <h3>Configuration file</h3>
 <p>When using the controller it is a good practice to describe the parameters in a <code>YAML</code> file and load it. Usually this is already done by your robot setup - e.g. for <a href="https://github.com/epfl-lasa/iiwa_ros/">iiwa_ros</a> that is <a href="https://github.com/epfl-lasa/iiwa_ros/blob/master/iiwa_control/config/iiwa_control.yaml">here</a>. Here is a template of what needs to be in that YAML file that can be adapted: </p><div class="fragment"><div class="line">CartesianImpedance_trajectory_controller:</div><div class="line">  type: cartesian_impedance_controller/CartesianImpedanceController</div><div class="line">  joints:                               # Joints to control</div><div class="line">    - iiwa_joint_1</div><div class="line">    - iiwa_joint_2</div><div class="line">    - iiwa_joint_3</div><div class="line">    - iiwa_joint_4</div><div class="line">    - iiwa_joint_5</div><div class="line">    - iiwa_joint_6</div><div class="line">    - iiwa_joint_7</div><div class="line">  end_effector: iiwa_link_ee            # Link to control arm in</div><div class="line">  update_frequency: 500                 # Controller update frequency in Hz</div><div class="line">  # Optional parameters - the mentioned values are the defaults</div><div class="line">  dynamic_reconfigure: true             # Starts dynamic reconfigure server</div><div class="line">  handle_trajectories: true             # Accept traj., e.g. from MoveIt</div><div class="line">  robot_description: /robot_description # In case of a varying name</div><div class="line">  wrench_ee_frame: iiwa_link_ee         # Default frame for wrench commands</div><div class="line">  delta_tau_max: 1.0                    # Max. commanded torque diff between steps in Nm</div><div class="line">  filtering:                            # Update existing values (0.0 1.0] per s</div><div class="line">    nullspace_config: 0.1               # Nullspace configuration filtering</div><div class="line">    pose: 0.1                           # Reference pose filtering</div><div class="line">    stiffness: 0.1                      # Cartesian and nullspace stiffness</div><div class="line">    wrench: 0.1                         # Commanded torque</div><div class="line">  verbosity:</div><div class="line">    verbose_print: false                # Enables additional prints</div><div class="line">    state_msgs: false                   # Messages of controller state</div><div class="line">    tf_frames: false                    # Extra tf frames</div></div><!-- fragment --><h3>Startup</h3>
 <p>To start up with this controller, eventually the controller spawner needs to load the controller. Typically this is baked into the robot driver. For example if using the YAML example above, with <a href="https://github.com/epfl-lasa/iiwa_ros/">iiwa_ros</a>, this can be achieved with command:</p>
@@ -116,8 +116,10 @@ $(function() {
  <a href="https://matthias-mayr.github.io/Cartesian-Impedance-Controller/">https://matthias-mayr.github.io/Cartesian-Impedance-Controller/</a></p>
 <h2>Repository and Contributions</h2>
 <p>The main public code repository is at: <a href="https://github.com/matthias-mayr/Cartesian-Impedance-Controller">https://github.com/matthias-mayr/Cartesian-Impedance-Controller</a></p>
-<p>Issues and pull requests are welcome. Feel free to contact the main author at <code>firstname.lastname@cs.lth.se</code> if you are using this implementation.</p>
-<h2>Troubleshooting</h2>
+<p>Issues, questions and pull requests are welcome. Feel free to contact the main author at <code>firstname.lastname@cs.lth.se</code> if you are using this implementation.</p>
+<h2>Citing this Work</h2>
+<p>A brief paper about the features and the control theory is under submission at <a href="https://joss.theoj.org/">JOSS</a>. For now there is a <a href="https://arxiv.org/abs/2212.11215">preprint on arXiv</a>.<br />
+ If you are using it or interacting with it, we would be happy if you could cite it. </p><div class="fragment"><div class="line">@misc{https://doi.org/10.48550/arxiv.2212.11215,</div><div class="line">  doi = {10.48550/ARXIV.2212.11215},</div><div class="line">  url = {https://arxiv.org/abs/2212.11215},</div><div class="line">  author = {Mayr, Matthias and Salt-Ducaju, Julian M.},</div><div class="line">  keywords = {Robotics (cs.RO), FOS: Computer and information sciences, FOS: Computer and information sciences},</div><div class="line">  title = {A C++ Implementation of a Cartesian Impedance Controller for Robotic Manipulators},</div><div class="line">  publisher = {arXiv},</div><div class="line">  year = {2022}, </div><div class="line">  copyright = {Creative Commons Attribution Share Alike 4.0 International}</div><div class="line">}</div></div><!-- fragment --><h2>Troubleshooting</h2>
 <h3>Compilation - A required package was not found</h3>
 <p>catkin build shows this CMake Error: </p><div class="fragment"><div class="line">CMake Error at /usr/share/cmake-3.16/Modules/FindPkgConfig.cmake:463 (message):</div><div class="line">  A required package was not found</div><div class="line">Call Stack (most recent call first):</div><div class="line">  /usr/share/cmake-3.16/Modules/FindPkgConfig.cmake:643 (_pkg_check_modules_internal)</div><div class="line">  CMakeLists.txt:12 (pkg_check_modules)</div></div><!-- fragment --><p>There are missing dependencies. When replacing <code>catkin_ws</code> with your workspace, they can be resolved like this : </p><div class="fragment"><div class="line">cd catkin_ws</div><div class="line">src/cartesian_impedance_controller/scripts/install_dependencies.sh</div><div class="line">rosdep install --from-paths src --ignore-src --rosdistro=${ROS_DISTRO} -y</div></div><!-- fragment --> </div></div><!-- contents -->
 
@@ -125,7 +127,7 @@ $(function() {
 <hr size="1"><div style="align: right;">
 <a href="http://wiki.ros.org/workspace">workspace</a><br />
 Author(s): Matthias Mayr, Oussama Chouman</br />
-<small>autogenerated on Fri Dec 23 2022 14:57:51</small>
+<small>autogenerated on Fri Dec 23 2022 14:59:43</small>
 </div>
 </body>
 </html>
