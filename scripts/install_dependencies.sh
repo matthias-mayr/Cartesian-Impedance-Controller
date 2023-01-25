@@ -41,3 +41,6 @@ make -j
 sudo make install
 
 cd ../..
+
+# Rebuild the library cache
+sudo ldconfig
