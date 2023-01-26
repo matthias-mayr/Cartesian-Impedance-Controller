@@ -151,7 +151,7 @@ namespace cartesian_impedance_controller
     * \param[in] cart_damping   Cartesian damping [0,1]
     * \param[in] nullspace      Nullspace damping [0,1]
     */
-    void setDamping(const geometry_msgs::Wrench &cart_damping, double nullspace);
+    void setDampingFactors(const geometry_msgs::Wrench &cart_damping, double nullspace);
 
     /*! \brief Sets Cartesian and nullspace stiffness
     *
@@ -164,11 +164,11 @@ namespace cartesian_impedance_controller
 
     /*! \brief Message callback for Cartesian damping.
     *
-    * Calls setDamping function.
-    * @sa setDamping.
+    * Calls setDampingFactors function.
+    * @sa setDampingFactors.
     * \param[in] msg Received message
     */
-    void cartesianDampingCb(const geometry_msgs::WrenchConstPtr &msg);
+    void cartesianDampingFactorCb(const geometry_msgs::WrenchConstPtr &msg);
 
     /*! \brief Message callback for Cartesian stiffness.
     *
@@ -181,7 +181,7 @@ namespace cartesian_impedance_controller
     /*! \brief Message callback for the whole controller configuration.
     *
     * Sets stiffness, damping and nullspace.
-    * @sa setDamping, setStiffness
+    * @sa setDampingFactors, setStiffness
     * \param[in] msg Received message
     */
     void controllerConfigCb(const cartesian_impedance_controller::ControllerConfigConstPtr &msg);
@@ -289,8 +289,8 @@ namespace cartesian_impedance_controller
 
     ros::Subscriber sub_cart_stiffness_;    //!< Cartesian stiffness subscriber
     ros::Subscriber sub_cart_wrench_;       //!< Cartesian wrench subscriber
-    ros::Subscriber sub_damping_;           //!< Damping subscriber
-    ros::Subscriber sub_impedance_config_;  //!< Controller configuration subscriber
+    ros::Subscriber sub_damping_factors_;           //!< Damping subscriber
+    ros::Subscriber sub_controller_config_;  //!< Controller configuration subscriber
     ros::Subscriber sub_reference_pose_;    //!< Cartesian reference pose subscriber
 
     tf::TransformListener tf_listener_;     //!< tf transformation listener
@@ -303,8 +303,8 @@ namespace cartesian_impedance_controller
     const double rot_stf_max_{100};     //!< Maximum rotational stiffness
     const double ns_min_{0};            //!< Minimum nullspace stiffness
     const double ns_max_{100};          //!< Maximum nullspace stiffness
-    const double dmp_min_{0.001};       //!< Minimum damping
-    const double dmp_max_{1.0};         //!< Maximum damping
+    const double dmp_factor_min_{0.001};       //!< Minimum damping factor
+    const double dmp_factor_max_{2.0};         //!< Maximum damping factor
 
     // The Jacobian of RBDyn comes with orientation in the first three lines. Needs to be interchanged.
     const Eigen::VectorXi perm_indices_ =

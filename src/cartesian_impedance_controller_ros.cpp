@@ -80,9 +80,9 @@ namespace cartesian_impedance_controller
                                               &CartesianImpedanceControllerRos::cartesianStiffnessCb, this);
     this->sub_cart_wrench_ = nh->subscribe("set_cartesian_wrench", 1,
                                            &CartesianImpedanceControllerRos::wrenchCommandCb, this);
-    this->sub_damping_ = nh->subscribe("set_damping_factors", 1,
-                                       &CartesianImpedanceControllerRos::cartesianDampingCb, this);
-    this->sub_impedance_config_ =
+    this->sub_damping_factors_ = nh->subscribe("set_damping_factors", 1,
+                                       &CartesianImpedanceControllerRos::cartesianDampingFactorCb, this);
+    this->sub_controller_config_ =
         nh->subscribe("set_config", 1, &CartesianImpedanceControllerRos::controllerConfigCb, this);
     this->sub_reference_pose_ = nh->subscribe("reference_pose", 1, &CartesianImpedanceControllerRos::referencePoseCb, this);
 
@@ -297,7 +297,7 @@ namespace cartesian_impedance_controller
   void CartesianImpedanceControllerRos::controllerConfigCb(const cartesian_impedance_controller::ControllerConfigConstPtr &msg)
   {
     this->setStiffness(msg->cartesian_stiffness, msg->nullspace_stiffness, false);
-    this->setDamping(msg->cartesian_damping, msg->nullspace_damping);
+    this->setDampingFactors(msg->cartesian_damping_factors, msg->nullspace_damping_factor);
 
     if (msg->q_d_nullspace.size() == this->n_joints_)
     {
@@ -314,9 +314,9 @@ namespace cartesian_impedance_controller
     }
   }
 
-  void CartesianImpedanceControllerRos::cartesianDampingCb(const geometry_msgs::WrenchConstPtr &msg)
+  void CartesianImpedanceControllerRos::cartesianDampingFactorCb(const geometry_msgs::WrenchConstPtr &msg)
   {
-    this->setDamping(*msg, this->nullspace_damping_);
+    this->setDampingFactors(*msg, this->damping_factors_[6]);
   }
 
   void CartesianImpedanceControllerRos::referencePoseCb(const geometry_msgs::PoseStampedConstPtr &msg)
@@ -344,15 +344,15 @@ namespace cartesian_impedance_controller
     this->setStiffness(msg->wrench, this->nullspace_stiffness_target_);
   }
 
-  void CartesianImpedanceControllerRos::setDamping(const geometry_msgs::Wrench &cart_damping, double nullspace)
+  void CartesianImpedanceControllerRos::setDampingFactors(const geometry_msgs::Wrench &cart_damping, double nullspace)
   {
-    CartesianImpedanceController::setDamping(saturateValue(cart_damping.force.x, dmp_min_, dmp_max_),
-                                             saturateValue(cart_damping.force.y, dmp_min_, dmp_max_),
-                                             saturateValue(cart_damping.force.z, dmp_min_, dmp_max_),
-                                             saturateValue(cart_damping.torque.x, dmp_min_, dmp_max_),
-                                             saturateValue(cart_damping.torque.y, dmp_min_, dmp_max_),
-                                             saturateValue(cart_damping.torque.z, dmp_min_, dmp_max_),
-                                             saturateValue(nullspace, dmp_min_, dmp_max_));
+    CartesianImpedanceController::setDampingFactors(saturateValue(cart_damping.force.x, dmp_factor_min_, dmp_factor_max_),
+                                             saturateValue(cart_damping.force.y, dmp_factor_min_, dmp_factor_max_),
+                                             saturateValue(cart_damping.force.z, dmp_factor_min_, dmp_factor_max_),
+                                             saturateValue(cart_damping.torque.x, dmp_factor_min_, dmp_factor_max_),
+                                             saturateValue(cart_damping.torque.y, dmp_factor_min_, dmp_factor_max_),
+                                             saturateValue(cart_damping.torque.z, dmp_factor_min_, dmp_factor_max_),
+                                             saturateValue(nullspace, dmp_factor_min_, dmp_factor_max_));
   }
 
   void CartesianImpedanceControllerRos::setStiffness(const geometry_msgs::Wrench &cart_stiffness, double nullspace, bool auto_damping)
@@ -507,11 +507,8 @@ namespace cartesian_impedance_controller
   {
     if (config.update_damping_factors)
     {
-      CartesianImpedanceController::setDamping(
-          saturateValue(config.translation_x, dmp_min_, dmp_max_), saturateValue(config.translation_y, dmp_min_, dmp_max_),
-          saturateValue(config.translation_z, dmp_min_, dmp_max_), saturateValue(config.rotation_x, dmp_min_, dmp_max_),
-          saturateValue(config.rotation_y, dmp_min_, dmp_max_), saturateValue(config.rotation_z, dmp_min_, dmp_max_),
-          config.nullspace_damping);
+      CartesianImpedanceController::setDampingFactors(
+          config.translation_x, config.translation_y, config.translation_z, config.rotation_x, config.rotation_y, config.rotation_z, config.nullspace_damping);
     }
   }
 

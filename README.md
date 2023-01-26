@@ -180,7 +180,7 @@ wrench:
 
 #### Cartesian Damping factors
 
-The damping factors can be configured with a `geometry_msgs/WrenchStamped` msg similar to the stiffnesses to the topic `${controller_ns}/set_damping_factors`. Damping factors are in the interval [0.01,1].
+The damping factors can be configured with a `geometry_msgs/WrenchStamped` msg similar to the stiffnesses to the topic `${controller_ns}/set_damping_factors`. Damping factors are in the interval [0.01,2]. These damping factors are additionally applied to the damping rule which is `2*sqrt(stiffness)`.
 
 #### Stiffnesses, damping and nullspace at once
 When also setting the nullspace stiffnes, a custom messages of the type `cartesian_impedance_controller/ControllerConfig` is to be sent to `set_config`:
@@ -189,11 +189,11 @@ When also setting the nullspace stiffnes, a custom messages of the type `cartesi
 rostopic pub --once /${controller_ns}/set_config cartesian_impedance_controller/ControllerConfig "cartesian_stiffness:
   force: {x: 300.0, y: 300.0, z: 300.0}
   torque: {x: 30.0, y: 30.0, z: 30.0}
-cartesian_damping:
-  force: {x: 0.0, y: 0.0, z: 0.0}
-  torque: {x: 0.0, y: 0.0, z: 0.0}
+cartesian_damping_factors:
+  force: {x: 1.0, y: 1.0, z: 1.0}
+  torque: {x: 1.0, y: 1.0, z: 1.0}
 nullspace_stiffness: 10.0
-nullspace_damping: 0.1
+nullspace_damping_factor: 0.1
 q_d_nullspace: [0, 0, 0, 0, 0, 0, 0]" 
 ```
 

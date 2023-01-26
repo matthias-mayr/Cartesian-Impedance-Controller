@@ -143,7 +143,7 @@ namespace cartesian_impedance_controller
     this->setStiffness(stiffness_vector, auto_damping);
   }
 
-  void CartesianImpedanceController::setDamping(double d_x, double d_y, double d_z, double d_a, double d_b, double d_c,
+  void CartesianImpedanceController::setDampingFactors(double d_x, double d_y, double d_z, double d_a, double d_b, double d_c,
                                                 double d_n)
   {
     Eigen::Matrix<double, 7, 1> damping_new;
@@ -167,6 +167,7 @@ namespace cartesian_impedance_controller
       this->cartesian_damping_target_(i, i) =
           this->damping_factors_(i) * this->dampingRule(this->cartesian_stiffness_target_(i, i));
     }
+    assert(this->damping_factors_(6) >= 0.0 && "Damping values need to be positive.");
     this->nullspace_damping_target_ = this->damping_factors_(6) * this->dampingRule(this->nullspace_stiffness_target_);
   }
 
