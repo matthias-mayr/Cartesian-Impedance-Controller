@@ -24,7 +24,6 @@ $(function() {
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="#pri-methods">Private Member Functions</a> &#124;
-<a href="#pri-attribs">Private Attributes</a> &#124;
 <a href="classcartesian__impedance__controller_1_1CartesianImpedanceController-members.html">List of all members</a>  </div>
   <div class="headertitle">
 <div class="title">cartesian_impedance_controller::CartesianImpedanceController Class Reference</div>  </div>
@@ -75,9 +74,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ab7af1a52f7e1904c680d627c453870d3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceController.html#ab7af1a52f7e1904c680d627c453870d3">initNullspaceConfig</a> (const Eigen::VectorXd &amp;q_d_nullspace_target)</td></tr>
 <tr class="memdesc:ab7af1a52f7e1904c680d627c453870d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the nullspace configuration without using filtering.  <a href="#ab7af1a52f7e1904c680d627c453870d3">More...</a><br /></td></tr>
 <tr class="separator:ab7af1a52f7e1904c680d627c453870d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afa7ae335fa5b38fe2c92845f641ef2e9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceController.html#afa7ae335fa5b38fe2c92845f641ef2e9">setDamping</a> (double d_x, double d_y, double d_z, double d_a, double d_b, double d_c, double d_n)</td></tr>
-<tr class="memdesc:afa7ae335fa5b38fe2c92845f641ef2e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the desired damping factors.  <a href="#afa7ae335fa5b38fe2c92845f641ef2e9">More...</a><br /></td></tr>
-<tr class="separator:afa7ae335fa5b38fe2c92845f641ef2e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae224dba4d230e044a91dcd2fe5018df3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceController.html#ae224dba4d230e044a91dcd2fe5018df3">setDampingFactors</a> (double d_x, double d_y, double d_z, double d_a, double d_b, double d_c, double d_n)</td></tr>
+<tr class="memdesc:ae224dba4d230e044a91dcd2fe5018df3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the desired damping factors.  <a href="#ae224dba4d230e044a91dcd2fe5018df3">More...</a><br /></td></tr>
+<tr class="separator:ae224dba4d230e044a91dcd2fe5018df3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac557f8d8e33d47648a11a1df3706a385"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceController.html#ac557f8d8e33d47648a11a1df3706a385">setFiltering</a> (double update_frequency, double filter_params_nullspace_config, double filter_params_stiffness, double filter_params_pose, double filter_params_wrench)</td></tr>
 <tr class="memdesc:ac557f8d8e33d47648a11a1df3706a385"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets filtering on stiffness + end-effector pose.  <a href="#ac557f8d8e33d47648a11a1df3706a385">More...</a><br /></td></tr>
 <tr class="separator:ac557f8d8e33d47648a11a1df3706a385"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -113,15 +112,33 @@ Protected Attributes</h2></td></tr>
 <tr class="memitem:a8b73d6df101ab35c76a636e6937507e3"><td class="memItemLeft" align="right" valign="top">Eigen::Matrix&lt; double, 6, 6 &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceController.html#a8b73d6df101ab35c76a636e6937507e3">cartesian_damping_</a> {Eigen::Matrix&lt;double, 6, 6&gt;::Identity()}</td></tr>
 <tr class="memdesc:a8b73d6df101ab35c76a636e6937507e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cartesian damping matrix.  <a href="#a8b73d6df101ab35c76a636e6937507e3">More...</a><br /></td></tr>
 <tr class="separator:a8b73d6df101ab35c76a636e6937507e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afbc40f7d3a7b865bddaa60d7dfc54de5"><td class="memItemLeft" align="right" valign="top">Eigen::Matrix&lt; double, 6, 6 &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceController.html#afbc40f7d3a7b865bddaa60d7dfc54de5">cartesian_damping_target_</a> {Eigen::Matrix&lt;double, 6, 6&gt;::Identity()}</td></tr>
+<tr class="memdesc:afbc40f7d3a7b865bddaa60d7dfc54de5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cartesian damping target.  <a href="#afbc40f7d3a7b865bddaa60d7dfc54de5">More...</a><br /></td></tr>
+<tr class="separator:afbc40f7d3a7b865bddaa60d7dfc54de5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4112154704a75d514f468aceb5366fde"><td class="memItemLeft" align="right" valign="top">Eigen::Matrix&lt; double, 6, 6 &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceController.html#a4112154704a75d514f468aceb5366fde">cartesian_stiffness_</a> {Eigen::Matrix&lt;double, 6, 6&gt;::Identity()}</td></tr>
 <tr class="memdesc:a4112154704a75d514f468aceb5366fde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cartesian stiffness matrix.  <a href="#a4112154704a75d514f468aceb5366fde">More...</a><br /></td></tr>
 <tr class="separator:a4112154704a75d514f468aceb5366fde"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a66eeba6b04f48fc6313cb1c6e520726c"><td class="memItemLeft" align="right" valign="top">Eigen::Matrix&lt; double, 6, 6 &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceController.html#a66eeba6b04f48fc6313cb1c6e520726c">cartesian_stiffness_target_</a> {Eigen::Matrix&lt;double, 6, 6&gt;::Identity()}</td></tr>
+<tr class="memdesc:a66eeba6b04f48fc6313cb1c6e520726c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cartesian stiffness target.  <a href="#a66eeba6b04f48fc6313cb1c6e520726c">More...</a><br /></td></tr>
+<tr class="separator:a66eeba6b04f48fc6313cb1c6e520726c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a48497b38610187d150d5c62d9aea54a4"><td class="memItemLeft" align="right" valign="top">Eigen::Matrix&lt; double, 6, 1 &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceController.html#a48497b38610187d150d5c62d9aea54a4">cartesian_wrench_</a> {Eigen::Matrix&lt;double, 6, 1&gt;::Zero()}</td></tr>
+<tr class="memdesc:a48497b38610187d150d5c62d9aea54a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Current Cartesian wrench.  <a href="#a48497b38610187d150d5c62d9aea54a4">More...</a><br /></td></tr>
+<tr class="separator:a48497b38610187d150d5c62d9aea54a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ea62c26a3a70d1e6a8691f44b0c5ed4"><td class="memItemLeft" align="right" valign="top">Eigen::Matrix&lt; double, 6, 1 &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceController.html#a1ea62c26a3a70d1e6a8691f44b0c5ed4">cartesian_wrench_target_</a> {Eigen::Matrix&lt;double, 6, 1&gt;::Zero()}</td></tr>
+<tr class="memdesc:a1ea62c26a3a70d1e6a8691f44b0c5ed4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cartesian wrench target.  <a href="#a1ea62c26a3a70d1e6a8691f44b0c5ed4">More...</a><br /></td></tr>
+<tr class="separator:a1ea62c26a3a70d1e6a8691f44b0c5ed4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6bbad24a9e01f76eeb0473ae99d343c6"><td class="memItemLeft" align="right" valign="top">Eigen::Matrix&lt; double, 7, 1 &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceController.html#a6bbad24a9e01f76eeb0473ae99d343c6">damping_factors_</a> {Eigen::Matrix&lt;double, 7, 1&gt;::Ones()}</td></tr>
+<tr class="memdesc:a6bbad24a9e01f76eeb0473ae99d343c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Damping factors.  <a href="#a6bbad24a9e01f76eeb0473ae99d343c6">More...</a><br /></td></tr>
+<tr class="separator:a6bbad24a9e01f76eeb0473ae99d343c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7c46021e973b2f0187a27f401ec9f644"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceController.html#a7c46021e973b2f0187a27f401ec9f644">delta_tau_max_</a> {1.0}</td></tr>
 <tr class="memdesc:a7c46021e973b2f0187a27f401ec9f644"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum allowed torque change per time step.  <a href="#a7c46021e973b2f0187a27f401ec9f644">More...</a><br /></td></tr>
 <tr class="separator:a7c46021e973b2f0187a27f401ec9f644"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7403d254e865c50059818f5cf3cb9b9f"><td class="memItemLeft" align="right" valign="top">Eigen::VectorXd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceController.html#a7403d254e865c50059818f5cf3cb9b9f">dq_</a></td></tr>
 <tr class="memdesc:a7403d254e865c50059818f5cf3cb9b9f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Joint velocities.  <a href="#a7403d254e865c50059818f5cf3cb9b9f">More...</a><br /></td></tr>
 <tr class="separator:a7403d254e865c50059818f5cf3cb9b9f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa3e5a91837954734b2acd4e29a983e90"><td class="memItemLeft" align="right" valign="top">Eigen::Matrix&lt; double, 6, 1 &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceController.html#aa3e5a91837954734b2acd4e29a983e90">error_</a></td></tr>
+<tr class="memdesc:aa3e5a91837954734b2acd4e29a983e90"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate pose error.  <a href="#aa3e5a91837954734b2acd4e29a983e90">More...</a><br /></td></tr>
+<tr class="separator:aa3e5a91837954734b2acd4e29a983e90"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab8e3b2d94e0a8f38d43214cba9b7444d"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceController.html#ab8e3b2d94e0a8f38d43214cba9b7444d">filter_params_nullspace_config_</a> {1.0}</td></tr>
 <tr class="memdesc:ab8e3b2d94e0a8f38d43214cba9b7444d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Nullspace filtering.  <a href="#ab8e3b2d94e0a8f38d43214cba9b7444d">More...</a><br /></td></tr>
 <tr class="separator:ab8e3b2d94e0a8f38d43214cba9b7444d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -211,27 +228,6 @@ Private Member Functions</h2></td></tr>
 <tr class="memitem:a765afc378677de235671086b27b2a76b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceController.html#a765afc378677de235671086b27b2a76b">updateFilteredWrench</a> ()</td></tr>
 <tr class="memdesc:a765afc378677de235671086b27b2a76b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a percental filtering effect to the applied Cartesian wrench.  <a href="#a765afc378677de235671086b27b2a76b">More...</a><br /></td></tr>
 <tr class="separator:a765afc378677de235671086b27b2a76b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pri-attribs"></a>
-Private Attributes</h2></td></tr>
-<tr class="memitem:afbc40f7d3a7b865bddaa60d7dfc54de5"><td class="memItemLeft" align="right" valign="top">Eigen::Matrix&lt; double, 6, 6 &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceController.html#afbc40f7d3a7b865bddaa60d7dfc54de5">cartesian_damping_target_</a> {Eigen::Matrix&lt;double, 6, 6&gt;::Identity()}</td></tr>
-<tr class="memdesc:afbc40f7d3a7b865bddaa60d7dfc54de5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cartesian damping target.  <a href="#afbc40f7d3a7b865bddaa60d7dfc54de5">More...</a><br /></td></tr>
-<tr class="separator:afbc40f7d3a7b865bddaa60d7dfc54de5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a66eeba6b04f48fc6313cb1c6e520726c"><td class="memItemLeft" align="right" valign="top">Eigen::Matrix&lt; double, 6, 6 &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceController.html#a66eeba6b04f48fc6313cb1c6e520726c">cartesian_stiffness_target_</a> {Eigen::Matrix&lt;double, 6, 6&gt;::Identity()}</td></tr>
-<tr class="memdesc:a66eeba6b04f48fc6313cb1c6e520726c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cartesian stiffness target.  <a href="#a66eeba6b04f48fc6313cb1c6e520726c">More...</a><br /></td></tr>
-<tr class="separator:a66eeba6b04f48fc6313cb1c6e520726c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a48497b38610187d150d5c62d9aea54a4"><td class="memItemLeft" align="right" valign="top">Eigen::Matrix&lt; double, 6, 1 &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceController.html#a48497b38610187d150d5c62d9aea54a4">cartesian_wrench_</a> {Eigen::Matrix&lt;double, 6, 1&gt;::Zero()}</td></tr>
-<tr class="memdesc:a48497b38610187d150d5c62d9aea54a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Current Cartesian wrench.  <a href="#a48497b38610187d150d5c62d9aea54a4">More...</a><br /></td></tr>
-<tr class="separator:a48497b38610187d150d5c62d9aea54a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1ea62c26a3a70d1e6a8691f44b0c5ed4"><td class="memItemLeft" align="right" valign="top">Eigen::Matrix&lt; double, 6, 1 &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceController.html#a1ea62c26a3a70d1e6a8691f44b0c5ed4">cartesian_wrench_target_</a> {Eigen::Matrix&lt;double, 6, 1&gt;::Zero()}</td></tr>
-<tr class="memdesc:a1ea62c26a3a70d1e6a8691f44b0c5ed4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cartesian wrench target.  <a href="#a1ea62c26a3a70d1e6a8691f44b0c5ed4">More...</a><br /></td></tr>
-<tr class="separator:a1ea62c26a3a70d1e6a8691f44b0c5ed4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6bbad24a9e01f76eeb0473ae99d343c6"><td class="memItemLeft" align="right" valign="top">Eigen::Matrix&lt; double, 7, 1 &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceController.html#a6bbad24a9e01f76eeb0473ae99d343c6">damping_factors_</a> {Eigen::Matrix&lt;double, 7, 1&gt;::Ones()}</td></tr>
-<tr class="memdesc:a6bbad24a9e01f76eeb0473ae99d343c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Damping factors.  <a href="#a6bbad24a9e01f76eeb0473ae99d343c6">More...</a><br /></td></tr>
-<tr class="separator:a6bbad24a9e01f76eeb0473ae99d343c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa3e5a91837954734b2acd4e29a983e90"><td class="memItemLeft" align="right" valign="top">Eigen::Matrix&lt; double, 6, 1 &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcartesian__impedance__controller_1_1CartesianImpedanceController.html#aa3e5a91837954734b2acd4e29a983e90">error_</a></td></tr>
-<tr class="memdesc:aa3e5a91837954734b2acd4e29a983e90"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate pose error.  <a href="#aa3e5a91837954734b2acd4e29a983e90">More...</a><br /></td></tr>
-<tr class="separator:aa3e5a91837954734b2acd4e29a983e90"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock">
@@ -335,7 +331,7 @@ Private Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00209">209</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00210">210</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -357,7 +353,7 @@ Private Attributes</h2></td></tr>
 <p>Returns the commanded torques. Performs a filtering step. </p>
 <p>This function assumes that the internal states have already been updates. The it utilizes the control rules to calculate commands. </p><dl class="section return"><dt>Returns</dt><dd>Eigen Vector of the commanded torques </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00230">230</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00231">231</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -417,7 +413,7 @@ Private Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00214">214</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00215">215</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -454,7 +450,7 @@ Private Attributes</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Damping value </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00305">305</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00306">306</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -476,7 +472,7 @@ Private Attributes</h2></td></tr>
 <p>Get the currently applied Cartesian wrench. </p>
 <dl class="section return"><dt>Returns</dt><dd>Eigen Vector with the applied wrench </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00295">295</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00296">296</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -498,7 +494,7 @@ Private Attributes</h2></td></tr>
 <p>Get the currently applied commands. </p>
 <dl class="section return"><dt>Returns</dt><dd>Eigen Vector with commands </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00290">290</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00291">291</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -520,7 +516,7 @@ Private Attributes</h2></td></tr>
 <p>Get the current pose error. </p>
 <dl class="section return"><dt>Returns</dt><dd>Eigen Vector with the pose error for translation and rotation </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00300">300</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00301">301</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -615,7 +611,7 @@ Private Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00263">263</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00264">264</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -682,7 +678,7 @@ Private Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00277">277</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00278">278</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -753,14 +749,14 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="afa7ae335fa5b38fe2c92845f641ef2e9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afa7ae335fa5b38fe2c92845f641ef2e9">&#9670;&nbsp;</a></span>setDamping()</h2>
+<a id="ae224dba4d230e044a91dcd2fe5018df3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae224dba4d230e044a91dcd2fe5018df3">&#9670;&nbsp;</a></span>setDampingFactors()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void cartesian_impedance_controller::CartesianImpedanceController::setDamping </td>
+          <td class="memname">void cartesian_impedance_controller::CartesianImpedanceController::setDampingFactors </td>
           <td>(</td>
           <td class="paramtype">double&#160;</td>
           <td class="paramname"><em>d_x</em>, </td>
@@ -883,7 +879,7 @@ Private Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00187">187</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00188">188</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -930,7 +926,7 @@ Private Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00316">316</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00317">317</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -958,7 +954,7 @@ Private Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00197">197</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00198">198</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -997,7 +993,7 @@ Private Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00203">203</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00204">204</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -1025,7 +1021,7 @@ Private Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00181">181</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00182">182</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -1092,7 +1088,7 @@ Private Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00173">173</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00174">174</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -1321,7 +1317,7 @@ Private Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00310">310</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00311">311</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -1351,7 +1347,7 @@ Private Attributes</h2></td></tr>
 <p>Adds a percental filtering effect to the nullspace configuration. </p>
 <p>Gradually moves the nullspace configuration to the target configuration. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00322">322</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00323">323</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -1380,7 +1376,7 @@ Private Attributes</h2></td></tr>
 
 <p>Adds a percental filtering effect to the end-effector pose. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00356">356</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00357">357</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -1409,7 +1405,7 @@ Private Attributes</h2></td></tr>
 
 <p>Adds a percental filtering effect to stiffness. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00335">335</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00336">336</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -1438,7 +1434,7 @@ Private Attributes</h2></td></tr>
 
 <p>Adds a percental filtering effect to the applied Cartesian wrench. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00372">372</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8cpp_source.html#l00373">373</a> of file <a class="el" href="cartesian__impedance__controller_8cpp_source.html">cartesian_impedance_controller.cpp</a>.</p>
 
 </div>
 </div>
@@ -1484,14 +1480,14 @@ Private Attributes</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 <p>Cartesian damping target. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00280">280</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00210">210</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
 
 </div>
 </div>
@@ -1536,14 +1532,14 @@ Private Attributes</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 <p>Cartesian stiffness target. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00279">279</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00209">209</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
 
 </div>
 </div>
@@ -1562,14 +1558,14 @@ Private Attributes</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 <p>Current Cartesian wrench. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00284">284</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00229">229</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
 
 </div>
 </div>
@@ -1588,14 +1584,14 @@ Private Attributes</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 <p>Cartesian wrench target. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00285">285</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00230">230</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
 
 </div>
 </div>
@@ -1614,14 +1610,14 @@ Private Attributes</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 <p>Damping factors. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00281">281</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00211">211</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
 
 </div>
 </div>
@@ -1647,7 +1643,7 @@ Private Attributes</h2></td></tr>
 
 <p>Maximum allowed torque change per time step. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00231">231</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00240">240</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
 
 </div>
 </div>
@@ -1673,7 +1669,7 @@ Private Attributes</h2></td></tr>
 
 <p>Joint velocities. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00210">210</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00214">214</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
 
 </div>
 </div>
@@ -1692,14 +1688,14 @@ Private Attributes</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 <p>Calculate pose error. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00277">277</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00219">219</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
 
 </div>
 </div>
@@ -1725,7 +1721,7 @@ Private Attributes</h2></td></tr>
 
 <p>Nullspace filtering. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00226">226</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00235">235</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
 
 </div>
 </div>
@@ -1751,7 +1747,7 @@ Private Attributes</h2></td></tr>
 
 <p>Reference pose filtering. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00228">228</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00237">237</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
 
 </div>
 </div>
@@ -1777,7 +1773,7 @@ Private Attributes</h2></td></tr>
 
 <p>Cartesian stiffness filtering. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00227">227</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00236">236</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
 
 </div>
 </div>
@@ -1803,7 +1799,7 @@ Private Attributes</h2></td></tr>
 
 <p>Commanded wrench filtering. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00229">229</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00238">238</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
 
 </div>
 </div>
@@ -1829,7 +1825,7 @@ Private Attributes</h2></td></tr>
 
 <p>Jacobian. Row format: 3 translations, 3 rotation. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00212">212</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00216">216</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
 
 </div>
 </div>
@@ -1985,7 +1981,7 @@ Private Attributes</h2></td></tr>
 
 <p>Current end-effector orientation. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00219">219</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00224">224</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
 
 </div>
 </div>
@@ -2011,7 +2007,7 @@ Private Attributes</h2></td></tr>
 
 <p>Current end-effector target orientation. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00220">220</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00225">225</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
 
 </div>
 </div>
@@ -2037,7 +2033,7 @@ Private Attributes</h2></td></tr>
 
 <p>End-effector orientation target. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00221">221</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00226">226</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
 
 </div>
 </div>
@@ -2063,7 +2059,7 @@ Private Attributes</h2></td></tr>
 
 <p>Current end-effector position. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00215">215</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00220">220</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
 
 </div>
 </div>
@@ -2089,7 +2085,7 @@ Private Attributes</h2></td></tr>
 
 <p>Current end-effector reference position. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00216">216</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00221">221</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
 
 </div>
 </div>
@@ -2115,7 +2111,7 @@ Private Attributes</h2></td></tr>
 
 <p>End-effector target position. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00217">217</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00222">222</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
 
 </div>
 </div>
@@ -2141,7 +2137,7 @@ Private Attributes</h2></td></tr>
 
 <p>Joint positions. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00209">209</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00213">213</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
 
 </div>
 </div>
@@ -2219,7 +2215,7 @@ Private Attributes</h2></td></tr>
 
 <p>Last commanded torques. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00223">223</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00232">232</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
 
 </div>
 </div>
@@ -2245,7 +2241,7 @@ Private Attributes</h2></td></tr>
 
 <p>Update frequency in Hz. </p>
 
-<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00225">225</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="cartesian__impedance__controller_8h_source.html#l00234">234</a> of file <a class="el" href="cartesian__impedance__controller_8h_source.html">cartesian_impedance_controller.h</a>.</p>
 
 </div>
 </div>
@@ -2259,7 +2255,7 @@ Private Attributes</h2></td></tr>
 <hr size="1"><div style="align: right;">
 <a href="http://wiki.ros.org/workspace">workspace</a><br />
 Author(s): Matthias Mayr, Oussama Chouman</br />
-<small>autogenerated on Wed Jan 25 2023 17:23:05</small>
+<small>autogenerated on Wed Feb 1 2023 09:28:51</small>
 </div>
 </body>
 </html>
