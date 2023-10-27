@@ -7,7 +7,7 @@ using namespace cartesian_impedance_controller;
 
 
 
-CartesianImpedanceController cont; // Create an instance of the controller
+CartesianImpedanceController cont; // Created an instance of the controller
 
 
 TEST(ControllerTests, initializationTests){
@@ -24,7 +24,7 @@ TEST(ControllerTests, initializationTests){
 	EXPECT_NO_THROW(cont.initNullspaceConfig(q_d_nullspace_target)); //Should not fail since we have the same number of joints as q_d_nullspace_target elements
 	
 	cont.setNumberOfJoints(n+1);
-	EXPECT_DEBUG_DEATH(cont.initNullspaceConfig(q_d_nullspace_target), "Nullspace target needs to same size as n_joints_"); //Should fail since we have differences between the number of joints and the number of q_d_nullspace_target elements
+	EXPECT_DEBUG_DEATH(cont.initNullspaceConfig(q_d_nullspace_target), "Nullspace target needs to same size as n_joints_");
 	
 }
 
@@ -79,7 +79,7 @@ TEST(ControllerTests, wrenchTest){
     EXPECT_NO_THROW(cont.applyWrench(wrench));
 }
 
-TEST(ControllerTests, getterTests){
+TEST(ControllerTests, getterTests){ 
     Eigen::VectorXd q(7);
     q << 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0;
     Eigen::VectorXd dq(7);
