@@ -153,7 +153,8 @@ namespace cartesian_impedance_controller
       if (damping_new(i) < 0)
       {
         damping_new(i) = this->damping_factors_(i);
-      }
+        throw std::invalid_argument("Damping factor should not be negative.");
+      }     
     }
     this->damping_factors_ = damping_new;
     this->applyDamping();
