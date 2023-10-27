@@ -1,3 +1,0 @@
-<launch>
-  <test test-name="test1_ros" pkg="cartesian_impedance_controller" type="test1_ros" />
-</launch>

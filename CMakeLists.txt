@@ -100,30 +100,21 @@ install(DIRECTORY include/${PROJECT_NAME}/
   PATTERN ".svn" EXCLUDE)
 
 ## Testing
-
-#Cpp level
-if (CATKIN_ENABLE_TESTING)
-	catkin_add_gtest(${PROJECT_NAME}-test test/test1.cpp)
-	if(TARGET ${PROJECT_NAME}-test)
-	    target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${Eigen3_LIBRARIES})
-	endif()
-endif()
-
-#Cpp level but in ROS
+#Cpp tests
 if (CATKIN_ENABLE_TESTING)
 	find_package(rostest REQUIRED)
-	add_rostest_gtest(test1_ros test/rostest.test test/test1_ros.cpp)
-	if(TARGET test1_ros)
-	    target_link_libraries(test1_ros ${PROJECT_NAME} ${Eigen3_LIBRARIES} ${catkin_LIBRARIES})
+	add_rostest_gtest(base_tests test/base.test test/base_tests.cpp)
+	if(TARGET base_tests)
+	    target_link_libraries(base_tests ${PROJECT_NAME} ${Eigen3_LIBRARIES} ${catkin_LIBRARIES})
 	endif()
 endif()
 
 #ROS tests
 if (CATKIN_ENABLE_TESTING)
 	find_package(rostest REQUIRED)
-	add_rostest_gtest(test2_ros test/rostest2.test test/test2_ros.cpp)
-	if(TARGET test2_ros)
-	    target_link_libraries(test2_ros ${PROJECT_NAME} ${Eigen3_LIBRARIES} ${catkin_LIBRARIES})
+	add_rostest_gtest(ros_tests test/ros.test test/ros_tests.cpp)
+	if(TARGET ros_tests)
+	    target_link_libraries(ros_tests ${PROJECT_NAME} ${Eigen3_LIBRARIES} ${catkin_LIBRARIES})
 	endif()
 endif()
 

@@ -11,5 +11,5 @@
    <node name="set_param_3" pkg="dynamic_reconfigure" type="dynparam" args="set /CartesianImpedance_trajectory_controller/damping_factors_reconfigure translation_x 0.75" />
 
   
-  <test test-name="test2_ros" pkg="cartesian_impedance_controller" type="test2_ros" />
+  <test test-name="ros_tests" pkg="cartesian_impedance_controller" type="ros_tests" />
 </launch>
