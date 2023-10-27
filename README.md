@@ -3,7 +3,8 @@
 ## Description
 This project is an implementation of Cartesian impedance control for robotic manipulators. It is a type of control strategy that sets a dynamic relationship between contact forces and the position of a robot arm, making it suitable for collaborative robots. It is particularily useful when the interesting dimensions in the workspace are in the Cartesian space.
 
-The controller is developed using the seven degree-of-freedom (DoF) robot arm `LBR iiwa` by `KUKA AG` and has also been tested with the `Franka Emika Robot (Panda)` both in reality and simulation.
+The controller is developed using the seven degree-of-freedom (DoF) robot arm `LBR iiwa` by `KUKA AG` and has also been tested with the `Franka Emika Robot (Panda)` both in reality and simulation.  
+This controller is used and tested with ROS 1 `melodic` and `noetic`.
 
 The implementation consists of a
 1. base library that has few dependencies and can e.g. be directly integrated into software such as the DART simulator and a
