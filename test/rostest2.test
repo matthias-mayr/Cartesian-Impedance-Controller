@@ -1,0 +1,15 @@
+<launch>
+  <include file="$(find cartesian_impedance_controller)/launch/panda_total.launch">
+    <arg name="sim" value="true"/>
+    <arg name="robot" value="panda"/>
+  </include>
+  
+  
+  
+  <node name="set_param" pkg="dynamic_reconfigure" type="dynparam" args="set /CartesianImpedance_trajectory_controller/cartesian_wrench_reconfigure f_x 5.0" />
+  <node name="set_param_2" pkg="dynamic_reconfigure" type="dynparam" args="set /CartesianImpedance_trajectory_controller/stiffness_reconfigure translation_x 100.0" />
+   <node name="set_param_3" pkg="dynamic_reconfigure" type="dynparam" args="set /CartesianImpedance_trajectory_controller/damping_factors_reconfigure translation_x 0.75" />
+
+  
+  <test test-name="test2_ros" pkg="cartesian_impedance_controller" type="test2_ros" />
+</launch>

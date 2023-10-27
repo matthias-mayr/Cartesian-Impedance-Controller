@@ -1,0 +1,29 @@
+CartesianImpedance_trajectory_controller:
+  type: cartesian_impedance_controller/CartesianImpedanceController
+  arm_id: $(arg arm_id)
+  joints:                               # Joints to control
+    - $(arg arm_id)_joint1
+    - $(arg arm_id)_joint2
+    - $(arg arm_id)_joint3
+    - $(arg arm_id)_joint4
+    - $(arg arm_id)_joint5
+    - $(arg arm_id)_joint6
+    - $(arg arm_id)_joint7
+  end_effector: $(arg arm_id)_hand_tcp            # Link to control arm in
+  update_frequency: 1000                 # Controller update frequency in Hz
+  dynamic_reconfigure: true             # Starts dynamic reconfigure server
+  handle_trajectories: false             # Accept traj., e.g. from MoveIt
+  wrench_ee_frame: $(arg arm_id)_hand_tcp       # Default frame for wrench commands. Replace for $(arg arm_id)_link0 if you want to command the forces in the frame of the base of the robot.
+  delta_tau_max: 1.0                    # Max. commanded torque diff between steps in Nm
+  filtering:                            # Update existing values (0.0 1.0] per s
+    nullspace_config: 1.0               # Nullspace configuration filtering
+    pose: 1.0                           # Reference pose filtering
+    stiffness: 1.0                      # Cartesian and nullspace stiffness
+    wrench: 1.0                         # Commanded torque
+  verbosity:
+    verbose_print: false                # Enables additional prints
+    state_msgs: false                  # Messages of controller state
+    tf_frames: false                    # Extra tf frames
+
+
+
