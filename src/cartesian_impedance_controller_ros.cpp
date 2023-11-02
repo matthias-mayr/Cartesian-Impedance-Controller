@@ -54,7 +54,7 @@ namespace cartesian_impedance_controller
     std::vector<std::string> joint_names;
     if (!nh.getParam("joints", joint_names))
     {
-      ROS_ERROR("Invalid or no joint_names parameters provided, aborting controller init!");
+      ROS_ERROR("Invalid or no 'joints' parameter provided, aborting controller init!");
       return false;
     }
     for (size_t i = 0; i < joint_names.size(); ++i)
@@ -70,6 +70,7 @@ namespace cartesian_impedance_controller
       }
     }
     ROS_INFO_STREAM("Number of joints specified in parameters: " << joint_names.size());
+    this->setNumberOfJoints(joint_names.size());
     return true;
   }
 
