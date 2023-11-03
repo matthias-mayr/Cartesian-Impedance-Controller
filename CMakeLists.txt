@@ -104,12 +104,16 @@ install(DIRECTORY include/${PROJECT_NAME}/
 if (CATKIN_ENABLE_TESTING)
   # Base library tests
 	find_package(rostest REQUIRED)
-	add_rostest_gtest(base_tests test/base.test test/base_tests.cpp)
+  add_rostest_gtest(base_tests test/base.test test/base_tests.cpp)
   target_link_libraries(base_tests ${PROJECT_NAME} ${Eigen3_LIBRARIES} ${catkin_LIBRARIES})
 
-  # ROS tests
-	add_rostest_gtest(ros_tests test/ros.test test/ros_tests.cpp)
+  # ROS basic tests
+  add_rostest_gtest(ros_tests test/ros.test test/ros_tests.cpp)
   target_link_libraries(ros_tests ${PROJECT_NAME} ${Eigen3_LIBRARIES} ${catkin_LIBRARIES})
+
+  # ROS functionality tests
+  add_rostest_gtest(ros_func_tests test/ros_func.test test/ros_func_tests.cpp)
+  target_link_libraries(ros_func_tests ${PROJECT_NAME} ${Eigen3_LIBRARIES} ${catkin_LIBRARIES})
 endif()
 
 
