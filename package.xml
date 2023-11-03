@@ -1,6 +1,6 @@
 <package format="3">
   <name>cartesian_impedance_controller</name>
-  <version>1.0.0</version>
+  <version>1.1.0</version>
   <description>
     A Cartesian Impedance controller implementation
   </description>
@@ -9,6 +9,7 @@
 
   <author>Matthias Mayr</author>
   <author>Oussama Chouman</author>
+  <author>Julian Salt Ducaju</author>
 
   <buildtool_depend>catkin</buildtool_depend>
 
@@ -51,18 +52,16 @@
   <exec_depend>tf_conversions</exec_depend>
   <exec_depend>trajectory_msgs</exec_depend>
 
-   <export>
+  <export>
     <!-- Other tools can request additional information be placed here -->
     <controller_interface plugin="${prefix}/controller_plugins.xml"/>
   </export>
   
   <test_depend>gtest</test_depend>
   <test_depend>eigen</test_depend>
-  <test_depend>gtest_conversions</test_depend>
   <test_depend>roscpp</test_depend>
   <test_depend>rostest</test_depend>
   <test_depend>geometry_msgs</test_depend>
   <test_depend>std_msgs</test_depend>
   <test_depend>dynamic_reconfigure</test_depend>
-
 </package>
