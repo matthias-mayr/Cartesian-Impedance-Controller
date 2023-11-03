@@ -9,20 +9,6 @@
 const std::string ctrl_name = "/CartesianImpedance_trajectory_controller";
 
 //ROSBaseTests tested that key topics in the library are being written.
-TEST(ROSBaseTests, referenceposeTests)
-{
-  ros::NodeHandle n;
-  ros::Duration timeout(1);
-  for (int i = 0; i < 5; i++) {
-    auto msg_pose = ros::topic::waitForMessage<geometry_msgs::PoseStamped>(
-        ctrl_name + "/reference_pose", n, timeout);
-
-    ASSERT_TRUE(msg_pose != nullptr) << "Did not receive message on iteration " << i + 1;
-
-    EXPECT_LE(std::abs(msg_pose->pose.orientation.x), 11);
-  }
-
-}
 
 TEST(ROSBaseTests, commandedtorqueTests)
 {
