@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
+cmake_policy(SET CMP0048 NEW) # Version not in project() command
 project(cartesian_impedance_controller)
 
 find_package(Boost 1.49 REQUIRED)
@@ -98,3 +99,17 @@ install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.h"
   PATTERN ".svn" EXCLUDE)
+
+## Testing
+if (CATKIN_ENABLE_TESTING)
+  # Base library tests
+	find_package(rostest REQUIRED)
+	add_rostest_gtest(base_tests test/base.test test/base_tests.cpp)
+  target_link_libraries(base_tests ${PROJECT_NAME} ${Eigen3_LIBRARIES} ${catkin_LIBRARIES})
+
+  # ROS tests
+	add_rostest_gtest(ros_tests test/ros.test test/ros_tests.cpp)
+  target_link_libraries(ros_tests ${PROJECT_NAME} ${Eigen3_LIBRARIES} ${catkin_LIBRARIES})
+endif()
+
+

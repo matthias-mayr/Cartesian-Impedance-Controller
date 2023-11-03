@@ -1,0 +1,3 @@
+<launch>
+  <test test-name="base_tests" pkg="cartesian_impedance_controller" type="base_tests" />
+</launch>

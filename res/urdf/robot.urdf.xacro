@@ -5,6 +5,9 @@
   <material name="blue">
     <color rgba="0 0 0.8 1"/>
   </material>
+  <material name="orange">
+    <color rgba="1.0 0.423529411765 0.0392156862745 1.0"/>
+  </material>
 
 <!-- Connect to world -->
 <link name="world" />
@@ -30,7 +33,7 @@
   </link>
 
   <!-- Joint and link definitions -->
-  <xacro:macro name="rotational_joint" params="prefix parent child xyz rpy">
+  <xacro:macro name="rotational_joint" params="prefix parent child xyz rpy length">
     <joint name="${prefix}" type="revolute">
       <origin xyz="${xyz}" rpy="${rpy}"/>
       <parent link="${parent}"/>
@@ -40,9 +43,17 @@
     </joint>
     
     <link name="${child}">
-      <visual>
+      <visual name="joint">
+        <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
-          <cylinder length="0.05" radius="0.05"/>
+          <sphere radius="0.05"/>
+        </geometry>
+        <material name="orange"/>
+      </visual> 
+      <visual name="link">
+      <origin xyz="0 0 0" rpy="${rpy}" />
+        <geometry>
+          <cylinder length="${length}" radius="0.03"/>
         </geometry>
         <material name="blue"/>
       </visual>   
@@ -55,7 +66,7 @@
     </link>
 
     <!-- Transmission -->
-    <transmission name="${prefix}_trans">
+    <transmission name="${prefix}_transmission">
       <type>transmission_interface/SimpleTransmission</type>
       <joint name="${prefix}">
         <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
@@ -77,13 +88,13 @@
   </xacro:macro>
 
   <!-- Chain of joints and links -->
-  <xacro:rotational_joint prefix="joint1" parent="base_link" child="link1" xyz="0 0 0.333" rpy="0 0 0"/>
-  <xacro:rotational_joint prefix="joint2" parent="link1" child="link2" xyz="0 0 0" rpy="0 -1.5708 0"/>
-  <xacro:rotational_joint prefix="joint3" parent="link2" child="link3" xyz="0 0.316 0" rpy="0 1.5708 0"/>
-  <xacro:rotational_joint prefix="joint4" parent="link3" child="link4" xyz="0.0825 0 0" rpy="0 1.5708 0"/>
-  <xacro:rotational_joint prefix="joint5" parent="link4" child="link5" xyz="-0.0825 0 0.384" rpy="0 -1.5708 0"/>
-  <xacro:rotational_joint prefix="joint6" parent="link5" child="link6" xyz="0 0 0" rpy="0 1.5708 0"/>
-  <xacro:rotational_joint prefix="joint7" parent="link6" child="link7" xyz="0.088 0 0" rpy="0 1.5708 0"/>
+  <xacro:rotational_joint prefix="joint1" parent="base_link" child="link1" xyz="0 0 0.333" rpy="0 0 0" length="0.333"/>
+  <xacro:rotational_joint prefix="joint2" parent="link1" child="link2" xyz="0 0 0" rpy="0 -1.5708 0" length="0"/>
+  <xacro:rotational_joint prefix="joint3" parent="link2" child="link3" xyz="0 0.316 0" rpy="0 1.5708 0" length="0.316"/>
+  <xacro:rotational_joint prefix="joint4" parent="link3" child="link4" xyz="0.0825 0 0" rpy="0 1.5708 0" length="0.0825"/>
+  <xacro:rotational_joint prefix="joint5" parent="link4" child="link5" xyz="-0.0825 0 0.384" rpy="0 -1.5708 0" length="0.3927"/>
+  <xacro:rotational_joint prefix="joint6" parent="link5" child="link6" xyz="0 0 0" rpy="0 1.5708 0" length="0"/>
+  <xacro:rotational_joint prefix="joint7" parent="link6" child="link7" xyz="0.088 0 0" rpy="0 1.5708 0" length="0.088"/>
 
   <!-- Joint connecting the last link and the end-effector -->
   <joint name="tool0_joint" type="fixed">
