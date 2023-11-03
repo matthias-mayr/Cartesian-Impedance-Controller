@@ -21,7 +21,7 @@ CartesianImpedance_trajectory_controller:
     stiffness: 0.1                      # Cartesian and nullspace stiffness
     wrench: 0.1                         # Commanded torque
   verbosity:
-    verbose_print: true                # Enables additional prints
+    verbose_print: false                # Enables additional prints
     state_msgs: true                    # Messages of controller state
     tf_frames: true                     # Extra tf frames
 
