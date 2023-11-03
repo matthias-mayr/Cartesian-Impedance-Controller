@@ -88,13 +88,13 @@
   </xacro:macro>
 
   <!-- Chain of joints and links -->
-  <xacro:rotational_joint prefix="joint1" parent="base_link" child="link1" xyz="0 0 0.333" rpy="0 0 0" length="0.333" x="0" y="0" z="-0.1665" r="0" p="0" yo="0"/>
-  <xacro:rotational_joint prefix="joint2" parent="link1" child="link2" xyz="0 0 0" rpy="0 -1.5708 0" length="0" x="0" y="0" z="0" r="0" p="0" yo="0"/>
-  <xacro:rotational_joint prefix="joint3" parent="link2" child="link3" xyz="0 0.316 0" rpy="0 1.5708 0" length="0.316" x="0" y="-0.158" z="0" r="1.5708" p="0" yo="0"/>
-  <xacro:rotational_joint prefix="joint4" parent="link3" child="link4" xyz="0.0825 0 0" rpy="0 1.5708 0" length="0.0825" x="0" y="0" z="0" r="0" p="0" yo="0"/>
-  <xacro:rotational_joint prefix="joint5" parent="link4" child="link5" xyz="-0.0825 0 0.384" rpy="0 -1.5708 0" length="0.3927" x="-0.192" y="0" z="-0.04125" r="0" p="1.359" yo="0"/>
-  <xacro:rotational_joint prefix="joint6" parent="link5" child="link6" xyz="0 0 0" rpy="0 1.5708 0" length="0" x="0" y="0" z="0" r="0" p="0" yo="0"/>
-  <xacro:rotational_joint prefix="joint7" parent="link6" child="link7" xyz="0.088 0 0" rpy="0 1.5708 0" length="0.088" x="0" y="0" z="0.044" r="0" p="0" yo="0"/>
+  <xacro:rotational_joint prefix="joint1" parent="base_link" child="link1" xyz="0 0 0.35" rpy="0 0 0" length="0.333" x="0" y="0" z="-0.175" r="0" p="0" yo="0"/>
+  <xacro:rotational_joint prefix="joint2" parent="link1" child="link2" xyz="0 0 0" rpy="0 -1.5708 0" length="0.3" x="0" y="0.15" z="0" r="-1.5708" p="0" yo="0"/>
+  <xacro:rotational_joint prefix="joint3" parent="link2" child="link3" xyz="0 0.3 0" rpy="0 1.5708 0" length="0.0" x="0" y="0" z="0" r="-1.5708" p="0" yo="0"/>
+  <xacro:rotational_joint prefix="joint4" parent="link3" child="link4" xyz="0 0 0" rpy="0 1.5708 0" length="0.4" x="0" y="0" z="0.2" r="0" p="0" yo="0"/>
+  <xacro:rotational_joint prefix="joint5" parent="link4" child="link5" xyz="0 0 0.4" rpy="0 -1.5708 0" length="0" x="0" y="0" z="0" r="0" p="1.5708" yo="0"/>
+  <xacro:rotational_joint prefix="joint6" parent="link5" child="link6" xyz="0 0 0" rpy="0 1.5708 0" length="0.1" x="0.05" y="0" z="0" r="0" p="1.5708" yo="0"/>
+  <xacro:rotational_joint prefix="joint7" parent="link6" child="link7" xyz="0.1 0 0" rpy="0 1.5708 0" length="0.107" x="0" y="0" z="0.05035" r="0" p="0" yo="0"/>
 
   <!-- Joint connecting the last link and the end-effector -->
   <joint name="tool0_joint" type="fixed">
