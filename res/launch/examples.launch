@@ -1,0 +1,41 @@
+<launch>
+        <!-- Configuration -->
+        <arg name="gazebo_gui" default="true"/>
+        <arg name="gzclient" default="true"/>
+        <arg name="debug" default="false"/>
+
+        <!-- Load robot_description to parameter server -->
+        <param name="/robot_description"
+        command="$(find xacro)/xacro '$(find cartesian_impedance_controller)/res/urdf/robot.urdf.xacro'" />
+
+        <!-- Robot state publisher -->
+        <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+                <param name="publish_frequency" type="double" value="50.0" />
+                <param name="tf_prefix" type="string" value="" />
+        </node>
+
+        <!-- Joint state publisher -->
+        <node name="joint_state_controller_spawner" pkg="controller_manager" type="spawner" args="joint_state_controller" respawn="false" output="screen"/>
+
+        <!-- Load controller configuration -->
+        <rosparam file="$(find cartesian_impedance_controller)/res/config/example_controller.yaml" command="load"></rosparam>
+
+        <!-- Spawn controllers -->
+        <node name="controller_spawner" pkg="controller_manager" type="spawner"
+                args="CartesianImpedance_trajectory_controller"
+        />
+
+        <!-- Loads the Gazebo world -->
+        <include if="$(arg gzclient)"
+                file="$(find gazebo_ros)/launch/empty_world.launch">
+                <arg name="debug" value="$(arg debug)" />
+                <arg name="gui" value="$(arg gazebo_gui)" />
+                <arg name="paused" value="false"/>
+                <arg name="use_sim_time" value="true"/>
+                <arg name="headless" value="false"/>
+        </include>
+
+        <!-- Run a python script to send a service call to gazebo_ros to spawn a URDF robot -->
+        <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+                args="-urdf -model robot -param robot_description"/>
+</launch>

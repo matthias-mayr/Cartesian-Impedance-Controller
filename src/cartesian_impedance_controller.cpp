@@ -103,6 +103,10 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceController::setNumberOfJoints(size_t n_joints)
   {
+    if (n_joints < 0)
+    {
+      throw std::invalid_argument("Number of joints must be positive");
+    }
     this->n_joints_ = n_joints;
     this->q_ = Eigen::VectorXd::Zero(this->n_joints_);
     this->dq_ = Eigen::VectorXd::Zero(this->n_joints_);
@@ -116,12 +120,25 @@ namespace cartesian_impedance_controller
   {
     for (int i = 0; i < 6; i++)
     {
-      assert(stiffness(i) >= 0.0 && "Stiffness values need to be positive.");
       // Set diagonal values of stiffness matrix
-      this->cartesian_stiffness_target_(i, i) = stiffness(i);
+      if (stiffness(i) < 0.0)
+      {
+        assert(stiffness(i) >= 0 && "Stiffness values need to be positive.");
+        this->cartesian_stiffness_target_(i, i) = 0.0;
+      }
+      else
+      {
+        this->cartesian_stiffness_target_(i, i) = stiffness(i);
+      }
     }
-    assert(stiffness(6) >= 0.0 && "Stiffness values need to be positive.");
-    this->nullspace_stiffness_target_ = stiffness(6);
+    if (stiffness(6) < 0.0) {
+      assert(stiffness(6) >= 0.0 && "Stiffness values need to be positive.");
+      this->nullspace_stiffness_target_ = 0.0;
+    }
+    else
+    {
+      this->nullspace_stiffness_target_ = stiffness(6);
+    }
     if (auto_damping)
     {
       this->applyDamping();
@@ -152,8 +169,9 @@ namespace cartesian_impedance_controller
     {
       if (damping_new(i) < 0)
       {
+        assert(damping_new(i) >= 0 && "Damping factor must not be negative.");
         damping_new(i) = this->damping_factors_(i);
-      }
+      }     
     }
     this->damping_factors_ = damping_new;
     this->applyDamping();
@@ -237,8 +255,8 @@ namespace cartesian_impedance_controller
     updateFilteredWrench();
 
     // Compute error term
-    error_.head(3) << this->position_ - this->position_d_;
-    error_.tail(3) << calculateOrientationError(this->orientation_d_, this->orientation_);
+    this->error_.head(3) << this->position_ - this->position_d_;
+    this->error_.tail(3) << calculateOrientationError(this->orientation_d_, this->orientation_);
 
     // Kinematic pseuoinverse
     Eigen::MatrixXd jacobian_transpose_pinv;
