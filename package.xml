@@ -51,6 +51,7 @@
   <exec_depend>tf</exec_depend>
   <exec_depend>tf_conversions</exec_depend>
   <exec_depend>trajectory_msgs</exec_depend>
+  <exec_depend>yaml-cpp</exec_depend>
 
   <export>
     <!-- Other tools can request additional information be placed here -->
@@ -64,4 +65,5 @@
   <test_depend>geometry_msgs</test_depend>
   <test_depend>std_msgs</test_depend>
   <test_depend>dynamic_reconfigure</test_depend>
+  <test_depend>yaml-cpp</test_depend>
 </package>
