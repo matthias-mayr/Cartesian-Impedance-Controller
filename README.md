@@ -66,7 +66,7 @@ cd catkin_ws
 git clone https://github.com/matthias-mayr/Cartesian-Impedance-Controller src/Cartesian-Impedance-Controller
 src/Cartesian-Impedance-Controller/scripts/install_dependencies.sh
 rosdep install --from-paths src --ignore-src --rosdistro=${ROS_DISTRO} -y
-catkin build # or catkin_make
+catkin_make # or 'catkin build'
 source devel/setup.bash
 ```
 
