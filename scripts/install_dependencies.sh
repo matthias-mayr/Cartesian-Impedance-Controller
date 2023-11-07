@@ -1,5 +1,5 @@
 #!/bin/bash
-
+sudo apt install python3-rosdep
 if [ ! -d "src" ]
 then
     print "This script should be run in a catkin workspace. Exiting."
