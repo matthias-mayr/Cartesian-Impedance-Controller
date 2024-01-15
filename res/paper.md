@@ -59,7 +59,7 @@ A complete implementation with respect to items 1-5 above of compliance for torq
 |    Trajectory Execution    |                     |            |           |     **x**    |
 |     Multi-Robot Support    |                     |            |           |     **x**    |
 
-This implementation offers a base library that can easily be integrated into other software and also implements a `ros_control` controller on top of the base library for the popular ROS middleware. The base library can be used with simulation software such as DART [@Lee2018]. It is utilized in several research papers such as @mayr22skireil, @mayr22priors and @ahmad2022generalizing that explore reinforcement learning as a strategy to accomplish contact-rich industrial robot tasks.
+This implementation offers a base library that can easily be integrated into other software and also implements a `ros_control` controller on top of the base library for the popular ROS middleware. The base library can be used with simulation software such as DART [@Lee2018]. It is used for contact-rich applications such as wiping a surface @mayr23wiping. Furthermore it is utilized in several research papers such as @mayr22skireil, @mayr22priors, @ahmad2022generalizing and @ahmad23generalization that explore reinforcement learning as a strategy to accomplish contact-rich industrial robot tasks.
 
 The Robot Operating System (ROS) is an open-source middleware that is widely used in the robotics community for the development of robotic software systems [@quigley:2009]. Within ROS, an implementation of compliant control is available for position-commanded and velocity-commanded robotic manipulators with the `cartesian_controllers` package [@FDCC]. However, if a robotic manipulator supports direct control of the joint torques, *e.g.*, the `KUKA LBR iiwa` or the `Franka Emika Robot (Panda)`, torque-commanded Cartesian impedance control is often the preferred control strategy, since a stable compliant behavior might not be achieved for position-commanded and velocity-commanded robotic manipulators [@lawrence:1988].
 
@@ -135,7 +135,7 @@ The rate of the commanded torque, $\tau_\mathrm{c}$ in (\autoref{eq:tau_c}), can
 
 # Acknowledgements
 
-We thank Björn Olofsson and Anders Robertsson for the discussions and feedback. Furthermore, we thank Konstantinos Chatzilygeroudis for the permission to use the `RBDyn` wrapper code.
+We thank Björn Olofsson and Anders Robertsson for the discussions and feedback as well as Konstantinos Chatzilygeroudis for the permission to use the `RBDyn` wrapper code. Finally, we thank Oussama Chouman for his contributions during his thesis project.
 
 This work was partially supported by the Wallenberg AI, Autonomous Systems and Software Program (WASP) funded by Knut and Alice Wallenberg Foundation. The authors are members of the ELLIIT Strategic Research Area at Lund University.
 
