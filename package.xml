@@ -5,7 +5,7 @@
     A Cartesian Impedance controller implementation
   </description>
   <maintainer email="matthias.mayr@cs.lth.se">Matthias Mayr</maintainer>
-  <license>BSD</license>
+  <license>BSD-3-Clause</license>
 
   <author>Matthias Mayr</author>
   <author>Oussama Chouman</author>
