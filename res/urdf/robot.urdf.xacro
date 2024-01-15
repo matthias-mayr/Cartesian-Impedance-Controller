@@ -1,0 +1,126 @@
+<?xml version="1.0"?>
+<robot name="robot" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- Properties for materials -->
+  <material name="blue">
+    <color rgba="0 0 0.8 1"/>
+  </material>
+  <material name="orange">
+    <color rgba="1.0 0.423529411765 0.0392156862745 1.0"/>
+  </material>
+
+<!-- Connect to world -->
+<link name="world" />
+<joint name="world_joint" type="fixed">
+        <parent link="world" />
+        <child link = "base_link" />
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+</joint>
+
+  <!-- Base link -->
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <cylinder length="0.1" radius="0.05"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+  </link>
+
+  <!-- Joint and link definitions -->
+  <xacro:macro name="rotational_joint" params="prefix parent child xyz rpy length x y z r p yo">
+    <joint name="${prefix}" type="revolute">
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+      <parent link="${parent}"/>
+      <child link="${child}"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="-2.967" upper="2.967" effort="300" velocity="2.5"/>
+    </joint>
+
+    <link name="${child}">
+      <visual name="joint">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <sphere radius="0.05"/>
+        </geometry>
+        <material name="orange"/>
+      </visual>
+      <visual name="link">
+      <origin xyz="${x} ${y} ${z}" rpy="${r} ${p} ${yo}" />
+        <geometry>
+          <cylinder length="${length}" radius="0.03"/>
+        </geometry>
+        <material name="blue"/>
+      </visual>
+      <inertial>
+        <!-- Generic inertial properties, adjust for accuracy -->
+        <origin xyz="${x} ${y} ${z}" rpy="${r} ${p} ${yo}" />
+        <mass value="1"/>
+        <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+      </inertial>
+    </link>
+
+    <!-- Transmission -->
+    <transmission name="${prefix}_transmission">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${prefix}">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="${prefix}_motor">
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+
+
+     <!-- Gazebo configuration for the joint -->
+    <gazebo reference="${prefix}">
+      <dynamics damping="0.01" friction="0.02"/>
+    </gazebo>
+
+    <gazebo reference="${child}">
+        <turnGravityOff>true</turnGravityOff>
+    </gazebo>
+  </xacro:macro>
+
+  <!-- Chain of joints and links -->
+  <xacro:rotational_joint prefix="joint1" parent="base_link" child="link1" xyz="0 0 0.35" rpy="0 0 0" length="0.333" x="0" y="0" z="-0.175" r="0" p="0" yo="0"/>
+  <xacro:rotational_joint prefix="joint2" parent="link1" child="link2" xyz="0 0 0" rpy="0 -1.5708 0" length="0.3" x="0" y="0.15" z="0" r="-1.5708" p="0" yo="0"/>
+  <xacro:rotational_joint prefix="joint3" parent="link2" child="link3" xyz="0 0.3 0" rpy="0 1.5708 0" length="0.0" x="0" y="0" z="0" r="-1.5708" p="0" yo="0"/>
+  <xacro:rotational_joint prefix="joint4" parent="link3" child="link4" xyz="0 0 0" rpy="0 1.5708 0" length="0.4" x="0" y="0" z="0.2" r="0" p="0" yo="0"/>
+  <xacro:rotational_joint prefix="joint5" parent="link4" child="link5" xyz="0 0 0.4" rpy="0 -1.5708 0" length="0" x="0" y="0" z="0" r="0" p="1.5708" yo="0"/>
+  <xacro:rotational_joint prefix="joint6" parent="link5" child="link6" xyz="0 0 0" rpy="0 1.5708 0" length="0.1" x="0.05" y="0" z="0" r="0" p="1.5708" yo="0"/>
+  <xacro:rotational_joint prefix="joint7" parent="link6" child="link7" xyz="0.1 0 0" rpy="0 1.5708 0" length="0.107" x="0" y="0" z="0.05035" r="0" p="0" yo="0"/>
+
+  <!-- Joint connecting the last link and the end-effector -->
+  <joint name="tool0_joint" type="fixed">
+    <parent link="link7"/>
+    <child link="tool0"/>
+    <origin xyz="0 0 0.107" rpy="0 0 0"/>
+  </joint>
+
+  <!-- End-effector link -->
+  <link name="tool0">
+    <visual>
+      <geometry>
+        <sphere radius="0.05"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+  </link>
+
+
+
+  <!-- Gazebo ROS Control plugin -->
+        <gazebo>
+                <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so" />
+        </gazebo>
+
+
+
+</robot>
+

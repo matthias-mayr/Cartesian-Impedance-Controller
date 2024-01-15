@@ -73,7 +73,7 @@ namespace cartesian_impedance_controller
     * \param[in] r_z Rotational damping z
     * \param[in] n   Nullspace damping
     */
-    void setDamping(double d_x, double d_y, double d_z, double d_a, double d_b, double d_c, double d_n);
+    void setDampingFactors(double d_x, double d_y, double d_z, double d_a, double d_b, double d_c, double d_n);
 
     /*! \brief Sets the desired end-effector pose
     *
@@ -206,12 +206,17 @@ namespace cartesian_impedance_controller
     double nullspace_damping_{0.0};           //!< Current nullspace damping
     double nullspace_damping_target_{0.0};    //!< Nullspace damping target
 
+    Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_{Eigen::Matrix<double, 6, 6>::Identity()}; //!< Cartesian stiffness target
+    Eigen::Matrix<double, 6, 6> cartesian_damping_target_{Eigen::Matrix<double, 6, 6>::Identity()};   //!< Cartesian damping target
+    Eigen::Matrix<double, 7, 1> damping_factors_{Eigen::Matrix<double, 7, 1>::Ones()};                //!< Damping factors
+
     Eigen::VectorXd q_;   //!< Joint positions
     Eigen::VectorXd dq_;  //!< Joint velocities
 
     Eigen::MatrixXd jacobian_; //!< Jacobian. Row format: 3 translations, 3 rotation
 
     // End Effector
+    Eigen::Matrix<double, 6, 1> error_; //!< Calculate pose error
     Eigen::Vector3d position_{Eigen::Vector3d::Zero()};           //!< Current end-effector position
     Eigen::Vector3d position_d_{Eigen::Vector3d::Zero()};         //!< Current end-effector reference position
     Eigen::Vector3d position_d_target_{Eigen::Vector3d::Zero()};  //!< End-effector target position
@@ -219,6 +224,10 @@ namespace cartesian_impedance_controller
     Eigen::Quaterniond orientation_{Eigen::Quaterniond::Identity()};          //!< Current end-effector orientation
     Eigen::Quaterniond orientation_d_{Eigen::Quaterniond::Identity()};        //!< Current end-effector target orientation
     Eigen::Quaterniond orientation_d_target_{Eigen::Quaterniond::Identity()}; //!< End-effector orientation target
+
+    //  External applied forces
+    Eigen::Matrix<double, 6, 1> cartesian_wrench_{Eigen::Matrix<double, 6, 1>::Zero()};         //!< Current Cartesian wrench
+    Eigen::Matrix<double, 6, 1> cartesian_wrench_target_{Eigen::Matrix<double, 6, 1>::Zero()};  //!< Cartesian wrench target
 
     Eigen::VectorXd tau_c_; //!< Last commanded torques
 
@@ -273,16 +282,6 @@ namespace cartesian_impedance_controller
     /*! \brief Adds a percental filtering effect to the applied Cartesian wrench
     */
     void updateFilteredWrench();
-
-    Eigen::Matrix<double, 6, 1> error_; //!< Calculate pose error
-
-    Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_{Eigen::Matrix<double, 6, 6>::Identity()}; //!< Cartesian stiffness target
-    Eigen::Matrix<double, 6, 6> cartesian_damping_target_{Eigen::Matrix<double, 6, 6>::Identity()};   //!< Cartesian damping target
-    Eigen::Matrix<double, 7, 1> damping_factors_{Eigen::Matrix<double, 7, 1>::Ones()};                //!< Damping factors
-
-    //  External applied forces
-    Eigen::Matrix<double, 6, 1> cartesian_wrench_{Eigen::Matrix<double, 6, 1>::Zero()};         //!< Current Cartesian wrench
-    Eigen::Matrix<double, 6, 1> cartesian_wrench_target_{Eigen::Matrix<double, 6, 1>::Zero()};  //!< Cartesian wrench target
   };
 
 } // namespace cartesian_impedance_controller
