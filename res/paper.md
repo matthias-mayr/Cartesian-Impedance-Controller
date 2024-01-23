@@ -34,7 +34,7 @@ In this package, we provide a C++ implementation of a controller that allows col
 2. To allow for joint compliance in the nullspace of task-frame coordinates; and
 3. To be able to apply desired forces and torques to their environments, e.g., for direct force control.
 
-This package can be used in any torque-controlled robotic manipulator. Its implementation in Robot Operating System (ROS) integrates it into `ros_control` [@ros_control] and can automatically utilize the URDF description of the robot's geometry.
+This package can be used in any torque-controlled robotic manipulator. Its implementation in Robot Operating System (ROS) integrates it into `ros_control` [@ros_control] and can automatically utilize the Unified Robot Description Format (URDF) description of the robot's geometry.
 
 # Statement of Need
 Modern robotics is moving more and more past the traditional robot systems that have hard-coded paths and stiff manipulators. Many use cases require the robots to work in semi-structured environments. These environments impose uncertainties that could cause collisions. Furthermore, many advanced assembly, manufacturing, and household scenarios such as insertions or wiping motions require the robot to excert a controlled force on the environment. Finally, the robot workspace is becoming increasingly shared with human workers to leverage both agents and allow them to complement each other.
