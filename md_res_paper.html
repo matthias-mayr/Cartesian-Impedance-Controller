@@ -37,22 +37,22 @@ $(function() {
 <p>A Cartesian impedance controller is a type of control strategy that is used in robotics to regulate the motion of robot manipulators. This type of controller is designed to provide a robot with the ability to interact with its environment in a stable and compliant manner. Impedance control increases the safety in contact-rich environments by establishing a mass-spring-damper relationship between the external forces acting on the robot and the variation from its reference defined by a set of coordinates that describe the motion of a robot. As a consequence, the controlled robot behaves in a compliant way with respect to its external forces, which has the added benefit of allowing a human operator to interact with the robot, such as manually guiding it.</p>
 <p>In this package, we provide a C++ implementation of a controller that allows collaborative robots:</p>
 <ol type="1">
-<li>To achieve compliance in its Cartesian task-frame coordinates.</li>
-<li>To allow for joint compliance in the nullspace of its task-frame coordinates.</li>
-<li>To be able to apply desired forces and torques to the environment of the robot, <em>e.g.</em>, for direct force control.</li>
+<li>To achieve compliance in Cartesian task-frame coordinates;</li>
+<li>To allow for joint compliance in the nullspace of task-frame coordinates; and</li>
+<li>To be able to apply desired forces and torques to their environments, e.g., for direct force control.</li>
 </ol>
-<p>This package can be used in any torque-controlled robotic manipulator. Its implementation in Robot Operating System (ROS) integrates it into <code>ros_control</code> [] and can automatically utilize the URDF description of the robot's geometry.</p>
+<p>This package can be used in any torque-controlled robotic manipulator. Its implementation in Robot Operating System (ROS) integrates it into <code>ros_control</code> [] and can automatically utilize the Unified Robot Description Format (URDF) description of the robot's geometry.</p>
 <h1>Statement of Need</h1>
-<p>Modern robotics is moving more and more past the traditional robot systems that have hard-coded paths and stiff manipulators. Many use-cases require the robots to work in semi-structured environments. These environments impose uncertainties that could cause collisions. Furthermore, many advanced assembly, manufacturing and household scenarios such as insertions or wiping motions require the robot to excert a controlled force on the environment. Finally, the robot workspace is becoming increasingly shared with human workers in order to leverage both agents and allow them to complement each other.</p>
+<p>Modern robotics is moving more and more past the traditional robot systems that have hard-coded paths and stiff manipulators. Many use cases require the robots to work in semi-structured environments. These environments impose uncertainties that could cause collisions. Furthermore, many advanced assembly, manufacturing, and household scenarios such as insertions or wiping motions require the robot to excert a controlled force on the environment. Finally, the robot workspace is becoming increasingly shared with human workers to leverage both agents and allow them to complement each other.</p>
 <p>An implementation of compliant control for robotic manipulators is an attractive solution for robots in contact-rich environments. To cover the wide variety of tasks and scenarios, we think that it needs to fulfill the following criteria:</p>
 <ol type="1">
 <li>Dynamically adapt the end-effector reference point.</li>
-<li>Dynamically adjust the robot's impedance (<em>i.e.</em>, its ability to resist or comply with external forces).</li>
-<li>Apply commanded forces and torques (<em>i.e.</em>, a wrench) with the end-effector of the robot.</li>
+<li>Dynamically adjust the robot's impedance (i.e., its ability to resist or comply with external forces).</li>
+<li>Apply commanded forces and torques (i.e., a wrench) with the end-effector of the robot.</li>
 <li>Command a joint configuration and apply it in the nullspace of the Cartesian robotic task.</li>
 <li>Execute joint-space trajectories.</li>
 </ol>
-<p>A complete implementation with respect to items 1-5 above of compliance for torque-commanded robotic manipulators is not available, and the existing solutions <code>franka_ros</code> [] and <code>libfranka</code> [] as well as the <code>KUKA</code> FRI Cartesian impedance controller can only be used for a single type of robotic manipulator:</p>
+<p>A complete implementation with respect to items 1–5 above of compliance for torque-commanded robotic manipulators is not available, and the existing solutions <code>franka_ros</code> [] and <code>libfranka</code> [] as well as the <code>KUKA</code> FRI Cartesian impedance controller can only be used for a single type of robotic manipulator:</p>
 <table class="doxtable">
 <tr>
 <th></th><th align="center">KUKA FRI controller </th><th align="center">franka_ros </th><th align="center">libfranka </th><th align="center"><b>This package</b>  </th></tr>
@@ -71,8 +71,8 @@ $(function() {
 <tr>
 <td>Multi-Robot Support </td><td align="center"></td><td align="center"></td><td align="center"></td><td align="center"><b>x</b> </td></tr>
 </table>
-<p>This implementation offers a base library that can easily be integrated into other software and also implements a <code>ros_control</code> controller on top of the base library for the popular ROS middleware. The base library can be used with simulation software such as DART []. It is used for contact-rich applications such as wiping a surface . Furthermore it is utilized in several research papers such as , ,  and  that explore reinforcement learning as a strategy to accomplish contact-rich industrial robot tasks.</p>
-<p>The Robot Operating System (ROS) is an open-source middleware that is widely used in the robotics community for the development of robotic software systems [:2009]. Within ROS, an implementation of compliant control is available for position-commanded and velocity-commanded robotic manipulators with the <code>cartesian_controllers</code> package []. However, if a robotic manipulator supports direct control of the joint torques, <em>e.g.</em>, the <code>KUKA LBR iiwa</code> or the <code>Franka Emika Robot (Panda)</code>, torque-commanded Cartesian impedance control is often the preferred control strategy, since a stable compliant behavior might not be achieved for position-commanded and velocity-commanded robotic manipulators [:1988].</p>
+<p>This implementation offers a base library that can easily be integrated into other software and also implements a <code>ros_control</code> controller on top of the base library for the popular ROS middleware. The base library can be used with simulation software such as DART []. It is used for contact-rich applications such as wiping a surface . Furthermore it is used in several research papers such as those by ; ; ; and  that explore reinforcement learning as a strategy to accomplish contact-rich industrial robot tasks.</p>
+<p>The Robot Operating System (ROS) is an open-source middleware that is widely used in the robotics community for the development of robotic software systems [:2009]. Within ROS, an implementation of compliant control is available for position-commanded and velocity-commanded robotic manipulators with the <code>cartesian_controllers</code> package []. However, if a robotic manipulator supports direct control of the joint torques, e.g., the <code>KUKA LBR iiwa</code> or the <code>Franka Emika Robot (Panda)</code>, torque-commanded Cartesian impedance control is often the preferred control strategy, since a stable compliant behavior might not be achieved for position-commanded and velocity-commanded robotic manipulators [:1988].</p>
 <h1>Control Implementation</h1>
 <p>The gravity-compensated rigid-body dynamics of the controlled robot can be described, in the joint space of the robot $q {R}^{n}$, as [:2016]: {equation}{eq:rigbod_q} M(q){q} + C(q,</p><div class="dotgraph">
 <div class="caption">
@@ -84,7 +84,7 @@ $(function() {
 <hr size="1"><div style="align: right;">
 <a href="http://wiki.ros.org/workspace">workspace</a><br />
 Author(s): Matthias Mayr, Oussama Chouman, Julian Salt Ducaju</br />
-<small>autogenerated on Mon Jan 15 2024 14:00:08</small>
+<small>autogenerated on Thu Jan 25 2024 20:00:32</small>
 </div>
 </body>
 </html>
