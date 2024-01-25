@@ -1,9 +1,13 @@
 # Cartesian Impedance Controller
-[![CI](https://github.com/matthias-mayr/Cartesian-Impedance-Controller/actions/workflows/build_code.yml/badge.svg?branch=master)](https://github.com/matthias-mayr/Cartesian-Impedance-Controller/actions/workflows/build_code.yml)  [![rosdoc](https://github.com/matthias-mayr/Cartesian-Impedance-Controller/actions/workflows/build_docs.yml/badge.svg)](https://matthias-mayr.github.io/Cartesian-Impedance-Controller/)
+[![CI](https://github.com/matthias-mayr/Cartesian-Impedance-Controller/actions/workflows/build_code.yml/badge.svg?branch=master)](https://github.com/matthias-mayr/Cartesian-Impedance-Controller/actions/workflows/build_code.yml)
+[![rosdoc](https://github.com/matthias-mayr/Cartesian-Impedance-Controller/actions/workflows/build_docs.yml/badge.svg)](https://matthias-mayr.github.io/Cartesian-Impedance-Controller/)
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.05194/status.svg)](https://doi.org/10.21105/joss.05194)
+[![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+
 ## Description
 This project is an implementation of Cartesian impedance control for robotic manipulators. It is a type of control strategy that sets a dynamic relationship between contact forces and the position of a robot arm, making it suitable for collaborative robots. It is particularily useful when the interesting dimensions in the workspace are in the Cartesian space.
 
-The controller is developed using the seven degree-of-freedom (DoF) robot arm `LBR iiwa` by `KUKA AG` and has also been tested with the `Franka Emika Robot (Panda)` both in reality and simulation.  
+The controller is developed using the seven degree-of-freedom (DoF) robot arm `LBR iiwa` by `KUKA AG` and has also been tested with the `Franka Emika Robot (Panda)` both in reality and simulation.
 This controller is used and tested with ROS 1 `melodic` and `noetic`.
 
 The implementation consists of a
@@ -195,7 +199,7 @@ cartesian_damping_factors:
   torque: {x: 1.0, y: 1.0, z: 1.0}
 nullspace_stiffness: 10.0
 nullspace_damping_factor: 0.1
-q_d_nullspace: [0, 0, 0, 0, 0, 0, 0]" 
+q_d_nullspace: [0, 0, 0, 0, 0, 0, 0]"
 ```
 
 `q_d_nullspace` is the nullspace joint configuration, so the joint configuration that should be achieved if the nullspace allows it. Note that the end-effector pose would deviate if the forward kinematics of this joint configuration do not overlap with it.
@@ -273,18 +277,23 @@ The main public code repository is at: https://github.com/matthias-mayr/Cartesia
 Issues, questions and pull requests are welcome. Feel free to contact the main author at `firstname.lastname@cs.lth.se` if you are using this implementation.
 
 ## Citing this Work
-A brief paper about the features and the control theory is under submission at [JOSS](https://joss.theoj.org/). For now there is a [preprint on arXiv](https://arxiv.org/abs/2212.11215).<br>
-If you are using it or interacting with it, we would be happy if you could cite it.
+A brief paper about the features and the control theory is accepted at [JOSS](https://joss.theoj.org/papers/10.21105/joss.05194). 
+If you are using it or interacting with it, we would appreciate a citation:
+```
+Mayr et al., (2024). A C++ Implementation of a Cartesian Impedance Controller for Robotic Manipulators. Journal of Open Source Software, 9(93), 5194, https://doi.org/10.21105/joss.05194
+```
+
 ```bibtex
-@misc{https://doi.org/10.48550/arxiv.2212.11215,
-  doi = {10.48550/ARXIV.2212.11215},
-  url = {https://arxiv.org/abs/2212.11215},
-  author = {Mayr, Matthias and Salt-Ducaju, Julian M.},
-  keywords = {Robotics (cs.RO), FOS: Computer and information sciences, FOS: Computer and information sciences},
-  title = {A C++ Implementation of a Cartesian Impedance Controller for Robotic Manipulators},
-  publisher = {arXiv},
-  year = {2022}, 
-  copyright = {Creative Commons Attribution Share Alike 4.0 International}
+@article{mayr2024cartesian,
+    doi = {10.21105/joss.05194},
+    url = {https://doi.org/10.21105/joss.05194},
+    year = {2024},
+    publisher = {The Open Journal},
+    volume = {9},
+    number = {93},
+    pages = {5194},
+    author = {Matthias Mayr and Julian M. Salt-Ducaju},
+    title = {A C++ Implementation of a Cartesian Impedance Controller for Robotic Manipulators}, journal = {Journal of Open Source Software}
 }
 ```
 
