@@ -75,3 +75,5 @@ build-job:       # This job runs in the build stage, which runs first.
     - catkin config --extend /opt/ros/$ROS_DISTRO
     - catkin build
     - echo "Compile complete."
+    - catkin test
+    - echo "Tests complete."

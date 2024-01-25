@@ -3,7 +3,8 @@
 ## Description
 This project is an implementation of Cartesian impedance control for robotic manipulators. It is a type of control strategy that sets a dynamic relationship between contact forces and the position of a robot arm, making it suitable for collaborative robots. It is particularily useful when the interesting dimensions in the workspace are in the Cartesian space.
 
-The controller is developed using the seven degree-of-freedom (DoF) robot arm `LBR iiwa` by `KUKA AG` and has also been tested `Franka Emika Robot (Panda)` both in reality and simulation.
+The controller is developed using the seven degree-of-freedom (DoF) robot arm `LBR iiwa` by `KUKA AG` and has also been tested with the `Franka Emika Robot (Panda)` both in reality and simulation.  
+This controller is used and tested with ROS 1 `melodic` and `noetic`.
 
 The implementation consists of a
 1. base library that has few dependencies and can e.g. be directly integrated into software such as the DART simulator and a
@@ -26,21 +27,20 @@ http://www.youtube.com/watch?v=Q4aPm4O_9fY
 - Separate base library that can be integrated in non-ROS environments
 - Interface to ROS messages and dynamic_reconfigure for easy runtime configuration
 
-
 ![](./res/flowchart.png)
 
 ## Torques
 
 The torque signal commanded to the joints of the robot is composed by the superposition of three joint-torque signals:
 - The torque calculated for Cartesian impedance control with respect to a Cartesian pose reference in the frame of the EE of the robot (`tau_task`).
-- The torque calculated for joint impedance control with respect to a desired configuration and projected in the null-space of the robot's Jacobian, so it should not affect the Cartesian motion of the robot's end-effector (`tau_ns`).
+- The torque calculated for joint impedance control with respect to a desired configuration and projected in the nullspace of the robot's Jacobian, so it should not affect the Cartesian motion of the robot's end-effector (`tau_ns`).
 - The torque necessary to achieve the desired external force command (`cartesian_wrench`), in the frame of the EE of the robot (`tau_ext`).
 
 ## Limitations
 
 - Joint friction is not accounted for
 - Stiffness and damping values along the Cartesian dimensions are uncoupled
-- No built-in gravity compensation for tools or workpieces (can be achieved by commanded a wrench)
+- No built-in gravity compensation for tools or workpieces (can be achieved by commanding a wrench)
 
 ## Prerequisites
 ### Required
@@ -54,22 +54,23 @@ We use `RBDyn` to calculate forward kinematics and the Jacobian.
 - [mc_rbdyn_urdf](https://github.com/jrl-umi3218/mc_rbdyn_urdf)
 - [SpaceVecAlg](https://github.com/jrl-umi3218/SpaceVecAlg)
 
-The installation steps are automated in `scripts/install_dependencies.sh`:
+The installation steps for the installation of the non-ROS dependencies are automated in `scripts/install_dependencies.sh`.
 
 ## Controller Usage in ROS
 Assuming that there is an [initialized catkin workspace](https://catkin-tools.readthedocs.io/en/latest/quick_start.html#initializing-a-new-workspace) you can clone this repository, install the dependencies and compile the controller.
 
-After cloning this repository in your catkin workspace, execute these commands:
+Here are the steps:
 
 ```bash
 cd catkin_ws
-src/cartesian_impedance_controller/scripts/install_dependencies.sh
+git clone https://github.com/matthias-mayr/Cartesian-Impedance-Controller src/Cartesian-Impedance-Controller
+src/Cartesian-Impedance-Controller/scripts/install_dependencies.sh
 rosdep install --from-paths src --ignore-src --rosdistro=${ROS_DISTRO} -y
-catkin build # or catkin_make
+catkin_make # or 'catkin build'
 source devel/setup.bash
 ```
 
-This allows you to add a controller configuration for the controller type `cartesian_impedance_controller/CartesianImpedanceController`.
+This allows you to add a controller configuration for the controller type `cartesian_impedance_controller/CartesianImpedanceController` in your `ros_control` configuration.
 
 ### Configuration file
 When using the controller it is a good practice to describe the parameters in a `YAML` file and load it. Usually this is already done by your robot setup - e.g. for [iiwa_ros](https://github.com/epfl-lasa/iiwa_ros/) that is [here](https://github.com/epfl-lasa/iiwa_ros/blob/master/iiwa_control/config/iiwa_control.yaml).
@@ -180,7 +181,7 @@ wrench:
 
 #### Cartesian Damping factors
 
-The damping factors can be configured with a `geometry_msgs/WrenchStamped` msg similar to the stiffnesses to the topic `${controller_ns}/set_damping_factors`. Damping factors are in the interval [0.01,1].
+The damping factors can be configured with a `geometry_msgs/WrenchStamped` msg similar to the stiffnesses to the topic `${controller_ns}/set_damping_factors`. Damping factors are in the interval [0.01,2]. These damping factors are additionally applied to the damping rule which is `2*sqrt(stiffness)`.
 
 #### Stiffnesses, damping and nullspace at once
 When also setting the nullspace stiffnes, a custom messages of the type `cartesian_impedance_controller/ControllerConfig` is to be sent to `set_config`:
@@ -189,11 +190,11 @@ When also setting the nullspace stiffnes, a custom messages of the type `cartesi
 rostopic pub --once /${controller_ns}/set_config cartesian_impedance_controller/ControllerConfig "cartesian_stiffness:
   force: {x: 300.0, y: 300.0, z: 300.0}
   torque: {x: 30.0, y: 30.0, z: 30.0}
-cartesian_damping:
-  force: {x: 0.0, y: 0.0, z: 0.0}
-  torque: {x: 0.0, y: 0.0, z: 0.0}
+cartesian_damping_factors:
+  force: {x: 1.0, y: 1.0, z: 1.0}
+  torque: {x: 1.0, y: 1.0, z: 1.0}
 nullspace_stiffness: 10.0
-nullspace_damping: 0.1
+nullspace_damping_factor: 0.1
 q_d_nullspace: [0, 0, 0, 0, 0, 0, 0]" 
 ```
 
@@ -269,7 +270,23 @@ https://matthias-mayr.github.io/Cartesian-Impedance-Controller/
 ## Repository and Contributions
 The main public code repository is at: https://github.com/matthias-mayr/Cartesian-Impedance-Controller
 
-Issues and pull requests are welcome. Feel free to contact the main author at `firstname.lastname@cs.lth.se` if you are using this implementation.
+Issues, questions and pull requests are welcome. Feel free to contact the main author at `firstname.lastname@cs.lth.se` if you are using this implementation.
+
+## Citing this Work
+A brief paper about the features and the control theory is under submission at [JOSS](https://joss.theoj.org/). For now there is a [preprint on arXiv](https://arxiv.org/abs/2212.11215).<br>
+If you are using it or interacting with it, we would be happy if you could cite it.
+```bibtex
+@misc{https://doi.org/10.48550/arxiv.2212.11215,
+  doi = {10.48550/ARXIV.2212.11215},
+  url = {https://arxiv.org/abs/2212.11215},
+  author = {Mayr, Matthias and Salt-Ducaju, Julian M.},
+  keywords = {Robotics (cs.RO), FOS: Computer and information sciences, FOS: Computer and information sciences},
+  title = {A C++ Implementation of a Cartesian Impedance Controller for Robotic Manipulators},
+  publisher = {arXiv},
+  year = {2022}, 
+  copyright = {Creative Commons Attribution Share Alike 4.0 International}
+}
+```
 
 ## Troubleshooting
 ### Compilation - A required package was not found
@@ -289,3 +306,16 @@ cd catkin_ws
 src/cartesian_impedance_controller/scripts/install_dependencies.sh
 rosdep install --from-paths src --ignore-src --rosdistro=${ROS_DISTRO} -y
 ```
+
+### RBDyn Library not found
+
+When starting the controller, this message appears:
+```
+ [ControllerManager::loadController]: Could not load class 'cartesian_impedance_controller/CartesianImpedanceController': Failed to load library /home/matthias/catkin_ws/devel/lib//libcartesian_impedance_controller_ros.so. Make sure that you are calling the PLUGINLIB_EXPORT_CLASS macro in the library code, and that names are consistent between this macro and your XML. Error string: Could not load library (Pocoexception = libRBDyn.so.1: cannot open shared object file: No such file or directory) /gazebo: [ControllerManager::loadController]: Could not load controller 'CartesianImpedance_trajectory_controller' because controller type 'cartesian_impedance_controller/CartesianImpedanceController' does exist.
+ ```
+
+ This happens when a shared library can not be found. They are installed with `scripts/install_dependencies.sh`. The dynamic linker has a cache and we now manually update it by calling `ldconfig` after the installation.
+
+ ### Controller crashes
+
+ Most likely this happens because some parts of the stack like `iiwa_ros` or `RBDyn` were built with `SIMD`/`march=native` being turned on and other parts are not. Everything needs to be built with or without this option in order to have working alignment. This package builds without, because it is otherwise cumbersome for people to ensure that this happens across the whole stack.

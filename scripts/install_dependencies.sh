@@ -1,5 +1,5 @@
 #!/bin/bash
-
+sudo apt install python3-rosdep || sudo apt install python-rosdep
 if [ ! -d "src" ]
 then
     print "This script should be run in a catkin workspace. Exiting."
@@ -41,3 +41,6 @@ make -j
 sudo make install
 
 cd ../..
+
+# Rebuild the library cache
+sudo ldconfig

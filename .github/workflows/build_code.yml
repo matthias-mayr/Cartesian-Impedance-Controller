@@ -1,6 +1,6 @@
 name: CI
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   build-code:
@@ -30,3 +30,9 @@ jobs:
         catkin config --extend /opt/ros/$ROS_DISTRO
         catkin build
         echo "Compile complete."
+    - name: Run tests
+      shell: bash
+      run: |
+        source /opt/ros/$ROS_DISTRO/setup.bash
+        cd catkin_ws
+        catkin test
