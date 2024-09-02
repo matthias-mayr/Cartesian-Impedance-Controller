@@ -96,6 +96,7 @@ CartesianImpedance_trajectory_controller:
   dynamic_reconfigure: true             # Starts dynamic reconfigure server
   handle_trajectories: true             # Accept traj., e.g. from MoveIt
   robot_description: /robot_description # In case of a varying name
+  control_frame: iiwa_link_ee           # The frame to which Stiffness and damping refer to (must belong to the robot body)
   wrench_ee_frame: iiwa_link_ee         # Default frame for wrench commands
   delta_tau_max: 1.0                    # Max. commanded torque diff between steps in Nm
   filtering:                            # Update existing values (0.0 1.0] per s

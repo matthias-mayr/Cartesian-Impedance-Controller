@@ -99,6 +99,7 @@ namespace cartesian_impedance_controller
     nh->getParam("joints", joint_names);
     this->pub_state_.init(*nh, "controller_state", 10);
     this->pub_state_.msg_.header.seq = 0;
+    this->pub_state_.msg_.header.frame_id = this->root_frame_;
     for (size_t i = 0; i < this->n_joints_; i++)
     {
       this->pub_state_.msg_.joint_state.name.push_back(joint_names.at(i));
@@ -162,9 +163,10 @@ namespace cartesian_impedance_controller
 
     // Fetch parameters
     node_handle.param<std::string>("end_effector", this->end_effector_, "iiwa_link_ee");
-    ROS_INFO_STREAM("End effektor link is: " << this->end_effector_);
+    ROS_INFO_STREAM("End effector link is: " << this->end_effector_);
     // Frame for applying commanded Cartesian wrenches
     node_handle.param<std::string>("wrench_ee_frame", this->wrench_ee_frame_, this->end_effector_);
+    ROS_INFO_STREAM("Wrench end effector frame is: " << this->wrench_ee_frame_);
     bool dynamic_reconfigure{true};
     node_handle.param<bool>("dynamic_reconfigure", dynamic_reconfigure, true);
     bool enable_trajectories{true};
@@ -189,6 +191,10 @@ namespace cartesian_impedance_controller
     }
     this->root_frame_ = this->rbdyn_wrapper_.root_link();
     node_handle.setParam("root_frame", this->root_frame_);
+    // The reference frame the stiffness and damping refer to
+    node_handle.param<std::string>("control_frame", this->control_frame_, this->rbdyn_wrapper_.root_link());
+    this->rbdyn_wrapper_.set_control_frame(this->control_frame_);
+    ROS_INFO_STREAM("Control frame is: " << this->control_frame_);
 
     // Initialize base_tools and member variables
     this->setNumberOfJoints(this->joint_handles_.size());
@@ -293,6 +299,14 @@ namespace cartesian_impedance_controller
     }
     getJacobian(this->q_, this->dq_, &this->jacobian_);
     getFk(this->q_, &this->position_, &this->orientation_);
+
+    if (control_frame_.compare(root_frame_) != 0 ) {
+
+      Eigen::Matrix3d R = this->rbdyn_wrapper_.get_R_control_frame();
+      T_control_w_adj_ << R, Eigen::Matrix3d::Zero(), 
+                          Eigen::Matrix3d::Zero(), R;
+
+    }
   }
 
   void CartesianImpedanceControllerRos::controllerConfigCb(const cartesian_impedance_controller::ControllerConfigConstPtr &msg)
@@ -322,17 +336,24 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceControllerRos::referencePoseCb(const geometry_msgs::PoseStampedConstPtr &msg)
   {
-    if (!msg->header.frame_id.empty() && msg->header.frame_id != this->root_frame_)
-    {
-      ROS_WARN_STREAM("Reference poses need to be in the root frame '" << this->root_frame_ << "'. Ignoring.");
-      return;
-    }
+
     Eigen::Vector3d position_d;
     position_d << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
     const Eigen::Quaterniond last_orientation_d_target(this->orientation_d_);
     Eigen::Quaterniond orientation_d;
     orientation_d.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z,
         msg->pose.orientation.w;
+
+    //if empty, consider as wrt root link
+    if  (!msg->header.frame_id.empty() && msg->header.frame_id.compare(this->root_frame_) != 0)
+    {
+      if (!transformPose(&position_d, &orientation_d, msg->header.frame_id, this->root_frame_))
+      {
+        ROS_ERROR("Could not transform Pose. Not applying it.");
+        return;
+      }
+    }
+    
     if (last_orientation_d_target.coeffs().dot(this->orientation_d_.coeffs()) < 0.0)
     {
       this->orientation_d_.coeffs() << -this->orientation_d_.coeffs();
@@ -404,6 +425,33 @@ namespace cartesian_impedance_controller
       tf::Vector3 v_f_rot = tf::quatRotate(transform.getRotation(), v_f);
       tf::Vector3 v_t_rot = tf::quatRotate(transform.getRotation(), v_t);
       *cartesian_wrench << v_f_rot[0], v_f_rot[1], v_f_rot[2], v_t_rot[0], v_t_rot[1], v_t_rot[2];
+      return true;
+    }
+    catch (const tf::TransformException &ex)
+    {
+      ROS_ERROR_THROTTLE(1, "%s", ex.what());
+      return false;
+    }
+  }
+
+  bool CartesianImpedanceControllerRos::transformPose(Eigen::Vector3d *pos, Eigen::Quaterniond *quat,
+                                                        const std::string &from_frame, const std::string &to_frame) const
+  {
+    try
+    {
+      tf::StampedTransform transform;
+      tf_listener_.lookupTransform(to_frame, from_frame, ros::Time(0), transform);
+      tf::Vector3 v_pos(pos->operator()(0), pos->operator()(1), pos->operator()(2));
+      tf::Vector3 v_pos_rot = tf::quatRotate(transform.getRotation(), v_pos);
+      
+      *pos << v_pos_rot[0]+transform.getOrigin().getX(), 
+              v_pos_rot[1]+transform.getOrigin().getY(), 
+              v_pos_rot[2]+transform.getOrigin().getZ();
+
+      Eigen::Quaterniond eig_transform_quat(transform.getRotation().getW(), transform.getRotation().getX(), transform.getRotation().getY(), transform.getRotation().getZ());
+      *quat = quat->inverse() * eig_transform_quat;
+      quat->normalize();
+
       return true;
     }
     catch (const tf::TransformException &ex)
@@ -520,7 +568,7 @@ namespace cartesian_impedance_controller
     if (config.apply_wrench)
     {
       F << config.f_x, config.f_y, config.f_z, config.tau_x, config.tau_y, config.tau_z;
-      if (!transformWrench(&F, this->wrench_ee_frame_, this->root_frame_))
+      if (this->wrench_ee_frame_.compare( this->root_frame_) != 0 && !transformWrench(&F, this->wrench_ee_frame_, this->root_frame_))
       {
         ROS_ERROR("Could not transform wrench. Not applying it.");
         return;

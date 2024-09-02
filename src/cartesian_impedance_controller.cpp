@@ -234,7 +234,8 @@ namespace cartesian_impedance_controller
                                                                           const Eigen::VectorXd &dq,
                                                                           const Eigen::Vector3d &position,
                                                                           Eigen::Quaterniond orientation,
-                                                                          const Eigen::MatrixXd &jacobian)
+                                                                          const Eigen::MatrixXd &jacobian,
+                                                                          const Eigen::Matrix3d &R_control_root)
   {
     // Update controller to the current robot state
     this->q_ = q;
@@ -242,6 +243,8 @@ namespace cartesian_impedance_controller
     this->position_ << position;
     this->orientation_.coeffs() << orientation.coeffs();
     this->jacobian_ << jacobian;
+    T_control_w_adj_ << R_control_root, Eigen::Matrix3d::Zero(), 
+                        Eigen::Matrix3d::Zero(), R_control_root;
 
     return this->calculateCommandedTorques();
   }
@@ -265,7 +268,8 @@ namespace cartesian_impedance_controller
     Eigen::VectorXd tau_task(this->n_joints_), tau_nullspace(this->n_joints_), tau_ext(this->n_joints_);
 
     // Torque calculated for Cartesian impedance control with respect to a Cartesian pose reference in the end, in the frame of the EE of the robot.
-    tau_task << this->jacobian_.transpose() * (-this->cartesian_stiffness_ * this->error_ - this->cartesian_damping_ * (this->jacobian_ * this->dq_));
+    tau_task << this->jacobian_.transpose() * (T_control_w_adj_ * -this->cartesian_stiffness_ * T_control_w_adj_.transpose() * this->error_ 
+                                              - T_control_w_adj_ * this->cartesian_damping_ * T_control_w_adj_.transpose() * (this->jacobian_ * this->dq_));
     // Torque for joint impedance control with respect to a desired configuration and projected in the null-space of the robot's Jacobian, so it should not affect the Cartesian motion of the robot's end-effector.
     tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) - this->jacobian_.transpose() * jacobian_transpose_pinv) *
                          (this->nullspace_stiffness_ * (this->q_d_nullspace_ - this->q_) - this->nullspace_damping_ * this->dq_);

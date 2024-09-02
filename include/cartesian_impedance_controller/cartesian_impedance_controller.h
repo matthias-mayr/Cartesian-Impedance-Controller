@@ -142,7 +142,7 @@ namespace cartesian_impedance_controller
     */
     Eigen::VectorXd calculateCommandedTorques(const Eigen::VectorXd &q, const Eigen::VectorXd &dq,
                                               const Eigen::Vector3d &position, Eigen::Quaterniond orientation,
-                                              const Eigen::MatrixXd &jacobian);
+                                              const Eigen::MatrixXd &jacobian, const Eigen::Matrix3d &R_control_root = Eigen::Matrix3d::Identity());
 
     /*! \brief Get the state of the controller. Updates when "calculateCommandedTorques" is called
     * 
@@ -214,6 +214,8 @@ namespace cartesian_impedance_controller
     Eigen::VectorXd dq_;  //!< Joint velocities
 
     Eigen::MatrixXd jacobian_; //!< Jacobian. Row format: 3 translations, 3 rotation
+
+    Eigen::Matrix<double, 6,6> T_control_w_adj_{Eigen::Matrix<double, 6,6>::Identity()};
 
     // End Effector
     Eigen::Matrix<double, 6, 1> error_; //!< Calculate pose error

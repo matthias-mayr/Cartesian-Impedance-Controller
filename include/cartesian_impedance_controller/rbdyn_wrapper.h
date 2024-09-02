@@ -39,6 +39,9 @@ public:
         return;
       }
     }
+
+    _R_control_root.setIdentity();
+    
     throw std::runtime_error("Index for end effector link " + end_effector + " not found in URDF. Aborting.");
   }
 
@@ -56,6 +59,12 @@ public:
     // // TO-DO: Check if we need this
     rbd::forwardKinematics(rbdyn_urdf.mb, rbdyn_urdf.mbc);
     rbd::forwardVelocity(rbdyn_urdf.mb, rbdyn_urdf.mbc);
+
+    if (_cf_index != 0) { //0 is root link
+      
+      sva::PTransformd tf_control_frame = rbdyn_urdf.mbc.bodyPosW.at(_cf_index);
+      _R_control_root = sva::conversions::toHomogeneous(tf_control_frame).topLeftCorner<3,3>();
+    }
 
     return jac.jacobian(rbdyn_urdf.mb, rbdyn_urdf.mbc);
   }
@@ -113,6 +122,23 @@ public:
     return _rbdyn_urdf.mb.body(0).name();
   }
 
+  Eigen::Matrix3d get_R_control_frame() const {
+    return _R_control_root;
+  }
+
+  void set_control_frame(const std::string& control_frame) {
+
+    for (size_t i = 0; i < _rbdyn_urdf.mb.nrBodies(); i++)
+    {
+      if (_rbdyn_urdf.mb.body(i).name() == control_frame)
+      {
+        _cf_index = i;
+        return;
+      }
+    }
+    throw std::runtime_error("Index for control frame link " + control_frame + " not found in URDF. Aborting.");
+  }
+
 private:
   void _update_urdf_state(mc_rbdyn_urdf::URDFParserResult &rbdyn_urdf, const Eigen::VectorXd &q,
                           const Eigen::VectorXd &dq)
@@ -149,4 +175,6 @@ private:
   mc_rbdyn_urdf::URDFParserResult _rbdyn_urdf;
   std::vector<size_t> _rbd_indices;
   size_t _ef_index;
+  size_t _cf_index;
+  Eigen::Matrix3d _R_control_root;
 };

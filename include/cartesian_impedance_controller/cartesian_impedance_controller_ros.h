@@ -216,6 +216,21 @@ namespace cartesian_impedance_controller
     */
     bool transformWrench(Eigen::Matrix<double, 6, 1> *cartesian_wrench, const std::string &from_frame, const std::string &to_frame) const;
 
+    /*! \brief Transforms the pose (3D vector and quaternion) in a target frame.
+    *
+    * Takes a vector and a quaternion and transforms it to a given coordinate frame. 
+    * E.g. from_frame= "world" , to_frame = "bh_link_ee"
+    * 
+    * @sa referencePoseCb
+    * \param[in] pos Vector representing the linear position
+    * \param[in] quat Quaternion representing the angular position
+    * \param[in] from_frame       Source frame
+    * \param[in] to_frame         Target frame
+    * \return True on success, false on failure.
+    */
+    bool transformPose(Eigen::Vector3d *pos, Eigen::Quaterniond *quat,
+                      const std::string &from_frame, const std::string &to_frame) const;
+
     /*! \brief Verbose printing; publishes ROS messages and tf frames.
      *
      * Always publishes commanded torques.
@@ -284,6 +299,7 @@ namespace cartesian_impedance_controller
     std::string end_effector_;      //!< End-effector link name
     std::string robot_description_; //!< URDF of the robot
     std::string root_frame_;        //!< Base frame obtained from URDF
+    std::string control_frame_;     //!< Frame wrt impedance is referred
 
     Eigen::VectorXd tau_m_;         //!< Measured joint torques
 
