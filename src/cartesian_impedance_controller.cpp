@@ -1,4 +1,4 @@
-#include <cartesian_impedance_controller/cartesian_impedance_controller.h>
+#include <cartesian_impedance_controller/cartesian_impedance_controller.hpp>
 #include "pseudo_inversion.h"
 
 #include <Eigen/Core>

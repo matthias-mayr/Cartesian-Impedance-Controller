@@ -1,0 +1,211 @@
+cartesian_impedance_controller:
+  delta_tau_max:
+    type: double
+    default_value: 100.0
+    description: "Maximum allowed change in joint torques."
+    validation:
+      bounds<>: [0.0, 100.0]
+  wrench_ee_frame:
+    type: string
+    default_value: ""
+    description: "Name of the end effector frame for wrench application"
+
+  update_frequency:
+    type: double
+    default_value: 500.0
+    description: "Controller update frequency in Hz."
+    validation:
+      bounds<>: [200.0, 1000.0]
+
+  end_effector:
+    type: string
+    default_value: "panda_hand"
+    description: "Name of the end effector link."
+
+
+  damping:
+    translation:
+      x:
+        type: double
+        default_value: 20.0
+        description: "Translational damping factor for the x-axis."
+        validation:
+          bounds<>: [0.0, 20.0]
+      y:
+        type: double
+        default_value: 20.0
+        description: "Translational damping factor for the y-axis."
+        validation:
+          bounds<>: [0.0, 20.0]
+      z:
+        type: double
+        default_value: 20.0
+        description: "Translational damping factor for the z-axis."
+        validation:
+          bounds<>: [0.0, 20.0]
+
+    rotation:
+      x:
+        type: double
+        default_value: 20.0
+        description: "Rotational damping factor around the x-axis."
+        validation:
+          bounds<>: [0.0, 20.0]
+      y:
+        type: double
+        default_value: 20.0
+        description: "Rotational damping factor around the y-axis."
+        validation:
+          bounds<>: [0.0, 20.0]
+      z:
+        type: double
+        default_value: 20.0
+        description: "Rotational damping factor around the z-axis."
+        validation:
+          bounds<>: [0.0, 20.0]
+
+    nullspace_damping:
+      type: double
+      default_value: 10.0
+      description: "Damping factor for the nullspace."
+      validation:
+        bounds<>: [0.0, 100.0]
+
+    update_damping_factors:
+      type: bool
+      default_value: false
+      description: "Flag to update damping factors dynamically at runtime."
+
+  stiffness:
+    translation:
+      x:
+        type: double
+        default_value: 600.0
+        description: "Translational stiffness for the x-axis."
+        validation:
+          bounds<>: [0.0, 2000.0]
+      y:
+        type: double
+        default_value: 600.0
+        description: "Translational stiffness for the y-axis."
+        validation:
+          bounds<>: [0.0, 2000.0]
+      z:
+        type: double
+        default_value: 600.0
+        description: "Translational stiffness for the z-axis."
+        validation:
+          bounds<>: [0.0, 2000.0]
+
+    rotation:
+      x:
+        type: double
+        default_value: 100.0
+        description: "Rotational stiffness around the x-axis."
+        validation:
+          bounds<>: [0.0, 300.0]
+      y:
+        type: double
+        default_value: 100.0
+        description: "Rotational stiffness around the y-axis."
+        validation:
+          bounds<>: [0.0, 300.0]
+      z:
+        type: double
+        default_value: 100.0
+        description: "Rotational stiffness around the z-axis."
+        validation:
+          bounds<>: [0.0, 300.0]
+
+    nullspace_stiffness:
+      type: double
+      default_value: 10.0
+      description: "Stiffness factor for the nullspace."
+      validation:
+        bounds<>: [0.0, 100.0]
+
+    update_stiffness:
+      type: bool
+      default_value: false
+      description: "Flag to update stiffness factors dynamically at runtime."
+
+  wrench:
+    apply_wrench:
+      type: bool
+      default_value: false
+      description: "Flag to apply a Cartesian wrench to the end effector."
+
+    force_x:
+      type: double
+      default_value: 0.0
+      description: "Force in the x-axis direction (End Effector Frame)."
+      validation:
+        bounds<>: [-30.0, 30.0]
+    force_y:
+      type: double
+      default_value: 0.0
+      description: "Force in the y-axis direction (End Effector Frame)."
+      validation:
+        bounds<>: [-30.0, 30.0]
+    force_z:
+      type: double
+      default_value: 0.0
+      description: "Force in the z-axis direction (End Effector Frame)."
+      validation:
+        bounds<>: [-30.0, 30.0]
+
+    torque_x:
+      type: double
+      default_value: 0.0
+      description: "Torque around the x-axis (End Effector Frame)."
+      validation:
+        bounds<>: [-10.0, 10.0]
+    torque_y:
+      type: double
+      default_value: 0.0
+      description: "Torque around the y-axis (End Effector Frame)."
+      validation:
+        bounds<>: [-10.0, 10.0]
+    torque_z:
+      type: double
+      default_value: 0.0
+      description: "Torque around the z-axis (End Effector Frame)."
+      validation:
+        bounds<>: [-10.0, 10.0]
+
+
+  filtering:
+    nullspace:
+      type: double
+      default_value: 1.0
+      description: "Filtering factor for nullspace."
+      validation:
+        bounds<>: [0.0, 1.0]
+    stiffness:
+      type: double
+      default_value: 1.0
+      description: "Filtering factor for stiffness."
+      validation:
+        bounds<>: [0.0, 1.0]
+    pose:
+      type: double
+      default_value: 1.0
+      description: "Filtering factor for pose."
+      validation:
+        bounds<>: [0.0, 1.0]
+    wrench:
+      type: double
+      default_value: 1.0
+      description: "Filtering factor for wrench."
+      validation:
+        bounds<>: [0.0, 1.0]
+    
+  joints: {
+    type: string_array,
+    default_value: [],
+    description: "Joint names to control and listen to",
+    read_only: true,
+    validation: {
+      unique<>: null,
+    }
+  }
