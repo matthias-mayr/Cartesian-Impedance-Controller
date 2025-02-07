@@ -1,119 +1,97 @@
-cmake_minimum_required(VERSION 2.8.3)
-cmake_policy(SET CMP0048 NEW) # Version not in project() command
+cmake_minimum_required(VERSION 3.16)
 project(cartesian_impedance_controller)
 
-find_package(Boost 1.49 REQUIRED)
-find_package(PkgConfig)
-
-# Find RBDyn library and dependencies
-pkg_search_module(Eigen3 REQUIRED eigen3)
-pkg_check_modules(mc_rbdyn_urdf REQUIRED mc_rbdyn_urdf)
-pkg_check_modules(RBDyn REQUIRED RBDyn)
-pkg_check_modules(SpaceVecAlg REQUIRED SpaceVecAlg)
-pkg_check_modules(tinyxml2 REQUIRED tinyxml2)
-
-find_package(catkin REQUIRED COMPONENTS
-  actionlib
-  actionlib_msgs
-  control_msgs
-  controller_interface
-  controller_manager
-  dynamic_reconfigure
-  eigen_conversions
-  geometry_msgs
-  hardware_interface
-  message_generation
-  pluginlib
-  realtime_tools
-  roscpp
-  sensor_msgs
-  std_msgs
-  tf
-  tf_conversions
-  trajectory_msgs
-)
-
-add_message_files(FILES
-  ControllerConfig.msg
-  ControllerState.msg
-)
-
-generate_messages(
-DEPENDENCIES
-  std_msgs
-  geometry_msgs
-  sensor_msgs
-)
-
-generate_dynamic_reconfigure_options(
-  cfg/damping.cfg
-  cfg/stiffness.cfg
-  cfg/wrench.cfg
-)
-
-catkin_package(
-  INCLUDE_DIRS include
-  CATKIN_DEPENDS actionlib actionlib_msgs control_msgs controller_interface controller_manager dynamic_reconfigure eigen_conversions geometry_msgs hardware_interface message_runtime pluginlib realtime_tools roscpp sensor_msgs std_msgs tf tf_conversions trajectory_msgs
-  DEPENDS Boost Eigen3 mc_rbdyn_urdf RBDyn SpaceVecAlg tinyxml2
-  LIBRARIES ${PROJECT_NAME} ${PROJECT_NAME}_ros
-)
-
-###########
-## Build ##
-###########
-
-# Sets build type to "Release" in case no build type has not been set before. This is necessary to run this controller at 1 kHz.
-# On our RT system with an i5 11th Gen processor this reduces update evaluations from about 800 to 300 microseconds
-if(NOT CMAKE_BUILD_TYPE) 
-    set(CMAKE_BUILD_TYPE Release)
-endif(NOT CMAKE_BUILD_TYPE)
-
-# Core library
-add_library(${PROJECT_NAME} src/cartesian_impedance_controller.cpp)
-add_dependencies(
-  ${PROJECT_NAME}
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-)
-
-target_compile_options(${PROJECT_NAME} PUBLIC -std=c++14)
-target_include_directories(${PROJECT_NAME} PUBLIC include ${catkin_INCLUDE_DIRS} ${Eigen3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${SpaceVecAlg_INCLUDE_DIRS} ${RBDyn_INCLUDE_DIRS} ${mc_rbdyn_urdf_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PUBLIC ${Eigen3_LIBRARIES})
-
-# ROS Integration
-add_library(${PROJECT_NAME}_ros src/cartesian_impedance_controller_ros.cpp)
-add_dependencies(
-  ${PROJECT_NAME}_ros
-  ${${PROJECT_NAME}_ros_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-  ${PROJECT_NAME}_gencfg
-)
-
-target_compile_options(${PROJECT_NAME}_ros PUBLIC -std=c++14)
-target_include_directories(${PROJECT_NAME}_ros PUBLIC include ${catkin_INCLUDE_DIRS} ${Eigen3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${tinyxml2_INCLUDE_DIRS} ${SpaceVecAlg_INCLUDE_DIRS} ${RBDyn_INCLUDE_DIRS} ${mc_rbdyn_urdf_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME}_ros PUBLIC ${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${tinyxml2_LIBRARIES} RBDyn mc_rbdyn_urdf ${Eigen3_LIBRARIES})
-
-
-## Install project namespaced headers
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE)
-
-## Testing
-if (CATKIN_ENABLE_TESTING)
-  # Base library tests
-	find_package(rostest REQUIRED)
-  add_rostest_gtest(base_tests test/base.test test/base_tests.cpp)
-  target_link_libraries(base_tests ${PROJECT_NAME} ${Eigen3_LIBRARIES} ${catkin_LIBRARIES})
-
-  # ROS basic tests
-  add_rostest_gtest(ros_tests test/ros.test test/ros_tests.cpp)
-  target_link_libraries(ros_tests ${PROJECT_NAME} ${Eigen3_LIBRARIES} ${catkin_LIBRARIES})
-
-  # ROS functionality tests
-  add_rostest_gtest(ros_func_tests test/ros_func.test test/ros_func_tests.cpp)
-  target_link_libraries(ros_func_tests ${PROJECT_NAME} ${Eigen3_LIBRARIES} ${catkin_LIBRARIES})
+# Compiler warnings (for GNU and Clang)
+if(CMAKE_CXX_COMPILER_ID MATCHES "(GNU|Clang)")
+  add_compile_options(
+    -Wall -Wextra -Wpedantic
+    -Werror=conversion -Werror=unused-but-set-variable
+    -Werror=return-type -Werror=shadow -Werror=format
+    -Werror=range-loop-construct -Werror=missing-braces
+  )
 endif()
 
+# Export all symbols on Windows
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
+set(THIS_PACKAGE_INCLUDE_DEPENDS
+  rclcpp
+  control_msgs
+  sensor_msgs
+  control_toolbox
+  controller_interface
+  geometry_msgs
+  joint_trajectory_controller
+  hardware_interface
+  kinematics_interface
+  rclcpp_lifecycle
+  rclcpp_action
+  realtime_tools
+  tf2
+  tf2_eigen
+  tf2_geometry_msgs
+  tf2_kdl
+  tf2_ros
+  trajectory_msgs
+  generate_parameter_library
+  urdf
+  controller_manager
+  ros2_control
+)
+
+find_package(ament_cmake REQUIRED)
+find_package(controller_interface REQUIRED)
+find_package(controller_manager REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+find_package(RBDyn REQUIRED)
+find_package(mc_rbdyn_urdf REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(pluginlib REQUIRED)
+foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
+  find_package(${Dependency} REQUIRED)
+endforeach()
+
+generate_parameter_library(cartesian_impedance_controller_parameters
+  src/cartesian_impedance_controller_parameters.yaml
+)
+
+add_library(cartesian_impedance_controller SHARED
+  src/cartesian_impedance_controller_ros.cpp
+  src/cartesian_impedance_controller.cpp
+)
+
+target_compile_features(cartesian_impedance_controller PUBLIC cxx_std_17)
+
+target_include_directories(cartesian_impedance_controller PUBLIC
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include/cartesian_impedance_controller>
+)
+
+target_link_libraries(cartesian_impedance_controller PUBLIC
+  cartesian_impedance_controller_parameters
+  Eigen3::Eigen
+  RBDyn
+  mc_rbdyn_urdf::mc_rbdyn_urdf
+)
+
+pluginlib_export_plugin_description_file(controller_interface cartesian_impedance_controller_plugin.xml)
+
+ament_target_dependencies(cartesian_impedance_controller PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS})
+
+install(
+  DIRECTORY include/
+  DESTINATION include/cartesian_impedance_controller
+)
+
+install(
+  TARGETS cartesian_impedance_controller cartesian_impedance_controller_parameters
+  EXPORT export_cartesian_impedance_controller
+  RUNTIME DESTINATION bin
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+)
+
+ament_export_targets(export_cartesian_impedance_controller HAS_LIBRARY_TARGET)
+ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})
+
+ament_package()

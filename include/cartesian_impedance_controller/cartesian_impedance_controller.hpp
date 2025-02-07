@@ -26,20 +26,20 @@ namespace cartesian_impedance_controller
     void initNullspaceConfig(const Eigen::VectorXd &q_d_nullspace_target);
 
     /*! \brief Sets the number of joints
-    * 
+    *
     * \param[in] n_joints Number of joints
     */
     void setNumberOfJoints(size_t n_joints);
 
     /*! \brief Set the desired diagonal stiffnessess + nullspace stiffness
-    * 
+    *
     * \param[in] stiffness Stiffnesses: position, orientation, nullspace
     * \param[in] auto_damping Apply automatic damping
     */
     void setStiffness(const Eigen::Matrix<double, 7, 1> &stiffness, bool auto_damping = true);
 
     /*! \brief Sets the Cartesian and nullspace stiffnesses
-    * 
+    *
     * \param[in] t_x Translational stiffness x
     * \param[in] t_y Translational stiffness y
     * \param[in] t_z Translational stiffness z
@@ -52,7 +52,7 @@ namespace cartesian_impedance_controller
     void setStiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z, double n, bool auto_damping = true);
 
     /*! \brief Sets the Cartesian and nullspace stiffnesses
-    * 
+    *
     * \param[in] t_x Translational stiffness x
     * \param[in] t_y Translational stiffness y
     * \param[in] t_z Translational stiffness z
@@ -64,7 +64,7 @@ namespace cartesian_impedance_controller
     void setStiffness(double t_x, double t_y, double t_z, double r_x, double r_y, double r_z, bool auto_damping = true);
 
     /*! \brief Set the desired damping factors
-    * 
+    *
     * \param[in] t_x Translational damping x
     * \param[in] t_y Translational damping y
     * \param[in] t_z Translational damping z
@@ -103,14 +103,14 @@ namespace cartesian_impedance_controller
                       double filter_params_wrench);
 
     /*! \brief Maximum commanded torque change per time step
-    * 
+    *
     * Prevents too large changes in the commanded torques by using saturation.
     * \param[in] d Torque change per timestep
     */
     void setMaxTorqueDelta(double d);
 
     /*! \brief Sets maximum commanded torque change per time step and the update frequency
-    * 
+    *
     * Prevents too large changes in the commanded torques by using saturation.
     * \param[in] d Torque change per timestep
     * \param[in] update_frequency Update frequency
@@ -118,21 +118,21 @@ namespace cartesian_impedance_controller
     void setMaxTorqueDelta(double d, double update_frequency);
 
     /*! \brief Apply a virtual Cartesian wrench in the root frame (often "world")
-    * 
+    *
     * Prevents too large changes in the commanded torques by using saturation.
     * \param[in] cartesian_wrench Wrench to apply
     */
     void applyWrench(const Eigen::Matrix<double, 6, 1> &cartesian_wrench);
 
     /*! \brief Returns the commanded torques. Performs a filtering step.
-    * 
+    *
     * This function assumes that the internal states have already been updates. The it utilizes the control rules to calculate commands.
     * \return Eigen Vector of the commanded torques
     */
     Eigen::VectorXd calculateCommandedTorques();
 
     /*! \brief Returns the commanded torques. Performs a filtering step and updates internal state.
-    * 
+    *
     * This function utilizes the control rules.
     * \param[in] q Joint positions
     * \param[in] dq Joint velocities
@@ -145,7 +145,7 @@ namespace cartesian_impedance_controller
                                               const Eigen::MatrixXd &jacobian);
 
     /*! \brief Get the state of the controller. Updates when "calculateCommandedTorques" is called
-    * 
+    *
     * \param[out] q Joint positions
     * \param[out] dq Joint velocities
     * \param[out] position End-effector position
@@ -163,7 +163,7 @@ namespace cartesian_impedance_controller
                   Eigen::VectorXd *q_d_nullspace, Eigen::Matrix<double, 6, 6> *cartesian_damping) const;
 
     /*! \brief Get the state of the controller. Updates when "calculateCommandedTorques" is called
-    * 
+    *
     * \param[out] position_d End-effector reference position
     * \param[out] orientation_d End-effector reference orientation
     * \param[out] cartesian_stiffness Cartesian stiffness
@@ -176,19 +176,19 @@ namespace cartesian_impedance_controller
                   Eigen::VectorXd *q_d_nullspace, Eigen::Matrix<double, 6, 6> *cartesian_damping) const;
 
     /*! \brief Get the currently applied commands
-    * 
+    *
     * \return Eigen Vector with commands
     */
     Eigen::VectorXd getLastCommands() const;
 
     /*! \brief Get the currently applied Cartesian wrench
-    * 
+    *
     * \return Eigen Vector with the applied wrench
     */
     Eigen::Matrix<double, 6, 1> getAppliedWrench() const;
 
     /*! \brief Get the current pose error
-    * 
+    *
     * \return Eigen Vector with the pose error for translation and rotation
     */
     Eigen::Matrix<double, 6, 1> getPoseError() const;
@@ -196,15 +196,16 @@ namespace cartesian_impedance_controller
   protected:
     size_t n_joints_{7}; //!< Number of joints to control
 
-    Eigen::Matrix<double, 6, 6> cartesian_stiffness_{Eigen::Matrix<double, 6, 6>::Identity()};  //!< Cartesian stiffness matrix
-    Eigen::Matrix<double, 6, 6> cartesian_damping_{Eigen::Matrix<double, 6, 6>::Identity()};    //!< Cartesian damping matrix
-
+    // Eigen::Matrix<double, 6, 6> cartesian_stiffness_{Eigen::Matrix<double, 6, 6>::Identity()};  //!< Cartesian stiffness matrix
+    // Eigen::Matrix<double, 6, 6> cartesian_damping_{Eigen::Matrix<double, 6, 6>::Identity()};    //!< Cartesian damping matrix
+Eigen::Matrix<double, 6, 6> cartesian_stiffness_{Eigen::Matrix<double, 6, 6>::Identity()};
+Eigen::Matrix<double, 6, 6> cartesian_damping_{Eigen::Matrix<double, 6, 6>::Identity()};
     Eigen::VectorXd q_d_nullspace_;           //!< Current nullspace reference pose
     Eigen::VectorXd q_d_nullspace_target_;    //!< Nullspace reference target pose
-    double nullspace_stiffness_{0.0};         //!< Current nullspace stiffness
-    double nullspace_stiffness_target_{0.0};  //!< Nullspace stiffness target
-    double nullspace_damping_{0.0};           //!< Current nullspace damping
-    double nullspace_damping_target_{0.0};    //!< Nullspace damping target
+    double nullspace_stiffness_{1.0};         //!< Current nullspace stiffness
+    double nullspace_stiffness_target_{1.0};  //!< Nullspace stiffness target
+    double nullspace_damping_{1.0};           //!< Current nullspace damping
+    double nullspace_damping_target_{1.0};    //!< Nullspace damping target
 
     Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_{Eigen::Matrix<double, 6, 6>::Identity()}; //!< Cartesian stiffness target
     Eigen::Matrix<double, 6, 6> cartesian_damping_target_{Eigen::Matrix<double, 6, 6>::Identity()};   //!< Cartesian damping target
@@ -237,7 +238,7 @@ namespace cartesian_impedance_controller
     double filter_params_pose_{1.0};              //!< Reference pose filtering
     double filter_params_wrench_{1.0};            //!< Commanded wrench filtering
 
-    double delta_tau_max_{1.0};                   //!< Maximum allowed torque change per time step
+    double delta_tau_max_{100.0};                   //!< Maximum allowed torque change per time step
 
   private:
     /*! \brief Implements the damping based on a stiffness

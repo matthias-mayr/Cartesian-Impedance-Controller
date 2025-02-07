@@ -1,0 +1,7 @@
+<library path="cartesian_impedance_controller">
+  <class name="cartesian_impedance_controller/CartesianImpedanceControllerRos" 
+         type="cartesian_impedance_controller::CartesianImpedanceControllerRos"
+         base_class_type="controller_interface::ControllerInterface">
+    <description>Cartesian impedance controller implementation</description>
+  </class>
+</library>

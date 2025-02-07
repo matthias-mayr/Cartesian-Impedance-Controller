@@ -1,69 +1,53 @@
+<?xml version="1.0"?>
 <package format="3">
   <name>cartesian_impedance_controller</name>
-  <version>1.1.1</version>
+  <version>0.1.0</version>
   <description>
     A Cartesian Impedance controller implementation
   </description>
   <maintainer email="matthias.mayr@cs.lth.se">Matthias Mayr</maintainer>
   <license>BSD-3-Clause</license>
-
+  
   <author>Matthias Mayr</author>
   <author>Oussama Chouman</author>
   <author>Julian Salt Ducaju</author>
+  <author email="cenk.cetin@liverpool.ac.uk">Cenk Cetin</author>
 
-  <buildtool_depend>catkin</buildtool_depend>
-
-  <build_depend>actionlib</build_depend>
-  <build_depend>actionlib_msgs</build_depend>
-  <build_depend>control_msgs</build_depend>
-  <build_depend>controller_interface</build_depend>
-  <build_depend>controller_manager</build_depend>
-  <build_depend>dynamic_reconfigure</build_depend>
-  <build_depend>eigen</build_depend>
-  <build_depend>eigen_conversions</build_depend>
-  <build_depend>geometry_msgs</build_depend>
-  <build_depend>hardware_interface</build_depend>
-  <build_depend>message_generation</build_depend>
-  <build_depend>pluginlib</build_depend>
-  <build_depend>realtime_tools</build_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>sensor_msgs</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>tf</build_depend>
-  <build_depend>tf_conversions</build_depend>
-  <build_depend>trajectory_msgs</build_depend>
-
-  <exec_depend>actionlib</exec_depend>
-  <exec_depend>actionlib_msgs</exec_depend>
-  <exec_depend>control_msgs</exec_depend>
-  <exec_depend>controller_interface</exec_depend>
-  <exec_depend>controller_manager</exec_depend>
-  <exec_depend>dynamic_reconfigure</exec_depend>
-  <exec_depend>eigen_conversions</exec_depend>
-  <exec_depend>geometry_msgs</exec_depend>
-  <exec_depend>hardware_interface</exec_depend>
-  <exec_depend>message_runtime</exec_depend>
-  <exec_depend>pluginlib</exec_depend>
-  <exec_depend>realtime_tools</exec_depend>
-  <exec_depend>roscpp</exec_depend>
-  <exec_depend>sensor_msgs</exec_depend>
-  <exec_depend>std_msgs</exec_depend>
-  <exec_depend>tf</exec_depend>
-  <exec_depend>tf_conversions</exec_depend>
-  <exec_depend>trajectory_msgs</exec_depend>
-  <exec_depend>yaml-cpp</exec_depend>
-
-  <export>
-    <!-- Other tools can request additional information be placed here -->
-    <controller_interface plugin="${prefix}/controller_plugins.xml"/>
-  </export>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
   
-  <test_depend>gtest</test_depend>
-  <test_depend>eigen</test_depend>
-  <test_depend>roscpp</test_depend>
-  <test_depend>rostest</test_depend>
+  <depend>action_msgs</depend>
+  <depend>control_msgs</depend>
+  <depend>controller_interface</depend>
+  <depend>controller_manager</depend>
+  <depend>eigen3_cmake_module</depend>
+  <depend>geometry_msgs</depend>
+  <depend>hardware_interface</depend>
+  <depend>pluginlib</depend>
+  <depend>realtime_tools</depend>
+  <depend>rclcpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_eigen</depend>
+  <depend>tf2_ros</depend>
+  <depend>trajectory_msgs</depend>
+  <depend>ros2_control</depend>
+  <depend>rclcpp_lifecycle</depend>
+  <depend>generate_parameter_library</depend>
+  <depend>rosidl_default_runtime</depend>
+  
+  <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>eigen3_cmake_module</test_depend>
+  <test_depend>rclcpp</test_depend>
   <test_depend>geometry_msgs</test_depend>
   <test_depend>std_msgs</test_depend>
-  <test_depend>dynamic_reconfigure</test_depend>
-  <test_depend>yaml-cpp</test_depend>
+  <test_depend>yaml_cpp_vendor</test_depend>
+  <test_depend>ament_add_gmock</test_depend>
+  <member_of_group>rosidl_interface_packages</member_of_group>
+  
+  <export>
+    <build_type>ament_cmake</build_type>
+    <controller_interface plugin="${prefix}/cartesian_impedance_controller_plugin.xml"/>
+  </export>
 </package>
