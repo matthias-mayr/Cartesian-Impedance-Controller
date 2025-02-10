@@ -36,6 +36,7 @@
 #include "cartesian_impedance_controller/cartesian_impedance_controller.hpp"
 #include "cartesian_impedance_controller/rbdyn_wrapper.h"
 #include <cartesian_impedance_controller/cartesian_impedance_controller_parameters.hpp>
+#include "cartesian_impedance_controller/msg/controller_config.hpp"
 
 namespace cartesian_impedance_controller {
 
@@ -94,6 +95,7 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::Wrench>::SharedPtr sub_damping_factors_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_reference_pose_;
   rclcpp::Subscription<trajectory_msgs::msg::JointTrajectory>::SharedPtr trajectory_sub_;
+  rclcpp::Subscription<cartesian_impedance_controller::msg::ControllerConfig>::SharedPtr sub_controller_config_;
 
   rclcpp_action::Server<control_msgs::action::FollowJointTrajectory>::SharedPtr traj_as_;
   bool traj_running_ = false;
@@ -117,6 +119,7 @@ private:
   bool getFk(const Eigen::VectorXd &q, Eigen::Vector3d *position, Eigen::Quaterniond *orientation);
   bool getJacobian(const Eigen::VectorXd &q, const Eigen::VectorXd &dq, Eigen::MatrixXd *jacobian);
 
+  void controllerConfigCb(const cartesian_impedance_controller::msg::ControllerConfig::SharedPtr msg);
   void cartesianDampingFactorCb(const geometry_msgs::msg::Wrench::SharedPtr msg);
   void cartesianStiffnessCb(const geometry_msgs::msg::WrenchStamped::SharedPtr msg);
   void referencePoseCb(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
