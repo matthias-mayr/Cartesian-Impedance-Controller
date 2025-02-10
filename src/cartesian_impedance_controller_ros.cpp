@@ -12,6 +12,7 @@
 #include <trajectory_msgs/msg/joint_trajectory.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
+// #include "cartesian_impedance_controller/msg/controller_state.hpp"
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/convert.h>
@@ -168,11 +169,6 @@ CallbackReturn CartesianImpedanceControllerRos::on_configure(const rclcpp_lifecy
   // pub_state_ = get_node()->create_publisher<cartesian_impedance_controller::msg::ControllerState>("controller_state",
   // 10);
 
-  // sub_controller_config_ = get_node()->create_subscription<cartesian_impedance_controller::msg::ControllerConfig>(
-  //     "set_config",
-  //     rclcpp::SystemDefaultsQoS(),
-  //     
-
   trajectory_sub_ = node->create_subscription<trajectory_msgs::msg::JointTrajectory>(
       "joint_trajectory", rclcpp::SystemDefaultsQoS(),
       std::bind(&CartesianImpedanceControllerRos::trajCb, this, std::placeholders::_1));
@@ -185,6 +181,11 @@ CallbackReturn CartesianImpedanceControllerRos::on_configure(const rclcpp_lifecy
       std::bind(&CartesianImpedanceControllerRos::trajAcceptCb, this, std::placeholders::_1));
 
   pub_torques_ = node->create_publisher<std_msgs::msg::Float64MultiArray>("commanded_torques", 10);
+  
+  sub_controller_config_ = get_node()->create_subscription<cartesian_impedance_controller::msg::ControllerConfig>(
+      "set_config",
+      rclcpp::SystemDefaultsQoS(),
+      std::bind(&CartesianImpedanceControllerRos::controllerConfigCb, this, std::placeholders::_1));
 
   sub_cart_stiffness_ = node->create_subscription<geometry_msgs::msg::WrenchStamped>(
       "set_cartesian_stiffness", rclcpp::SystemDefaultsQoS(),
@@ -561,31 +562,34 @@ bool CartesianImpedanceControllerRos::getJacobian(const Eigen::VectorXd& q, cons
   return true;
 }
 
-// void CartesianImpedanceControllerRos::controllerConfigCb(
-//   const cartesian_impedance_controller::msg::ControllerConfig::SharedPtr msg)
-// {
-//   //// This merges all config:
-//   setStiffness(msg->cartesian_stiffness, msg->nullspace_stiffness, false);
-//   setDampingFactors(msg->cartesian_damping_factors, msg->nullspace_damping_factor);
+void CartesianImpedanceControllerRos::controllerConfigCb(
+  const cartesian_impedance_controller::msg::ControllerConfig::SharedPtr msg)
+{
+  setStiffness(msg->cartesian_stiffness.force.x, msg->cartesian_stiffness.force.y, msg->cartesian_stiffness.force.z,
+               msg->cartesian_stiffness.torque.x, msg->cartesian_stiffness.torque.y, msg->cartesian_stiffness.torque.z,
+               msg->nullspace_stiffness, false);
+  setDampingFactors(msg->cartesian_damping_factors.force.x, msg->cartesian_damping_factors.force.y, msg->cartesian_damping_factors.force.z,
+                    msg->cartesian_damping_factors.torque.x, msg->cartesian_damping_factors.torque.y, msg->cartesian_damping_factors.torque.z,
+                    msg->nullspace_damping_factor);
 
-//   //// Nullspace configuration
-//   if (msg->q_d_nullspace.size() == dof_)
-//   {
-//     Eigen::VectorXd qd(dof_);
-//     for (size_t i = 0; i < dof_; i++)
-//     {
-//       qd(i) = msg->q_d_nullspace[i];
-//     }
-//     setNullspaceConfig(qd);
-//   }
-//   else
-//   {
-//     RCLCPP_WARN(
-//       get_node()->get_logger(),
-//       "Nullspace configuration has wrong dimension: got %zu, expected %zu",
-//       msg->q_d_nullspace.size(), dof_);
-//   }
-// }
+  if (msg->q_d_nullspace.size() == dof_)
+  {
+    Eigen::VectorXd qd(dof_);
+    for (size_t i = 0; i < dof_; i++)
+    {
+      qd(i) = msg->q_d_nullspace[i];
+    }
+    setNullspaceConfig(qd);
+  }
+  else
+  {
+    RCLCPP_WARN(
+      get_node()->get_logger(),
+      "Nullspace configuration has wrong dimension: got %zu, expected %zu",
+      msg->q_d_nullspace.size(), dof_);
+  }
+}
+
 // void CartesianImpedanceControllerRos::publishMsgs()
 // {
 //   //// Publish ControllerState

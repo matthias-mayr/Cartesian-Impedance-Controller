@@ -32,6 +32,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   tf2_geometry_msgs
   tf2_kdl
   tf2_ros
+  std_msgs
   trajectory_msgs
   generate_parameter_library
   urdf
@@ -75,8 +76,10 @@ target_include_directories(cartesian_impedance_controller PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/rosidl_generator_cpp> 
   $<INSTALL_INTERFACE:include/cartesian_impedance_controller>
 )
+rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_msgs "rosidl_typesupport_cpp")
 
 target_link_libraries(cartesian_impedance_controller PUBLIC
+  "${cpp_typesupport_target}"
   cartesian_impedance_controller_parameters
   Eigen3::Eigen
   RBDyn
