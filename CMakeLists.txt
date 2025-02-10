@@ -51,6 +51,12 @@ foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
   find_package(${Dependency} REQUIRED)
 endforeach()
 
+rosidl_generate_interfaces(${PROJECT_NAME}_msgs
+  "msg/ControllerConfig.msg"
+  "msg/ControllerState.msg"
+  DEPENDENCIES std_msgs geometry_msgs sensor_msgs
+)
+
 generate_parameter_library(cartesian_impedance_controller_parameters
   src/cartesian_impedance_controller_parameters.yaml
 )
@@ -60,10 +66,13 @@ add_library(cartesian_impedance_controller SHARED
   src/cartesian_impedance_controller.cpp
 )
 
+add_dependencies(cartesian_impedance_controller ${PROJECT_NAME}_msgs)
+
 target_compile_features(cartesian_impedance_controller PUBLIC cxx_std_17)
 
 target_include_directories(cartesian_impedance_controller PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/rosidl_generator_cpp> 
   $<INSTALL_INTERFACE:include/cartesian_impedance_controller>
 )
 
@@ -76,7 +85,9 @@ target_link_libraries(cartesian_impedance_controller PUBLIC
 
 pluginlib_export_plugin_description_file(controller_interface cartesian_impedance_controller_plugin.xml)
 
-ament_target_dependencies(cartesian_impedance_controller PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS})
+ament_target_dependencies(cartesian_impedance_controller PUBLIC 
+  ${THIS_PACKAGE_INCLUDE_DEPENDS}  
+)
 
 install(
   DIRECTORY include/
