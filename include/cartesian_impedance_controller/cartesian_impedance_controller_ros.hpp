@@ -28,6 +28,7 @@
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
+#include <tf2_ros/transform_broadcaster.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
@@ -37,6 +38,10 @@
 #include "cartesian_impedance_controller/rbdyn_wrapper.h"
 #include <cartesian_impedance_controller/cartesian_impedance_controller_parameters.hpp>
 #include "cartesian_impedance_controller/msg/controller_config.hpp"
+#include "cartesian_impedance_controller/msg/controller_state.hpp"
+
+#include <realtime_tools/realtime_buffer.h>
+#include <realtime_tools/realtime_publisher.h>
 
 namespace cartesian_impedance_controller {
 
@@ -86,9 +91,13 @@ private:
   std::vector<bool> joints_angle_wraparound_;
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+  rclcpp::Time tf_last_time_;
+  std::shared_ptr<tf2_ros::TransformBroadcaster> tf_br_;  
+
   rbdyn_wrapper rbdyn_wrapper_;
 
-  rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_torques_;
+  std::shared_ptr<realtime_tools::RealtimePublisher<cartesian_impedance_controller::msg::ControllerState>> rt_pub_state_;
+  std::shared_ptr<realtime_tools::RealtimePublisher<std_msgs::msg::Float64MultiArray>> rt_pub_torques_;
 
   rclcpp::Subscription<geometry_msgs::msg::WrenchStamped>::SharedPtr sub_cart_stiffness_;
   rclcpp::Subscription<geometry_msgs::msg::WrenchStamped>::SharedPtr sub_cart_wrench_;
@@ -135,7 +144,7 @@ private:
   bool transformWrench(Eigen::Matrix<double, 6, 1> * wrench,
                        const std::string & from_frame,
                        const std::string & to_frame) const;
-  void publishMsgs();
+  void publishMsgsAndTf();
   void applyRuntimeParameters();
   bool initRBDyn();
 };

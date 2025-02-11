@@ -12,7 +12,6 @@
 #include <trajectory_msgs/msg/joint_trajectory.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
-// #include "cartesian_impedance_controller/msg/controller_state.hpp"
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/convert.h>
@@ -34,8 +33,6 @@
 #else
 #include "urdf/model.h"
 #endif
-
-#include <realtime_tools/realtime_buffer.h>
 
 namespace cartesian_impedance_controller
 {
@@ -79,6 +76,7 @@ CallbackReturn CartesianImpedanceControllerRos::on_init()
     RCLCPP_ERROR(logger, "Failed to get robot_description parameter");
     return CallbackReturn::ERROR;
   }
+  tf_br_ = std::make_shared<tf2_ros::TransformBroadcaster>(node);
   return CallbackReturn::SUCCESS;
 }
 
@@ -142,6 +140,7 @@ CallbackReturn CartesianImpedanceControllerRos::on_configure(const rclcpp_lifecy
 
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(node->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+  tf_last_time_ = get_node()->now();
 
   std::stringstream joints_ss;
   joints_ss << "Joints: ";
@@ -166,9 +165,6 @@ CallbackReturn CartesianImpedanceControllerRos::on_configure(const rclcpp_lifecy
               params_.damping.rotation.x, params_.damping.rotation.y, params_.damping.rotation.z,
               params_.damping.nullspace_damping, params_.damping.update_damping_factors ? "true" : "false");
 
-  // pub_state_ = get_node()->create_publisher<cartesian_impedance_controller::msg::ControllerState>("controller_state",
-  // 10);
-
   trajectory_sub_ = node->create_subscription<trajectory_msgs::msg::JointTrajectory>(
       "joint_trajectory", rclcpp::SystemDefaultsQoS(),
       std::bind(&CartesianImpedanceControllerRos::trajCb, this, std::placeholders::_1));
@@ -179,9 +175,16 @@ CallbackReturn CartesianImpedanceControllerRos::on_configure(const rclcpp_lifecy
       std::bind(&CartesianImpedanceControllerRos::trajGoalCb, this, std::placeholders::_1, std::placeholders::_2),
       std::bind(&CartesianImpedanceControllerRos::trajCancelCb, this, std::placeholders::_1),
       std::bind(&CartesianImpedanceControllerRos::trajAcceptCb, this, std::placeholders::_1));
-
-  pub_torques_ = node->create_publisher<std_msgs::msg::Float64MultiArray>("commanded_torques", 10);
   
+  auto state_pub =
+      get_node()->create_publisher<cartesian_impedance_controller::msg::ControllerState>("controller_state", 10);
+  auto torques_pub = get_node()->create_publisher<std_msgs::msg::Float64MultiArray>("commanded_torques", 10);
+
+  rt_pub_state_ =
+      std::make_shared<realtime_tools::RealtimePublisher<cartesian_impedance_controller::msg::ControllerState>>(
+          state_pub);
+  rt_pub_torques_ = std::make_shared<realtime_tools::RealtimePublisher<std_msgs::msg::Float64MultiArray>>(torques_pub);
+
   sub_controller_config_ = get_node()->create_subscription<cartesian_impedance_controller::msg::ControllerConfig>(
       "set_config",
       rclcpp::SystemDefaultsQoS(),
@@ -339,13 +342,8 @@ controller_interface::return_type CartesianImpedanceControllerRos::update(const 
 
   read_state_from_hardware();
   calculateCommandedTorques();  // Populates tau_c_
-
-  std::vector<double> torque_vector(tau_c_.data(), tau_c_.data() + tau_c_.size());
-  std_msgs::msg::Float64MultiArray torque_msg;
-  torque_msg.data = torque_vector;
-  pub_torques_->publish(torque_msg);
-
   write_command_to_hardware();
+  publishMsgsAndTf();
 
   if (auto current_traj = rt_trajectory_->readFromRT())
   {
@@ -563,7 +561,7 @@ bool CartesianImpedanceControllerRos::getJacobian(const Eigen::VectorXd& q, cons
 }
 
 void CartesianImpedanceControllerRos::controllerConfigCb(
-  const cartesian_impedance_controller::msg::ControllerConfig::SharedPtr msg)
+    const cartesian_impedance_controller::msg::ControllerConfig::SharedPtr msg)
 {
   setStiffness(msg->cartesian_stiffness.force.x, msg->cartesian_stiffness.force.y, msg->cartesian_stiffness.force.z,
                msg->cartesian_stiffness.torque.x, msg->cartesian_stiffness.torque.y, msg->cartesian_stiffness.torque.z,
@@ -586,113 +584,188 @@ void CartesianImpedanceControllerRos::controllerConfigCb(
     RCLCPP_WARN(
       get_node()->get_logger(),
       "Nullspace configuration has wrong dimension: got %zu, expected %zu",
-      msg->q_d_nullspace.size(), dof_);
+                msg->q_d_nullspace.size(), dof_);
   }
 }
 
-// void CartesianImpedanceControllerRos::publishMsgs()
-// {
-//   //// Publish ControllerState
-//   cartesian_impedance_controller::msg::ControllerState st;
-//   st.header.stamp = get_node()->now();
+void CartesianImpedanceControllerRos::publishMsgsAndTf()
+{
+  if (rt_pub_torques_ && rt_pub_torques_->trylock())
+  {
+    rt_pub_torques_->msg_.data.resize(tau_c_.size());
+    for (size_t i = 0; i < tau_c_.size(); ++i)
+    {
+      rt_pub_torques_->msg_.data[i] = tau_c_(i);
+    }
+    rt_pub_torques_->unlockAndPublish();
+  }
 
-//   // Fill joint states
-//   st.joint_state.name = params_.joints;
-//   st.joint_state.position.resize(dof_);
-//   st.joint_state.velocity.resize(dof_);
-//   st.joint_state.effort.resize(dof_);
-//   st.commanded_torques.resize(dof_);
-//   st.nullspace_config.resize(dof_);
+  Eigen::Matrix<double, 6, 1> error = getPoseError();
 
-//   for (size_t i = 0; i < dof_; i++)
-//   {
-//     st.joint_state.position[i] = q_(i);
-//     st.joint_state.velocity[i] = dq_(i);
-//     st.joint_state.effort[i]   = tau_m_(i);
-//     st.commanded_torques[i]    = tau_c_(i);
-//     st.nullspace_config[i]     = q_d_nullspace_(i);
-//   }
+  if (params_.verbosity.verbose_print)
+  {
+    RCLCPP_INFO(get_node()->get_logger(), "Cartesian Position: [%f, %f, %f]", position_(0), position_(1), position_(2));
 
-//   // Fill current and reference poses
-//   st.current_pose.position.x = position_(0);
-//   st.current_pose.position.y = position_(1);
-//   st.current_pose.position.z = position_(2);
-//   st.current_pose.orientation.x = orientation_.x();
-//   st.current_pose.orientation.y = orientation_.y();
-//   st.current_pose.orientation.z = orientation_.z();
-//   st.current_pose.orientation.w = orientation_.w();
+    RCLCPP_INFO(get_node()->get_logger(), "Pose Error: [%f, %f, %f, %f, %f, %f]", error(0), error(1), error(2),
+                error(3), error(4), error(5));
 
-//   st.reference_pose.position.x = position_d_target_(0);
-//   st.reference_pose.position.y = position_d_target_(1);
-//   st.reference_pose.position.z = position_d_target_(2);
-//   st.reference_pose.orientation.x = orientation_d_target_.x();
-//   st.reference_pose.orientation.y = orientation_d_target_.y();
-//   st.reference_pose.orientation.z = orientation_d_target_.z();
-//   st.reference_pose.orientation.w = orientation_d_target_.w();
+    RCLCPP_INFO(get_node()->get_logger(), "Cartesian Stiffness (diag): [%f, %f, %f, %f, %f, %f]",
+                cartesian_stiffness_.diagonal()(0), cartesian_stiffness_.diagonal()(1),
+                cartesian_stiffness_.diagonal()(2), cartesian_stiffness_.diagonal()(3),
+                cartesian_stiffness_.diagonal()(4), cartesian_stiffness_.diagonal()(5));
 
-//   // Compute pose error
-//   Eigen::Matrix<double, 6, 1> pose_err = getPoseError();
-//   st.pose_error.position.x = pose_err(0);
-//   st.pose_error.position.y = pose_err(1);
-//   st.pose_error.position.z = pose_err(2);
-//   // Convert small rotation error to a quaternion (axis-angle)
-//   Eigen::Quaterniond eq;
-//   double angle = pose_err.tail<3>().norm();
-//   if (angle > 1e-6)
-//   {
-//     Eigen::Vector3d axis = pose_err.tail<3>() / angle;
-//     eq = Eigen::AngleAxisd(angle, axis);
-//   }
-//   else
-//   {
-//     eq = Eigen::Quaterniond::Identity();
-//   }
-//   st.pose_error.orientation.x = eq.x();
-//   st.pose_error.orientation.y = eq.y();
-//   st.pose_error.orientation.z = eq.z();
-//   st.pose_error.orientation.w = eq.w();
+    RCLCPP_INFO(get_node()->get_logger(), "Cartesian Damping (diag): [%f, %f, %f, %f, %f, %f]",
+                cartesian_damping_.diagonal()(0), cartesian_damping_.diagonal()(1), cartesian_damping_.diagonal()(2),
+                cartesian_damping_.diagonal()(3), cartesian_damping_.diagonal()(4), cartesian_damping_.diagonal()(5));
 
-//   // Fill Cartesian stiffness/damping
-//   Eigen::Matrix<double,6,1> diag_stiff = cartesian_stiffness_.diagonal();
-//   st.cartesian_stiffness.force.x = diag_stiff(0);
-//   st.cartesian_stiffness.force.y = diag_stiff(1);
-//   st.cartesian_stiffness.force.z = diag_stiff(2);
-//   st.cartesian_stiffness.torque.x = diag_stiff(3);
-//   st.cartesian_stiffness.torque.y = diag_stiff(4);
-//   st.cartesian_stiffness.torque.z = diag_stiff(5);
+    RCLCPP_INFO(get_node()->get_logger(), "Nullspace Stiffness: %f", nullspace_stiffness_);
 
-//   Eigen::Matrix<double,6,1> diag_damp  = cartesian_damping_.diagonal();
-//   st.cartesian_damping.force.x = diag_damp(0);
-//   st.cartesian_damping.force.y = diag_damp(1);
-//   st.cartesian_damping.force.z = diag_damp(2);
-//   st.cartesian_damping.torque.x = diag_damp(3);
-//   st.cartesian_damping.torque.y = diag_damp(4);
-//   st.cartesian_damping.torque.z = diag_damp(5);
+    {
+      std::stringstream ss;
+      ss << "q_d_nullspace: [";
+      for (int i = 0; i < q_d_nullspace_.size(); ++i)
+      {
+        ss << q_d_nullspace_(i);
+        if (i != q_d_nullspace_.size() - 1)
+        {
+          ss << ", ";
+        }
+      }
+      ss << "]";
+      RCLCPP_INFO(get_node()->get_logger(), "%s", ss.str().c_str());
+    }
+    {
+      std::stringstream ss;
+      ss << "tau_c: [";
+      for (int i = 0; i < tau_c_.size(); ++i)
+      {
+        ss << tau_c_(i);
+        if (i != tau_c_.size() - 1)
+        {
+          ss << ", ";
+        }
+      }
+      ss << "]";
+      RCLCPP_INFO(get_node()->get_logger(), "%s", ss.str().c_str());
+    }
+  }
 
-//   // Fill commanded wrench
-//   Eigen::Matrix<double,6,1> w_applied = getAppliedWrench();
-//   st.commanded_wrench.force.x = w_applied(0);
-//   st.commanded_wrench.force.y = w_applied(1);
-//   st.commanded_wrench.force.z = w_applied(2);
-//   st.commanded_wrench.torque.x = w_applied(3);
-//   st.commanded_wrench.torque.y = w_applied(4);
-//   st.commanded_wrench.torque.z = w_applied(5);
+  if (params_.verbosity.tf_frames)
+  {
+    rclcpp::Time now = get_node()->now();
+    if (now > tf_last_time_)
+    {
+      if (!tf_br_)
+      {
+        tf_br_ = std::make_shared<tf2_ros::TransformBroadcaster>(get_node());
+      }
 
-//   // Nullspace stiffness/damping
-//   st.nullspace_stiffness = nullspace_stiffness_;
-//   st.nullspace_damping   = nullspace_damping_;
+      geometry_msgs::msg::TransformStamped fk_tf;
+      fk_tf.header.stamp = now;
+      fk_tf.header.frame_id = root_frame_;
+      fk_tf.child_frame_id = end_effector_ + "_ee_fk";
+      fk_tf.transform.translation.x = position_(0);
+      fk_tf.transform.translation.y = position_(1);
+      fk_tf.transform.translation.z = position_(2);
+      fk_tf.transform.rotation =
+          tf2::toMsg(tf2::Quaternion(orientation_.x(), orientation_.y(), orientation_.z(), orientation_.w()));
+      tf_br_->sendTransform(fk_tf);
 
-//   // Cartesian velocity (optional)
-//   st.cartesian_velocity = getCartesianVelocity();
+      geometry_msgs::msg::TransformStamped ref_tf;
+      ref_tf.header.stamp = now;
+      ref_tf.header.frame_id = root_frame_;
+      ref_tf.child_frame_id = end_effector_ + "_ee_ref_pose";
+      ref_tf.transform.translation.x = position_d_(0);
+      ref_tf.transform.translation.y = position_d_(1);
+      ref_tf.transform.translation.z = position_d_(2);
+      ref_tf.transform.rotation =
+          tf2::toMsg(tf2::Quaternion(orientation_d_.x(), orientation_d_.y(), orientation_d_.z(), orientation_d_.w()));
+      tf_br_->sendTransform(ref_tf);
 
-//   //// Publish the message
-//   pub_state_->publish(st);
+      tf_last_time_ = now;
+    }
+  }
 
-//   // Also, publish commanded torques
-//   std_msgs::msg::Float64MultiArray torques_msg;
-//   torques_msg.data = std::vector<double>(tau_c_.data(), tau_c_.data() + tau_c_.size());
-//   pub_torques_->publish(torques_msg);
-// }
+  if (params_.verbosity.state_msgs)
+  {
+    if (rt_pub_state_ && rt_pub_state_->trylock())
+    {
+      auto& state_msg = rt_pub_state_->msg_;
+      state_msg.header.stamp = get_node()->now();
+
+      state_msg.joint_state.name = params_.joints;
+      state_msg.joint_state.position.assign(q_.data(), q_.data() + q_.size());
+      state_msg.joint_state.velocity.assign(dq_.data(), dq_.data() + dq_.size());
+      state_msg.joint_state.effort.assign(tau_m_.data(), tau_m_.data() + tau_m_.size());
+      state_msg.commanded_torques.assign(tau_c_.data(), tau_c_.data() + tau_c_.size());
+      state_msg.nullspace_config.assign(q_d_nullspace_.data(), q_d_nullspace_.data() + q_d_nullspace_.size());
+
+      state_msg.current_pose.position.x = position_(0);
+      state_msg.current_pose.position.y = position_(1);
+      state_msg.current_pose.position.z = position_(2);
+      state_msg.current_pose.orientation =
+          tf2::toMsg(tf2::Quaternion(orientation_.x(), orientation_.y(), orientation_.z(), orientation_.w()));
+      state_msg.reference_pose.position.x = position_d_target_(0);
+      state_msg.reference_pose.position.y = position_d_target_(1);
+      state_msg.reference_pose.position.z = position_d_target_(2);
+      state_msg.reference_pose.orientation.w = orientation_d_target_.w();
+      state_msg.reference_pose.orientation.x = orientation_d_target_.x();
+      state_msg.reference_pose.orientation.y = orientation_d_target_.y();
+      state_msg.reference_pose.orientation.z = orientation_d_target_.z();
+
+      state_msg.pose_error.position.x = error(0);
+      state_msg.pose_error.position.y = error(1);
+      state_msg.pose_error.position.z = error(2);
+      double angle = error.tail<3>().norm();
+      if (angle > 1e-6)
+      {
+        Eigen::Vector3d axis = error.tail<3>() / angle;
+        Eigen::AngleAxisd aa(angle, axis);
+        Eigen::Quaterniond q_err(aa);
+        state_msg.reference_pose.orientation =
+            tf2::toMsg(tf2::Quaternion(orientation_d_target_.x(), orientation_d_target_.y(), orientation_d_target_.z(),
+                                       orientation_d_target_.w()));
+      }
+      else
+      {
+        state_msg.pose_error.orientation.w = 1.0;
+        state_msg.pose_error.orientation.x = 0.0;
+        state_msg.pose_error.orientation.y = 0.0;
+        state_msg.pose_error.orientation.z = 0.0;
+      }
+
+      state_msg.cartesian_stiffness.force.x = cartesian_stiffness_.diagonal()(0);
+      state_msg.cartesian_stiffness.force.y = cartesian_stiffness_.diagonal()(1);
+      state_msg.cartesian_stiffness.force.z = cartesian_stiffness_.diagonal()(2);
+      state_msg.cartesian_stiffness.torque.x = cartesian_stiffness_.diagonal()(3);
+      state_msg.cartesian_stiffness.torque.y = cartesian_stiffness_.diagonal()(4);
+      state_msg.cartesian_stiffness.torque.z = cartesian_stiffness_.diagonal()(5);
+
+      state_msg.cartesian_damping.force.x = cartesian_damping_.diagonal()(0);
+      state_msg.cartesian_damping.force.y = cartesian_damping_.diagonal()(1);
+      state_msg.cartesian_damping.force.z = cartesian_damping_.diagonal()(2);
+      state_msg.cartesian_damping.torque.x = cartesian_damping_.diagonal()(3);
+      state_msg.cartesian_damping.torque.y = cartesian_damping_.diagonal()(4);
+      state_msg.cartesian_damping.torque.z = cartesian_damping_.diagonal()(5);
+
+      Eigen::Matrix<double, 6, 1> applied_wrench = getAppliedWrench();
+      state_msg.commanded_wrench.force.x = applied_wrench(0);
+      state_msg.commanded_wrench.force.y = applied_wrench(1);
+      state_msg.commanded_wrench.force.z = applied_wrench(2);
+      state_msg.commanded_wrench.torque.x = applied_wrench(3);
+      state_msg.commanded_wrench.torque.y = applied_wrench(4);
+      state_msg.commanded_wrench.torque.z = applied_wrench(5);
+
+      state_msg.nullspace_stiffness = nullspace_stiffness_;
+      state_msg.nullspace_damping = nullspace_damping_;
+
+      Eigen::Matrix<double, 6, 1> dx = jacobian_ * dq_;
+      state_msg.cartesian_velocity = std::sqrt(dx(0) * dx(0) + dx(1) * dx(1) + dx(2) * dx(2));
+
+      rt_pub_state_->unlockAndPublish();
+    }
+  }
+}
 
 void CartesianImpedanceControllerRos::cartesianDampingFactorCb(const geometry_msgs::msg::Wrench::SharedPtr msg)
 {

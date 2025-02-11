@@ -199,13 +199,25 @@ cartesian_impedance_controller:
       description: "Filtering factor for wrench."
       validation:
         bounds<>: [0.0, 1.0]
-    
-  joints: {
-    type: string_array,
-    default_value: [],
-    description: "Joint names to control and listen to",
-    read_only: true,
-    validation: {
-      unique<>: null,
-    }
-  }
+
+  joints:
+    type: string_array
+    default_value: []
+    description: "Joint names to control and listen to"
+    read_only: true
+    validation:
+      unique<>: null
+
+  verbosity:
+    verbose_print:
+      type: bool
+      default_value: false
+      description: "Enable verbose printing of internal states."
+    tf_frames:
+      type: bool
+      default_value: false
+      description: "Enable broadcasting of TF transforms for the end-effector."
+    state_msgs:
+      type: bool
+      default_value: false
+      description: "Enable publishing of the controller state message."
