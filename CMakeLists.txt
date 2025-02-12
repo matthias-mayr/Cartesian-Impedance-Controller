@@ -52,33 +52,33 @@ foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
   find_package(${Dependency} REQUIRED)
 endforeach()
 
-rosidl_generate_interfaces(${PROJECT_NAME}_msgs
+rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ControllerConfig.msg"
   "msg/ControllerState.msg"
   DEPENDENCIES std_msgs geometry_msgs sensor_msgs
 )
 
+set(library_name cartesian_impedance_controller_lib)
+
 generate_parameter_library(cartesian_impedance_controller_parameters
   src/cartesian_impedance_controller_parameters.yaml
 )
 
-add_library(cartesian_impedance_controller SHARED
+add_library(${library_name} SHARED
   src/cartesian_impedance_controller_ros.cpp
   src/cartesian_impedance_controller.cpp
 )
 
-add_dependencies(cartesian_impedance_controller ${PROJECT_NAME}_msgs)
+target_compile_features(${library_name} PUBLIC cxx_std_17)
 
-target_compile_features(cartesian_impedance_controller PUBLIC cxx_std_17)
-
-target_include_directories(cartesian_impedance_controller PUBLIC
+target_include_directories(${library_name} PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/rosidl_generator_cpp> 
-  $<INSTALL_INTERFACE:include/cartesian_impedance_controller>
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
 )
-rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_msgs "rosidl_typesupport_cpp")
+rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
-target_link_libraries(cartesian_impedance_controller PUBLIC
+target_link_libraries(${library_name} PUBLIC
   "${cpp_typesupport_target}"
   cartesian_impedance_controller_parameters
   Eigen3::Eigen
@@ -88,7 +88,7 @@ target_link_libraries(cartesian_impedance_controller PUBLIC
 
 pluginlib_export_plugin_description_file(controller_interface cartesian_impedance_controller_plugin.xml)
 
-ament_target_dependencies(cartesian_impedance_controller PUBLIC 
+ament_target_dependencies(${library_name} PUBLIC 
   ${THIS_PACKAGE_INCLUDE_DEPENDS}  
 )
 
@@ -98,14 +98,14 @@ install(
 )
 
 install(
-  TARGETS cartesian_impedance_controller cartesian_impedance_controller_parameters
-  EXPORT export_cartesian_impedance_controller
+  TARGETS ${library_name} cartesian_impedance_controller_parameters
+  EXPORT export_${PROJECT_NAME}
   RUNTIME DESTINATION bin
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
 )
 
-ament_export_targets(export_cartesian_impedance_controller HAS_LIBRARY_TARGET)
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 ament_package()

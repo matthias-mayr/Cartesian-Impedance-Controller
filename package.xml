@@ -36,7 +36,8 @@
   <depend>rclcpp_lifecycle</depend>
   <depend>generate_parameter_library</depend>
   <depend>rosidl_default_runtime</depend>
-  
+  <depend>rosidl_typesupport_cpp</depend>
+
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>eigen3_cmake_module</test_depend>
   <test_depend>rclcpp</test_depend>
