@@ -11,6 +11,7 @@ then
     mkdir depends
 fi
 cd depends
+touch COLCON_IGNORE
 
 # SpaceVecAlg
 git clone --recursive https://github.com/jrl-umi3218/SpaceVecAlg
