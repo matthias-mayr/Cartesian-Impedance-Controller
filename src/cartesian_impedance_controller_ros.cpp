@@ -307,7 +307,7 @@ CallbackReturn CartesianImpedanceControllerRos::on_activate(const rclcpp_lifecyc
 
   update(rclcpp::Time(0), rclcpp::Duration(0, 0));
   initDesiredPose(position_, orientation_);
-  initNullspaceConfig(q_d_nullspace_);
+  initNullspaceConfig(q_);
   for (size_t i = 0; i < dof_; i++)
   {
     if (!joint_command_handles_[i])
