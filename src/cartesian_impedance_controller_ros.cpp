@@ -175,7 +175,7 @@ CallbackReturn CartesianImpedanceControllerRos::on_configure(const rclcpp_lifecy
       std::bind(&CartesianImpedanceControllerRos::trajGoalCb, this, std::placeholders::_1, std::placeholders::_2),
       std::bind(&CartesianImpedanceControllerRos::trajCancelCb, this, std::placeholders::_1),
       std::bind(&CartesianImpedanceControllerRos::trajAcceptCb, this, std::placeholders::_1));
-  
+
   auto state_pub =
       get_node()->create_publisher<cartesian_impedance_controller::msg::ControllerState>("controller_state", 10);
   auto torques_pub = get_node()->create_publisher<std_msgs::msg::Float64MultiArray>("commanded_torques", 10);
@@ -227,6 +227,7 @@ CallbackReturn CartesianImpedanceControllerRos::on_configure(const rclcpp_lifecy
   double stiff_ry = params_.stiffness.rotation.y;
   double stiff_rz = params_.stiffness.rotation.z;
   double stiff_ns = params_.stiffness.nullspace_stiffness;
+  setStiffness(stiff_tx, stiff_ty, stiff_tz, stiff_rx, stiff_ry, stiff_rz, stiff_ns, true);
 
   double damp_tx = params_.damping.translation.x;
   double damp_ty = params_.damping.translation.y;
@@ -235,9 +236,7 @@ CallbackReturn CartesianImpedanceControllerRos::on_configure(const rclcpp_lifecy
   double damp_ry = params_.damping.rotation.y;
   double damp_rz = params_.damping.rotation.z;
   double damp_ns = params_.damping.nullspace_damping;
-
-  if (params_.damping.update_damping_factors)
-    setDampingFactors(damp_tx, damp_ty, damp_tz, damp_rx, damp_ry, damp_rz, damp_ns);
+  setDampingFactors(damp_tx, damp_ty, damp_tz, damp_rx, damp_ry, damp_rz, damp_ns);
 
   damping_factors_.resize(7);
   damping_factors_ << damp_tx, damp_ty, damp_tz, damp_rx, damp_ry, damp_rz, damp_ns;
@@ -366,29 +365,30 @@ void CartesianImpedanceControllerRos::applyRuntimeParameters()
 {
   if (params_.stiffness.update_stiffness)
   {
-    double sx = params_.stiffness.translation.x;
-    double sy = params_.stiffness.translation.y;
-    double sz = params_.stiffness.translation.z;
-    double rx = params_.stiffness.rotation.x;
-    double ry = params_.stiffness.rotation.y;
-    double rz = params_.stiffness.rotation.z;
-    double ns = params_.stiffness.nullspace_stiffness;
+    double stiff_tx = params_.stiffness.translation.x;
+    double stiff_ty = params_.stiffness.translation.y;
+    double stiff_tz = params_.stiffness.translation.z;
+    double stiff_rx = params_.stiffness.rotation.x;
+    double stiff_ry = params_.stiffness.rotation.y;
+    double stiff_rz = params_.stiffness.rotation.z;
+    double stiff_ns = params_.stiffness.nullspace_stiffness;
+    nullspace_stiffness_target_ = stiff_ns;
     RCLCPP_INFO(get_node()->get_logger(),
-                "Updating stiffness: trans=(%.2f, %.2f, %.2f), rot=(%.2f, %.2f, %.2f), nullspace=%.2f", sx, sy, sz, rx,
-                ry, rz, ns);
-    setStiffness(sx, sy, sz, rx, ry, rz, ns, true);
+                "Updating stiffness: trans=(%.2f, %.2f, %.2f), rot=(%.2f, %.2f, %.2f), nullspace=%.2f", stiff_tx,
+                stiff_ty, stiff_tz, stiff_rx, stiff_ry, stiff_rz, stiff_ns);
+    setStiffness(stiff_tx, stiff_ty, stiff_tz, stiff_rx, stiff_ry, stiff_rz, stiff_ns, true);
   }
 
   if (params_.damping.update_damping_factors)
   {
-    double tx = params_.damping.translation.x;
-    double ty = params_.damping.translation.y;
-    double tz = params_.damping.translation.z;
-    double rx = params_.damping.rotation.x;
-    double ry = params_.damping.rotation.y;
-    double rz = params_.damping.rotation.z;
-    double ns = params_.damping.nullspace_damping;
-    setDampingFactors(tx, ty, tz, rx, ry, rz, ns);
+    double damp_tx = params_.damping.translation.x;
+    double damp_ty = params_.damping.translation.y;
+    double damp_tz = params_.damping.translation.z;
+    double damp_rx = params_.damping.rotation.x;
+    double damp_ry = params_.damping.rotation.y;
+    double damp_rz = params_.damping.rotation.z;
+    double damp_ns = params_.damping.nullspace_damping;
+    setDampingFactors(damp_tx, damp_ty, damp_tz, damp_rx, damp_ry, damp_rz, damp_ns);
   }
 
   if (params_.wrench.apply_wrench)
