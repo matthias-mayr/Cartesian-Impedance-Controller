@@ -18,31 +18,23 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   rclcpp
   control_msgs
   sensor_msgs
-  control_toolbox
   controller_interface
   geometry_msgs
-  joint_trajectory_controller
   hardware_interface
-  kinematics_interface
   rclcpp_lifecycle
   rclcpp_action
   realtime_tools
   tf2
-  tf2_eigen
   tf2_geometry_msgs
-  tf2_kdl
   tf2_ros
   std_msgs
   trajectory_msgs
   generate_parameter_library
   urdf
-  controller_manager
-  ros2_control
 )
 
 find_package(ament_cmake REQUIRED)
 find_package(controller_interface REQUIRED)
-find_package(controller_manager REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(RBDyn REQUIRED)
 find_package(mc_rbdyn_urdf REQUIRED)
