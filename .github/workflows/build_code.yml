@@ -6,33 +6,39 @@ jobs:
   build-code:
     runs-on: ubuntu-latest
     container:
-      image: osrf/ros:noetic-desktop-full
+      image: osrf/ros:humble-desktop-full
     
     steps:
-    - name: Create catkin workspace
-      shell: bash
-      run: |
-        mkdir -p ~/catkin_ws/src
-    - uses: actions/checkout@v3
-      with:
-        path: 'catkin_ws/src/Cartesian-Impedance-Controller'
-    - name: Build in catkin_ws
-      shell: bash
-      run: |
-        apt-get update
-        apt-get install -y python3-catkin-tools  python3-rosdep git
-        cd catkin_ws
-        bash src/Cartesian-Impedance-Controller/scripts/install_dependencies.sh
-        rosdep update
-        source /opt/ros/$ROS_DISTRO/setup.bash
-        rosdep install --from-paths src --ignore-src --rosdistro=$ROS_DISTRO -y
-        catkin init
-        catkin config --extend /opt/ros/$ROS_DISTRO
-        catkin build
-        echo "Compile complete."
-    - name: Run tests
-      shell: bash
-      run: |
-        source /opt/ros/$ROS_DISTRO/setup.bash
-        cd catkin_ws
-        catkin test
+      - name: Install system dependencies
+        shell: bash
+        run: |
+          apt-get update && apt-get install -y \
+            python3-colcon-common-extensions \
+            python3-rosdep \
+            git \
+            nodejs npm  # for actions/checkout@v3
+
+      - name: Create ROS2 workspace directories
+        shell: bash
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/ros2_ws/src
+
+      - name: Checkout repository into workspace
+        uses: actions/checkout@v3
+        with:
+          ref: ros2
+          path: ros2_ws/src/Cartesian-Impedance-Controller
+
+      - name: Install package dependencies & Build workspace
+        shell: bash
+        run: |
+          cd $GITHUB_WORKSPACE/ros2_ws
+          
+          bash src/Cartesian-Impedance-Controller/scripts/install_dependencies.sh
+          
+          rosdep update
+          rosdep install --from-paths src --ignore-src --rosdistro=humble -y
+          
+          source /opt/ros/humble/setup.bash
+          colcon build --base-paths $GITHUB_WORKSPACE/ros2_ws
+
