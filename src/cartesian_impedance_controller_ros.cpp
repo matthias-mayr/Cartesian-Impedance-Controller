@@ -157,8 +157,7 @@ CallbackReturn CartesianImpedanceControllerRos::on_configure(const rclcpp_lifecy
   rt_pub_torques_ = std::make_shared<realtime_tools::RealtimePublisher<std_msgs::msg::Float64MultiArray>>(torques_pub);
 
   sub_controller_config_ = get_node()->create_subscription<cartesian_impedance_controller::msg::ControllerConfig>(
-      "set_config",
-      rclcpp::SystemDefaultsQoS(),
+      "set_config", rclcpp::SystemDefaultsQoS(),
       std::bind(&CartesianImpedanceControllerRos::controllerConfigCb, this, std::placeholders::_1));
 
   sub_cart_stiffness_ = node->create_subscription<geometry_msgs::msg::WrenchStamped>(
@@ -534,8 +533,9 @@ void CartesianImpedanceControllerRos::controllerConfigCb(
   setStiffness(msg->cartesian_stiffness.force.x, msg->cartesian_stiffness.force.y, msg->cartesian_stiffness.force.z,
                msg->cartesian_stiffness.torque.x, msg->cartesian_stiffness.torque.y, msg->cartesian_stiffness.torque.z,
                msg->nullspace_stiffness, false);
-  setDampingFactors(msg->cartesian_damping_factors.force.x, msg->cartesian_damping_factors.force.y, msg->cartesian_damping_factors.force.z,
-                    msg->cartesian_damping_factors.torque.x, msg->cartesian_damping_factors.torque.y, msg->cartesian_damping_factors.torque.z,
+  setDampingFactors(msg->cartesian_damping_factors.force.x, msg->cartesian_damping_factors.force.y,
+                    msg->cartesian_damping_factors.force.z, msg->cartesian_damping_factors.torque.x,
+                    msg->cartesian_damping_factors.torque.y, msg->cartesian_damping_factors.torque.z,
                     msg->nullspace_damping_factor);
 
   if (msg->q_d_nullspace.size() == dof_)
@@ -549,9 +549,7 @@ void CartesianImpedanceControllerRos::controllerConfigCb(
   }
   else
   {
-    RCLCPP_WARN(
-      get_node()->get_logger(),
-      "Nullspace configuration has wrong dimension: got %zu, expected %zu",
+    RCLCPP_WARN(get_node()->get_logger(), "Nullspace configuration has wrong dimension: got %zu, expected %zu",
                 msg->q_d_nullspace.size(), dof_);
   }
 }
@@ -573,8 +571,8 @@ void CartesianImpedanceControllerRos::publishMsgsAndTf()
   if (params_.verbosity.verbose_print)
   {
     RCLCPP_INFO(get_node()->get_logger(), "Cartesian Position: [%f, %f, %f]", position_(0), position_(1), position_(2));
-    RCLCPP_INFO(get_node()->get_logger(), "Pose Error: [%f, %f, %f, %f, %f, %f]",
-                error(0), error(1), error(2), error(3), error(4), error(5));
+    RCLCPP_INFO(get_node()->get_logger(), "Pose Error: [%f, %f, %f, %f, %f, %f]", error(0), error(1), error(2),
+                error(3), error(4), error(5));
 
     RCLCPP_INFO(get_node()->get_logger(), "Cartesian Stiffness (diag): [%f, %f, %f, %f, %f, %f]",
                 cartesian_stiffness_.diagonal()(0), cartesian_stiffness_.diagonal()(1),
@@ -683,12 +681,10 @@ void CartesianImpedanceControllerRos::publishMsgsAndTf()
       state_msg.pose_error.position.x = error(0);
       state_msg.pose_error.position.y = error(1);
       state_msg.pose_error.position.z = error(2);
-      Eigen::Quaterniond q_err =
-          Eigen::AngleAxisd(error(3), Eigen::Vector3d::UnitX()) *
-          Eigen::AngleAxisd(error(4), Eigen::Vector3d::UnitY()) *
-          Eigen::AngleAxisd(error(5), Eigen::Vector3d::UnitZ());
-      state_msg.pose_error.orientation =
-          tf2::toMsg(tf2::Quaternion(q_err.x(), q_err.y(), q_err.z(), q_err.w()));
+      Eigen::Quaterniond q_err = Eigen::AngleAxisd(error(3), Eigen::Vector3d::UnitX()) *
+                                 Eigen::AngleAxisd(error(4), Eigen::Vector3d::UnitY()) *
+                                 Eigen::AngleAxisd(error(5), Eigen::Vector3d::UnitZ());
+      state_msg.pose_error.orientation = tf2::toMsg(tf2::Quaternion(q_err.x(), q_err.y(), q_err.z(), q_err.w()));
 
       state_msg.cartesian_stiffness.force.x = cartesian_stiffness_.diagonal()(0);
       state_msg.cartesian_stiffness.force.y = cartesian_stiffness_.diagonal()(1);
@@ -716,8 +712,7 @@ void CartesianImpedanceControllerRos::publishMsgsAndTf()
       state_msg.nullspace_damping = nullspace_damping_;
 
       Eigen::Matrix<double, 6, 1> dx = jacobian_ * dq_;
-      state_msg.cartesian_velocity =
-          std::sqrt(dx(0) * dx(0) + dx(1) * dx(1) + dx(2) * dx(2));
+      state_msg.cartesian_velocity = std::sqrt(dx(0) * dx(0) + dx(1) * dx(1) + dx(2) * dx(2));
 
       rt_pub_state_->unlockAndPublish();
     }
