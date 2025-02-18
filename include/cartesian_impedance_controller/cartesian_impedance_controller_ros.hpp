@@ -8,7 +8,7 @@
 #include <controller_interface/controller_interface.hpp>
 #include <controller_interface/helpers.hpp>
 #include <hardware_interface/types/hardware_interface_type_values.hpp>
-#include <hardware_interface/component_parser.hpp>
+
 #include <rclcpp/qos.hpp>
 #include <rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp>
 #include <rclcpp/logging.hpp>
@@ -25,12 +25,14 @@
 #include <trajectory_msgs/msg/joint_trajectory.hpp>
 #include <control_msgs/action/follow_joint_trajectory.hpp>
 #include <std_msgs/msg/float64_multi_array.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <tf2_ros/buffer.h>
+#include <tf2/convert.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2/LinearMath/Quaternion.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <urdf/model.h>
 
@@ -65,14 +67,11 @@ public:
   controller_interface::return_type update(const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
 private:
-  std::string urdf_;
-
   const Eigen::VectorXi perm_indices_ =
       (Eigen::Matrix<int, 6, 1>() << 3, 4, 5, 0, 1, 2).finished();
   const Eigen::PermutationMatrix<Eigen::Dynamic, 6> jacobian_perm_ =
       Eigen::PermutationMatrix<Eigen::Dynamic, 6>(perm_indices_);
 
-  std::vector<std::string> joint_names_;
   std::vector<std::string> command_joint_names_;
   size_t dof_{0};
   std::shared_ptr<realtime_tools::RealtimeBuffer<trajectory_msgs::msg::JointTrajectory>> rt_trajectory_;
@@ -88,7 +87,6 @@ private:
   std::string end_effector_;
   std::string wrench_ee_frame_;
   std::string root_frame_;
-  std::vector<bool> joints_angle_wraparound_;
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
   rclcpp::Time tf_last_time_;
