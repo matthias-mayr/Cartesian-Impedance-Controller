@@ -175,7 +175,7 @@ cartesian_impedance_controller:
 
 
   filtering:
-    nullspace:
+    nullspace_config:
       type: double
       default_value: 0.1
       description: "Filtering factor for nullspace."

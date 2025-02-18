@@ -153,7 +153,7 @@ CallbackReturn CartesianImpedanceControllerRos::on_configure(const rclcpp_lifecy
   RCLCPP_INFO(logger, "Wrench EE Frame: %s", params_.wrench_ee_frame.c_str());
   RCLCPP_INFO(logger, "Update Frequency: %.2f", params_.update_frequency);
   RCLCPP_INFO(logger, "Filtering parameters - Nullspace: %.2f, Stiffness: %.2f, Pose: %.2f, Wrench: %.2f",
-              params_.filtering.nullspace, params_.filtering.stiffness, params_.filtering.pose,
+              params_.filtering.nullspace_config, params_.filtering.stiffness, params_.filtering.pose,
               params_.filtering.wrench);
   RCLCPP_INFO(logger, "Stiffness - Translation: (%.2f, %.2f, %.2f), Rotation: (%.2f, %.2f, %.2f), Nullspace: %.2f",
               params_.stiffness.translation.x, params_.stiffness.translation.y, params_.stiffness.translation.z,
@@ -214,7 +214,7 @@ CallbackReturn CartesianImpedanceControllerRos::on_configure(const rclcpp_lifecy
     return CallbackReturn::ERROR;
   }
 
-  double filter_ns = params_.filtering.nullspace;
+  double filter_ns = params_.filtering.nullspace_config;
   double filter_stiff = params_.filtering.stiffness;
   double filter_pose = params_.filtering.pose;
   double filter_wrench = params_.filtering.wrench;
