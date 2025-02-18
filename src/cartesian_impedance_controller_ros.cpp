@@ -1,30 +1,8 @@
 #include <cartesian_impedance_controller/cartesian_impedance_controller_ros.hpp>
 
-#include <controller_interface/controller_interface.hpp>
-#include <controller_interface/helpers.hpp>
-#include <controller_interface/controller_interface_base.hpp>
-
-#include <std_msgs/msg/float64_multi_array.hpp>
-#include <geometry_msgs/msg/pose_stamped.hpp>
-#include <geometry_msgs/msg/wrench_stamped.hpp>
-#include <geometry_msgs/msg/wrench.hpp>
-#include <control_msgs/action/follow_joint_trajectory.hpp>
-#include <trajectory_msgs/msg/joint_trajectory.hpp>
-#include <sensor_msgs/msg/joint_state.hpp>
-#include "hardware_interface/types/hardware_interface_type_values.hpp"
-
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2/convert.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
-
 #include <algorithm>
 #include <chrono>
 #include <functional>
-#include <memory>
-#include <string>
-#include <vector>
 #include <sstream>
 
 #include "rclcpp/version.h"
@@ -67,13 +45,6 @@ CallbackReturn CartesianImpedanceControllerRos::on_init()
   catch (const std::exception& e)
   {
     RCLCPP_ERROR(logger, "Exception during init: %s", e.what());
-    return CallbackReturn::ERROR;
-  }
-
-  std::string urdf_string;
-  if (!node->get_parameter("robot_description", urdf_string))
-  {
-    RCLCPP_ERROR(logger, "Failed to get robot_description parameter");
     return CallbackReturn::ERROR;
   }
   tf_br_ = std::make_shared<tf2_ros::TransformBroadcaster>(node);
@@ -265,14 +236,11 @@ CallbackReturn CartesianImpedanceControllerRos::on_activate(const rclcpp_lifecyc
   joint_velocity_state_.resize(dof_, nullptr);
   joint_effort_state_.resize(dof_, nullptr);
 
-  if (q_.size() != dof_)
-    q_.resize(dof_);
-  if (dq_.size() != dof_)
-    dq_.resize(dof_);
-  if (tau_m_.size() != dof_)
-    tau_m_.resize(dof_);
-  if (tau_c_.size() != dof_)
-    tau_c_.resize(dof_);
+  if (q_.size() != dof_ || dq_.size() != dof_ || tau_m_.size() != dof_ || tau_c_.size() != dof_)
+  {
+    RCLCPP_ERROR(logger, "Size mismatch in internal vectors (q_, dq_, tau_m_, tau_c_) vs. dof_");
+    return CallbackReturn::ERROR;
+  }
 
   for (const auto& interface : state_interfaces)
   {
@@ -605,9 +573,8 @@ void CartesianImpedanceControllerRos::publishMsgsAndTf()
   if (params_.verbosity.verbose_print)
   {
     RCLCPP_INFO(get_node()->get_logger(), "Cartesian Position: [%f, %f, %f]", position_(0), position_(1), position_(2));
-
-    RCLCPP_INFO(get_node()->get_logger(), "Pose Error: [%f, %f, %f, %f, %f, %f]", error(0), error(1), error(2),
-                error(3), error(4), error(5));
+    RCLCPP_INFO(get_node()->get_logger(), "Pose Error: [%f, %f, %f, %f, %f, %f]",
+                error(0), error(1), error(2), error(3), error(4), error(5));
 
     RCLCPP_INFO(get_node()->get_logger(), "Cartesian Stiffness (diag): [%f, %f, %f, %f, %f, %f]",
                 cartesian_stiffness_.diagonal()(0), cartesian_stiffness_.diagonal()(1),
@@ -716,23 +683,12 @@ void CartesianImpedanceControllerRos::publishMsgsAndTf()
       state_msg.pose_error.position.x = error(0);
       state_msg.pose_error.position.y = error(1);
       state_msg.pose_error.position.z = error(2);
-      double angle = error.tail<3>().norm();
-      if (angle > 1e-6)
-      {
-        Eigen::Vector3d axis = error.tail<3>() / angle;
-        Eigen::AngleAxisd aa(angle, axis);
-        Eigen::Quaterniond q_err(aa);
-        state_msg.reference_pose.orientation =
-            tf2::toMsg(tf2::Quaternion(orientation_d_target_.x(), orientation_d_target_.y(), orientation_d_target_.z(),
-                                       orientation_d_target_.w()));
-      }
-      else
-      {
-        state_msg.pose_error.orientation.w = 1.0;
-        state_msg.pose_error.orientation.x = 0.0;
-        state_msg.pose_error.orientation.y = 0.0;
-        state_msg.pose_error.orientation.z = 0.0;
-      }
+      Eigen::Quaterniond q_err =
+          Eigen::AngleAxisd(error(3), Eigen::Vector3d::UnitX()) *
+          Eigen::AngleAxisd(error(4), Eigen::Vector3d::UnitY()) *
+          Eigen::AngleAxisd(error(5), Eigen::Vector3d::UnitZ());
+      state_msg.pose_error.orientation =
+          tf2::toMsg(tf2::Quaternion(q_err.x(), q_err.y(), q_err.z(), q_err.w()));
 
       state_msg.cartesian_stiffness.force.x = cartesian_stiffness_.diagonal()(0);
       state_msg.cartesian_stiffness.force.y = cartesian_stiffness_.diagonal()(1);
@@ -760,7 +716,8 @@ void CartesianImpedanceControllerRos::publishMsgsAndTf()
       state_msg.nullspace_damping = nullspace_damping_;
 
       Eigen::Matrix<double, 6, 1> dx = jacobian_ * dq_;
-      state_msg.cartesian_velocity = std::sqrt(dx(0) * dx(0) + dx(1) * dx(1) + dx(2) * dx(2));
+      state_msg.cartesian_velocity =
+          std::sqrt(dx(0) * dx(0) + dx(1) * dx(1) + dx(2) * dx(2));
 
       rt_pub_state_->unlockAndPublish();
     }
