@@ -16,9 +16,6 @@
 #include <rclcpp_action/server_goal_handle.hpp>
 #include <rclcpp_lifecycle/state.hpp>
 
-#include <realtime_tools/realtime_publisher.hpp>
-#include <realtime_tools/realtime_buffer.h>
-
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/wrench_stamped.hpp>
 #include <geometry_msgs/msg/wrench.hpp>
@@ -26,7 +23,7 @@
 #include <control_msgs/action/follow_joint_trajectory.hpp>
 #include <std_msgs/msg/float64_multi_array.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <tf2_ros/buffer.h>
 #include <tf2/convert.h>
@@ -36,14 +33,14 @@
 
 #include <urdf/model.h>
 
-#include "cartesian_impedance_controller/cartesian_impedance_controller.hpp"
-#include "cartesian_impedance_controller/rbdyn_wrapper.h"
+#include <cartesian_impedance_controller/cartesian_impedance_controller.hpp>
+#include <cartesian_impedance_controller/rbdyn_wrapper.h>
 #include <cartesian_impedance_controller/cartesian_impedance_controller_parameters.hpp>
-#include "cartesian_impedance_controller/msg/controller_config.hpp"
-#include "cartesian_impedance_controller/msg/controller_state.hpp"
+#include <cartesian_impedance_controller/msg/controller_config.hpp>
+#include <cartesian_impedance_controller/msg/controller_state.hpp>
 
-#include <realtime_tools/realtime_buffer.h>
-#include <realtime_tools/realtime_publisher.h>
+#include <realtime_tools/realtime_buffer.hpp>
+#include <realtime_tools/realtime_publisher.hpp>
 
 namespace cartesian_impedance_controller
 {
