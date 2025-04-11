@@ -69,17 +69,57 @@ The installation steps for the installation of the non-ROS dependencies are auto
 Assuming that there is an initialized colcon workspace you can clone this repository, install the dependencies and compile the controller.
  
 Here are the steps:
- 
+
+### Local Machine Installation
 ```bash
-cd ros2_ws
+mkdir -p ~/ros2_ws/src  
+cd ~/ros2_ws
 git clone https://github.com/mrceki/Cartesian-Impedance-Controller src/Cartesian-Impedance-Controller
-src/Cartesian-Impedance-Controller/scripts/install_dependencies.sh
-touch depends/COLCON_IGNORE
+bash src/Cartesian-Impedance-Controller/scripts/install_dependencies.sh
 rosdep install --from-paths src --ignore-src --rosdistro=${ROS_DISTRO} -y
 colcon build
 source install/setup.bash
 ```
- 
+### Docker Installation
+```markdown
+To build and run the Docker container for the Cartesian Impedance Controller, follow these steps:
+
+#### Build the Docker Image
+1. Navigate to the directory containing the `Dockerfile`.
+2. Build the Docker image:
+  ```bash
+  docker build -t cartesian_impedance_controller:latest .
+  ```
+
+#### Run the Docker Container
+1. Start a container from the built image:
+  ```bash
+  docker run -it --rm \
+     --name cartesian_impedance_controller \
+     --net=host \
+     -e DISPLAY=$DISPLAY \
+     -v /tmp/.X11-unix:/tmp/.X11-unix \
+     cartesian_impedance_controller:latest
+  ```
+
+  - `--net=host`: Allows the container to use the host network.
+  - `-e DISPLAY=$DISPLAY` and `-v /tmp/.X11-unix:/tmp/.X11-unix`: Enable GUI applications (e.g., `rviz2`) to run inside the container.
+
+#### Optional: Enable Franka ROS 2 Integration
+If you want to include Franka ROS 2 installation inside docker, build the docker image with the `BUILD_FRANKA_ROS` argument set to `true`:
+```bash
+docker build --build-arg BUILD_FRANKA_ROS=true -t cartesian_impedance_controller:franka .
+```
+
+### Access the Workspace
+Once inside the container, you can access the ROS 2 workspace at `/ros2_ws`. To build the workspace or source it:
+```bash
+source /opt/ros/humble/setup.bash
+cd /ros2_ws
+colcon build
+source install/setup.bash
+```
+
 This allows you to add a controller configuration for the controller type `cartesian_impedance_controller/CartesianImpedanceController` in your `ros2_control` configuration.
  
 ### Configuration file
