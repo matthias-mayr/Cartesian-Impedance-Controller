@@ -84,6 +84,7 @@ private:
   std::string end_effector_;
   std::string wrench_ee_frame_;
   std::string root_frame_;
+  std::string robot_description_;
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
   rclcpp::Time tf_last_time_;
