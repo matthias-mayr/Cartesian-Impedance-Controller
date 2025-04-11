@@ -375,6 +375,10 @@ void CartesianImpedanceControllerRos::applyRuntimeParameters()
     else
       applyWrench(F);
   }
+  else
+  {
+    applyWrench(Eigen::Matrix<double, 6, 1>::Zero());
+  }
 }
 
 bool CartesianImpedanceControllerRos::initRBDyn()
