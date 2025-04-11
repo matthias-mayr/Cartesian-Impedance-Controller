@@ -108,7 +108,7 @@ CallbackReturn CartesianImpedanceControllerRos::on_configure(const rclcpp_lifecy
   wrench_ee_frame_ = params_.wrench_ee_frame;
   delta_tau_max_ = params_.delta_tau_max;
   update_frequency_ = params_.update_frequency;
-
+  robot_description_ = params_.robot_description;
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(node->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
   tf_last_time_ = get_node()->now();
@@ -385,26 +385,40 @@ bool CartesianImpedanceControllerRos::initRBDyn()
 {
   auto node = get_node();
   auto logger = node->get_logger();
-
-  std::string urdf_string;
-  if (!node->get_parameter("robot_description", urdf_string))
-  {
-    RCLCPP_ERROR(logger, "No robot URDF found in 'robot_description' parameter!");
+  
+  auto param_client = std::make_shared<rclcpp::AsyncParametersClient>(node, "/robot_state_publisher");
+  if (!param_client->wait_for_service(std::chrono::seconds(5))) {
+    RCLCPP_ERROR(logger, "Parameter service not available on /robot_state_publisher");
     return false;
   }
 
-  try
-  {
-    rbdyn_wrapper_.init_rbdyn(urdf_string, end_effector_);
+  std::string urdf_string;
+  try {
+    auto response = param_client->get_parameters({robot_description_}).get();
+    if (response.empty() || response[0].get_type() != rclcpp::PARAMETER_STRING) {
+      RCLCPP_ERROR(logger, "Failed to retrieve 'robot_description' parameter");
+      return false;
+    }
+    urdf_string = response[0].as_string();
+  } catch (const std::exception& e) {
+    RCLCPP_ERROR(logger, "Exception while retrieving robot_description: %s", e.what());
+    return false;
   }
-  catch (const std::runtime_error& e)
-  {
+
+  if (urdf_string.empty()) {
+    RCLCPP_ERROR(logger, "Retrieved empty 'robot_description'");
+    return false;
+  }
+
+  // Initialize RBDyn with the URDF
+  try {
+    rbdyn_wrapper_.init_rbdyn(urdf_string, end_effector_);
+    root_frame_ = rbdyn_wrapper_.root_link();
+    RCLCPP_INFO(logger, "Root frame is '%s'", root_frame_.c_str());
+  } catch (const std::exception& e) {
     RCLCPP_ERROR(logger, "Error initializing RBDyn: %s", e.what());
     return false;
   }
-
-  root_frame_ = rbdyn_wrapper_.root_link();
-  RCLCPP_INFO(logger, "Root frame is '%s'.", root_frame_.c_str());
 
   if (rbdyn_wrapper_.n_joints() < static_cast<int>(dof_))
   {

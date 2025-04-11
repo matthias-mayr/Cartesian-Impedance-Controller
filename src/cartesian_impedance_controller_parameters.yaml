@@ -22,6 +22,10 @@ cartesian_impedance_controller:
     default_value: ""
     description: "Name of the end effector link."
 
+  robot_description:
+    type: string
+    default_value: "robot_description"
+    description: "Name of the robot description parameter."
 
   damping:
     translation:
