@@ -65,7 +65,7 @@ We use `RBDyn` to calculate forward kinematics and the Jacobian.
 
 The installation steps for the installation of the non-ROS dependencies are automated in `scripts/install_dependencies.sh`.
  
-## Controller Usage in ROS
+## Controller Usage in ROS 2
 Assuming that there is an initialized colcon workspace you can clone this repository, install the dependencies and compile the controller.
  
 Here are the steps:
@@ -81,7 +81,7 @@ colcon build
 source install/setup.bash
 ```
 ### Docker Installation
-```markdown
+
 To build and run the Docker container for the Cartesian Impedance Controller, follow these steps:
 
 #### Build the Docker Image
@@ -127,65 +127,66 @@ When using the controller it is a good practice to describe the parameters in a 
 Here is a template of what needs to be in that YAML file that can be adapted:
 ```YAML
 cartesian_impedance_controller:
-  type: cartesian_impedance_controller/CartesianImpedanceController
-  joints:
-    - fr3_joint1
-    - fr3_joint2
-    - fr3_joint3
-    - fr3_joint4
-    - fr3_joint5
-    - fr3_joint6
-    - fr3_joint7
-  end_effector: fr3_hand_tcp
-  update_frequency: 500
-  handle_trajectories: true
-  robot_description: /robot_description
-  wrench_ee_frame: fr3_hand_tcp
-  delta_tau_max: 1.0
-
-  damping:
-    translation:
-      x: 1.0
-      y: 1.0
-      z: 1.0
-    rotation:
-      x: 1.0
-      y: 1.0
-      z: 1.0
-    nullspace_damping: 1.0
-    update_damping_factors: false
-
-  stiffness:
-    translation:
-      x: 200.0
-      y: 200.0
-      z: 200.0
-    rotation:
-      x: 20.0
-      y: 20.0
-      z: 20.0
-    nullspace_stiffness: 0.0
-    update_stiffness: false
-
-  wrench:
-    apply_wrench: false
-    force_x: 0.0
-    force_y: 0.0
-    force_z: 0.0
-    torque_x: 0.0
-    torque_y: 0.0
-    torque_z: 0.0
-
-  filtering:
-    nullspace_config: 0.1
-    pose: 0.1
-    stiffness: 0.1
-    wrench: 0.1
-
-  verbosity:
-    verbose_print: false
-    state_msgs: true
-    tf_frames: false
+  ros__parameters:
+   type: cartesian_impedance_controller/CartesianImpedanceController
+   joints:
+     - fr3_joint1
+     - fr3_joint2
+     - fr3_joint3
+     - fr3_joint4
+     - fr3_joint5
+     - fr3_joint6
+     - fr3_joint7
+   end_effector: fr3_hand_tcp
+   update_frequency: 500
+   handle_trajectories: true
+   robot_description: "robot_description"
+   wrench_ee_frame: fr3_hand_tcp
+   delta_tau_max: 1.0
+ 
+   damping:
+     translation:
+       x: 1.0
+       y: 1.0
+       z: 1.0
+     rotation:
+       x: 1.0
+       y: 1.0
+       z: 1.0
+     nullspace_damping: 1.0
+     update_damping_factors: false
+ 
+   stiffness:
+     translation:
+       x: 200.0
+       y: 200.0
+       z: 200.0
+     rotation:
+       x: 20.0
+       y: 20.0
+       z: 20.0
+     nullspace_stiffness: 0.0
+     update_stiffness: false
+ 
+   wrench:
+     apply_wrench: false
+     force_x: 0.0
+     force_y: 0.0
+     force_z: 0.0
+     torque_x: 0.0
+     torque_y: 0.0
+     torque_z: 0.0
+ 
+   filtering:
+     nullspace_config: 0.1
+     pose: 0.1
+     stiffness: 0.1
+     wrench: 0.1
+ 
+   verbosity:
+     verbose_print: false
+     state_msgs: true
+     tf_frames: false
 ```
  
 ### Changing parameters with Dynamic Reconfigure
