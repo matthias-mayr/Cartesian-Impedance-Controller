@@ -381,24 +381,37 @@ namespace cartesian_impedance_controller
   {
     auto node = get_node();
     auto logger = node->get_logger();
-
-    auto param_client = std::make_shared<rclcpp::AsyncParametersClient>(node, "/robot_state_publisher");
-    if (!param_client->wait_for_service(std::chrono::seconds(5)))
+  
+    if (robot_description_.empty())
     {
-      RCLCPP_ERROR(logger, "Parameter service not available on /robot_state_publisher");
-      return false;
+        RCLCPP_ERROR(logger, "'robot_description' parameter name is empty in controller config. Cannot initialize RBDyn.");
+        return false;
     }
+    RCLCPP_DEBUG(logger, "Attempting to get robot_description parameter named: '%s'", robot_description_.c_str());
 
     std::string urdf_string;
     try
     {
-      auto response = param_client->get_parameters({robot_description_}).get();
-      if (response.empty() || response[0].get_type() != rclcpp::PARAMETER_STRING)
-      {
-        RCLCPP_ERROR(logger, "Failed to retrieve 'robot_description' parameter");
-        return false;
+      std::string temp_node_name = std::string(node->get_name()) + "_param_fetcher";
+      auto temp_node = rclcpp::Node::make_shared(temp_node_name);
+  
+      auto param_client = std::make_shared<rclcpp::SyncParametersClient>(temp_node, "/robot_state_publisher");
+  
+      RCLCPP_INFO(logger, "Waiting for parameter service '/robot_state_publisher'...");
+      if (!param_client->wait_for_service(std::chrono::seconds(5))) {
+        RCLCPP_ERROR(logger, "Parameter service not available on /robot_state_publisher.");
+        return false; 
+      }
+  
+      auto response = param_client->get_parameters({robot_description_});
+  
+      if (response.empty() || response[0].get_type() == rclcpp::PARAMETER_NOT_SET) {
+          RCLCPP_ERROR(logger, "Parameter '%s' not set or not retrieved from '%s'.",
+                       robot_description_.c_str(), "/robot_state_publisher");
+          return false; 
       }
       urdf_string = response[0].as_string();
+      RCLCPP_DEBUG(logger, "Successfully retrieved URDF string (length: %zu)", urdf_string.length());
     }
     catch (const std::exception &e)
     {
