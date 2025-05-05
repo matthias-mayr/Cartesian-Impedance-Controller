@@ -1,0 +1,11 @@
+<library path="libmoveit_ros_control_interface_trajectory_plugin">
+    <class
+        name="Cartesian-Impedance-Controller/CartesianImpedance_trajectory_controller"
+        type="moveit_ros_control_interface::JointTrajectoryControllerAllocator"
+        base_class_type="moveit_ros_control_interface::ControllerHandleAllocator"
+    >
+        <description>
+            Controller description
+        </description>
+    </class>
+</library>

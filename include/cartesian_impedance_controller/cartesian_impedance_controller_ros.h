@@ -329,6 +329,10 @@ namespace cartesian_impedance_controller
     ros::Duration traj_duration_;   //!< Duration of the current trajectory
     unsigned int traj_index_{0};    //!< Index of the current trajectory point
     bool traj_running_{false};      //!< True when running a trajectory 
+    
+    // Cartesian trajectory interpolation
+    std::vector<Eigen::Vector3d> traj_positions_;      //!< Cached Cartesian positions for trajectory points
+    std::vector<Eigen::Quaterniond> traj_orientations_; //!< Cached Cartesian orientations for trajectory points
 
     // Extra output
     bool verbose_print_{false};       //!< Verbose printing enabled

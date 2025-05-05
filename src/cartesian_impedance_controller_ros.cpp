@@ -561,7 +561,49 @@ namespace cartesian_impedance_controller
     this->traj_running_ = true;
     this->traj_start_ = ros::Time::now();
     this->traj_index_ = 0;
-    trajUpdate();
+
+    // Pre-compute Cartesian poses for all trajectory points
+    this->traj_positions_.clear();
+    this->traj_orientations_.clear();
+    this->traj_positions_.reserve(trajectory.points.size());
+    this->traj_orientations_.reserve(trajectory.points.size());
+
+    for (size_t i = 0; i < trajectory.points.size(); ++i)
+    {
+      // Robustness Check: Joint size
+      if (trajectory.points.at(i).positions.size() != this->n_joints_) {
+          ROS_ERROR("Trajectory point %zu has incorrect number of joints (%zu vs %zu). Aborting trajectory.", 
+                    i, trajectory.points.at(i).positions.size(), this->n_joints_);
+          this->traj_positions_.clear();
+          this->traj_orientations_.clear();
+          this->traj_running_ = false;
+          if (this->traj_as_->isActive()) { this->traj_as_->setAborted(); }
+          return; // Exit trajStart
+      }
+
+      Eigen::VectorXd q = Eigen::VectorXd::Map(trajectory.points.at(i).positions.data(),
+                                             trajectory.points.at(i).positions.size());
+      Eigen::Vector3d position;
+      Eigen::Quaterniond orientation;
+      getFk(q, &position, &orientation);
+      
+      // Robustness Check: Ensure quaternion hemisphere consistency for Slerp
+      if (i > 0 && this->traj_orientations_.back().dot(orientation) < 0.0) {
+          orientation.coeffs() *= -1.0; 
+      }
+
+      this->traj_positions_.push_back(position);
+      this->traj_orientations_.push_back(orientation);
+      
+      if (this->verbose_print_)
+      {
+        ROS_INFO_STREAM("Trajectory point " << i << " position: " << position.transpose() 
+                        << " orientation: " << orientation.coeffs().transpose());
+      }
+    }
+    
+    // Call trajUpdate once to set initial targets
+    trajUpdate(); 
     if (this->nullspace_stiffness_ < 5.)
     {
       ROS_WARN("Nullspace stiffness is low. The joints might not follow the planned path.");
@@ -570,29 +612,103 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceControllerRos::trajUpdate()
   {
-    if (ros::Time::now() > (this->traj_start_ + trajectory_.points.at(this->traj_index_).time_from_start))
+    // Check if trajectory is finished
+    ros::Time current_time = ros::Time::now();
+    if (current_time > (this->traj_start_ + this->traj_duration_))
     {
-      // Get end effector pose
-      Eigen::VectorXd q = Eigen::VectorXd::Map(trajectory_.points.at(this->traj_index_).positions.data(),
-                                               trajectory_.points.at(this->traj_index_).positions.size());
-      if (this->verbose_print_)
-      {
-        ROS_INFO_STREAM("Index " << this->traj_index_ << " q_nullspace: " << q.transpose());
+      // Ensure final pose is set
+      if (!this->traj_positions_.empty()) {
+        this->position_d_target_ = this->traj_positions_.back();
+        this->orientation_d_target_ = this->traj_orientations_.back();
+        Eigen::VectorXd q_last = Eigen::VectorXd::Map(trajectory_.points.back().positions.data(),
+                                                      trajectory_.points.back().positions.size());
+        this->setNullspaceConfig(q_last);
       }
-      // Update end-effector pose and nullspace
-      getFk(q, &this->position_d_target_, &this->orientation_d_target_);
-      this->setNullspaceConfig(q);
-      this->traj_index_++;
-    }
 
-    if (ros::Time::now() > (this->traj_start_ + this->traj_duration_))
-    {
       ROS_INFO_STREAM("Finished executing trajectory.");
       if (this->traj_as_->isActive())
       {
         this->traj_as_->setSucceeded();
       }
       this->traj_running_ = false;
+      return;
     }
+    
+    // Calculate current time within trajectory
+    ros::Duration time_from_start = current_time - this->traj_start_;
+    
+    // Find the two waypoints that bracket the current time
+    // traj_index_ is updated here to avoid re-searching from start every time
+    while (this->traj_index_ < trajectory_.points.size() && 
+           time_from_start >= trajectory_.points.at(this->traj_index_).time_from_start)
+    {
+      this->traj_index_++;
+    }
+    
+    size_t next_index = this->traj_index_;
+    
+    // If we're past the last point (should be handled by finish check, but safety), use last point
+    if (next_index >= trajectory_.points.size())
+    {
+      this->position_d_target_ = this->traj_positions_.back();
+      this->orientation_d_target_ = this->traj_orientations_.back();
+      Eigen::VectorXd q_last = Eigen::VectorXd::Map(trajectory_.points.back().positions.data(),
+                                                    trajectory_.points.back().positions.size());
+      this->setNullspaceConfig(q_last);
+      return;
+    }
+    
+    // If we're before the first point (or exactly at it), use the first point
+    if (next_index == 0)
+    {
+      this->position_d_target_ = this->traj_positions_[0];
+      this->orientation_d_target_ = this->traj_orientations_[0];
+      Eigen::VectorXd q_first = Eigen::VectorXd::Map(trajectory_.points[0].positions.data(),
+                                                     trajectory_.points[0].positions.size());
+      this->setNullspaceConfig(q_first);
+      return;
+    }
+    
+    // Otherwise, interpolate between the two points: prev_index and next_index
+    size_t prev_index = next_index - 1;
+    
+    // Calculate interpolation factor (alpha) between 0 and 1
+    double t_prev = trajectory_.points.at(prev_index).time_from_start.toSec();
+    double t_next = trajectory_.points.at(next_index).time_from_start.toSec();
+    double t_curr = time_from_start.toSec();
+    
+    double dt = t_next - t_prev;
+    double alpha = 1.0; // Default alpha if segment duration is invalid
+    if (dt > 1e-6) // Use a small epsilon to avoid floating point issues near zero
+    {
+        alpha = (t_curr - t_prev) / dt;
+    } else {
+        ROS_WARN_THROTTLE(1.0, "Trajectory segment duration is near-zero or negative. Clamping alpha=1.");
+    }
+    // Clamp alpha strictly between 0 and 1
+    alpha = std::max(0.0, std::min(1.0, alpha)); 
+    
+    if (this->verbose_print_)
+    {
+      ROS_INFO_STREAM_THROTTLE(0.5, "Interpolating between points " << prev_index << " and " << next_index 
+                              << " with alpha=" << alpha << " (t=" << t_curr << ")");
+    }
+    
+    // Linear interpolation for position
+    this->position_d_target_ = (1.0 - alpha) * this->traj_positions_[prev_index] + 
+                               alpha * this->traj_positions_[next_index];
+    
+    // SLERP for orientation (using cached, hemisphere-consistent quaternions)
+    this->orientation_d_target_ = this->traj_orientations_[prev_index].slerp(
+                                 alpha, this->traj_orientations_[next_index]);
+    
+    // Linear interpolation for nullspace configuration
+    Eigen::VectorXd q_prev = Eigen::VectorXd::Map(trajectory_.points.at(prev_index).positions.data(),
+                                                trajectory_.points.at(prev_index).positions.size());
+    Eigen::VectorXd q_next = Eigen::VectorXd::Map(trajectory_.points.at(next_index).positions.data(),
+                                                trajectory_.points.at(next_index).positions.size());
+    Eigen::VectorXd q_interp = (1.0 - alpha) * q_prev + alpha * q_next;
+    
+    this->setNullspaceConfig(q_interp);
   }
 } // namespace cartesian_impedance_controller
