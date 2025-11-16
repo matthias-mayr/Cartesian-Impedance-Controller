@@ -17,6 +17,11 @@ cartesian_impedance_controller:
     validation:
       bounds<>: [200.0, 1000.0]
 
+  command_current_joint_pos:
+    type: bool
+    default_value: false
+    description: "Flag to command current joint positions (needed for KUKA with FRI)."
+
   end_effector:
     type: string
     default_value: ""

@@ -73,7 +73,8 @@ namespace cartesian_impedance_controller
     size_t dof_{0};
     std::shared_ptr<realtime_tools::RealtimeBuffer<trajectory_msgs::msg::JointTrajectory>> rt_trajectory_;
 
-    std::vector<hardware_interface::LoanedCommandInterface *> joint_command_handles_;
+    std::vector<hardware_interface::LoanedCommandInterface *> joint_effort_command_handles_;
+    std::vector<hardware_interface::LoanedCommandInterface *> joint_position_command_handles_;
     std::vector<const hardware_interface::LoanedStateInterface *> joint_position_state_;
     std::vector<const hardware_interface::LoanedStateInterface *> joint_velocity_state_;
     std::vector<const hardware_interface::LoanedStateInterface *> joint_effort_state_;
@@ -81,6 +82,7 @@ namespace cartesian_impedance_controller
     std::shared_ptr<ParamListener> parameter_handler_;
     Params params_;
 
+    bool command_current_joint_pos_; // KUKA with FRI also needs current joint position commands
     std::string end_effector_;
     std::string wrench_ee_frame_;
     std::string root_frame_;

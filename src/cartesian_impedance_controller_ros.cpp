@@ -58,6 +58,10 @@ namespace cartesian_impedance_controller
     for (const auto &jn : params_.joints)
     {
       conf.names.push_back(jn + "/" + hardware_interface::HW_IF_EFFORT);
+      if (command_current_joint_pos_)
+      {
+        conf.names.push_back(jn + "/" + hardware_interface::HW_IF_POSITION);
+      }
     }
     return conf;
   }
@@ -104,6 +108,7 @@ namespace cartesian_impedance_controller
     tau_c_ = Eigen::VectorXd::Zero(dof_);
     command_joint_names_ = params_.joints;
 
+    command_current_joint_pos_ = params_.command_current_joint_pos;
     end_effector_ = params_.end_effector;
     wrench_ee_frame_ = params_.wrench_ee_frame;
     delta_tau_max_ = params_.delta_tau_max;
@@ -120,6 +125,10 @@ namespace cartesian_impedance_controller
       joints_ss << joint << " ";
     }
     RCLCPP_INFO(logger, "%s", joints_ss.str().c_str());
+    RCLCPP_INFO(logger, "Command Current Joint Position: %s", command_current_joint_pos_ ? "true" : "false");
+    if (command_current_joint_pos_) {
+      RCLCPP_WARN(logger, "Controller configured to command current joint positions in addition to the commanded torques. This is needed for KUKA with FRI, but might lead to unexpected behavior on other robots.");
+    }
     RCLCPP_INFO(logger, "End Effector: %s", params_.end_effector.c_str());
     RCLCPP_INFO(logger, "Wrench EE Frame: %s", params_.wrench_ee_frame.c_str());
     RCLCPP_INFO(logger, "Update Frequency: %.2f", params_.update_frequency);
@@ -225,12 +234,14 @@ namespace cartesian_impedance_controller
     auto &command_interfaces = this->command_interfaces_;
     const auto &state_interfaces = this->state_interfaces_;
 
-    joint_command_handles_.clear();
+    joint_effort_command_handles_.clear();
+    joint_position_command_handles_.clear();
     joint_position_state_.clear();
     joint_velocity_state_.clear();
     joint_effort_state_.clear();
 
-    joint_command_handles_.resize(dof_, nullptr);
+    joint_effort_command_handles_.resize(dof_, nullptr);
+    joint_position_command_handles_.resize(dof_, nullptr);
     joint_position_state_.resize(dof_, nullptr);
     joint_velocity_state_.resize(dof_, nullptr);
     joint_effort_state_.resize(dof_, nullptr);
@@ -261,14 +272,18 @@ namespace cartesian_impedance_controller
 
     for (auto &interface : command_interfaces)
     {
-      if (interface.get_interface_name() != hardware_interface::HW_IF_EFFORT)
+      const std::string &if_name = interface.get_interface_name();
+      if ((if_name != hardware_interface::HW_IF_EFFORT) || (command_current_joint_pos_ && if_name != hardware_interface::HW_IF_POSITION))
         continue;
       const std::string &joint_name = interface.get_prefix_name();
       auto it = std::find(params_.joints.begin(), params_.joints.end(), joint_name);
       if (it == params_.joints.end())
         continue;
       const size_t index = std::distance(params_.joints.begin(), it);
-      joint_command_handles_[index] = &interface;
+      if (if_name == hardware_interface::HW_IF_POSITION)
+        joint_position_command_handles_[index] = &interface;
+      else if (if_name == hardware_interface::HW_IF_EFFORT)
+        joint_effort_command_handles_[index] = &interface;
     }
 
     update(rclcpp::Time(0), rclcpp::Duration(0, 0));
@@ -276,9 +291,14 @@ namespace cartesian_impedance_controller
     initNullspaceConfig(q_);
     for (size_t i = 0; i < dof_; i++)
     {
-      if (!joint_command_handles_[i])
+      if (!joint_effort_command_handles_[i])
       {
         RCLCPP_ERROR(logger, "Command handle for joint %zu is null!", i);
+        return CallbackReturn::ERROR;
+      }
+      if (!joint_position_command_handles_[i] && command_current_joint_pos_)
+      {
+        RCLCPP_ERROR(logger, "Position command handle for joint %zu is null!", i);
         return CallbackReturn::ERROR;
       }
     }
@@ -475,14 +495,19 @@ namespace cartesian_impedance_controller
 
   void CartesianImpedanceControllerRos::write_command_to_hardware()
   {
-    for (size_t i = 0; i < dof_; i++)
-      joint_command_handles_[i]->set_value(tau_c_(i));
+    for (size_t i = 0; i < dof_; i++) {
+      if (command_current_joint_pos_ && joint_position_command_handles_[i]) {
+        joint_position_command_handles_[i]->set_value(q_(i));
+      }
+      joint_effort_command_handles_[i]->set_value(tau_c_(i));
+    }
+
   }
 
   void CartesianImpedanceControllerRos::write_zero_commands_to_hardware()
   {
     for (size_t i = 0; i < dof_; i++)
-      joint_command_handles_[i]->set_value(0.0);
+      joint_effort_command_handles_[i]->set_value(0.0);
   }
 
   bool CartesianImpedanceControllerRos::getFk(const Eigen::VectorXd &q, Eigen::Vector3d *position,

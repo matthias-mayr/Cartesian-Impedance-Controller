@@ -137,6 +137,7 @@ cartesian_impedance_controller:
      - fr3_joint5
      - fr3_joint6
      - fr3_joint7
+   command_current_joint_pos: false
    end_effector: fr3_hand_tcp
    update_frequency: 500
    handle_trajectories: true
