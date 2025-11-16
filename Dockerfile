@@ -1,12 +1,11 @@
-# If you would like to use lightweight image, you can use the following base image:
-# FROM ros:humble-ros-base
-
-FROM osrf/ros:humble-desktop-full 
+# Decide to have a lightweight base image or a full desktop image
+FROM ros:jazzy-ros-base
+#FROM osrf/ros:jazzy-desktop-full 
 
 ENV DEBIAN_FRONTEND=noninteractive \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
-    ROS_DISTRO=humble
+    ROS_DISTRO=jazzy
 
 ARG BUILD_FRANKA_ROS=false
 
@@ -52,34 +51,34 @@ RUN rosdep update && \
 RUN if [ "$BUILD_FRANKA_ROS" = "true" ]; then \
       echo "Installing franka_ros2 dependencies and cloning repository..."; \
       sudo apt-get install -y --no-install-recommends \
-      	   ros-humble-franka-description \
-           ros-humble-ros-gz \
-           ros-humble-sdformat-urdf \
-           ros-humble-joint-state-publisher-gui \
-           ros-humble-ros2controlcli \
-           ros-humble-controller-interface \
-           ros-humble-hardware-interface-testing \
-           ros-humble-ament-cmake-clang-format \
-           ros-humble-ament-cmake-clang-tidy \
-           ros-humble-controller-manager \
-           ros-humble-ros2-control-test-assets \
+      	   ros-$ROS_DISTRO-franka-description \
+           ros-$ROS_DISTRO-ros-gz \
+           ros-$ROS_DISTRO-sdformat-urdf \
+           ros-$ROS_DISTRO-joint-state-publisher-gui \
+           ros-$ROS_DISTRO-ros2controlcli \
+           ros-$ROS_DISTRO-controller-interface \
+           ros-$ROS_DISTRO-hardware-interface-testing \
+           ros-$ROS_DISTRO-ament-cmake-clang-format \
+           ros-$ROS_DISTRO-ament-cmake-clang-tidy \
+           ros-$ROS_DISTRO-controller-manager \
+           ros-$ROS_DISTRO-ros2-control-test-assets \
            libignition-gazebo6-dev \
            libignition-plugin-dev \
-           ros-humble-hardware-interface \
-           ros-humble-control-msgs \
-           ros-humble-backward-ros \
-           ros-humble-generate-parameter-library \
-           ros-humble-realtime-tools \
-           ros-humble-joint-state-publisher \
-           ros-humble-joint-state-broadcaster \
-           ros-humble-moveit-ros-move-group \
-           ros-humble-moveit-kinematics \
-           ros-humble-moveit-planners-ompl \
-           ros-humble-moveit-ros-visualization \
-           ros-humble-joint-trajectory-controller \
-           ros-humble-moveit-simple-controller-manager \
-           ros-humble-rviz2 \	
-           ros-humble-xacro && \
+           ros-$ROS_DISTRO-hardware-interface \
+           ros-$ROS_DISTRO-control-msgs \
+           ros-$ROS_DISTRO-backward-ros \
+           ros-$ROS_DISTRO-generate-parameter-library \
+           ros-$ROS_DISTRO-realtime-tools \
+           ros-$ROS_DISTRO-joint-state-publisher \
+           ros-$ROS_DISTRO-joint-state-broadcaster \
+           ros-$ROS_DISTRO-moveit-ros-move-group \
+           ros-$ROS_DISTRO-moveit-kinematics \
+           ros-$ROS_DISTRO-moveit-planners-ompl \
+           ros-$ROS_DISTRO-moveit-ros-visualization \
+           ros-$ROS_DISTRO-joint-trajectory-controller \
+           ros-$ROS_DISTRO-moveit-simple-controller-manager \
+           ros-$ROS_DISTRO-rviz2 \	
+           ros-$ROS_DISTRO-xacro && \
       sudo apt-get clean && \
       git clone https://github.com/frankaemika/franka_ros2.git /ros2_ws/src/franka_ros2 && \
       vcs import /ros2_ws/src < /ros2_ws/src/franka_ros2/franka.repos --recursive --skip-existing && \
