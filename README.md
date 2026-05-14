@@ -80,14 +80,14 @@ colcon build
 source install/setup.bash
 ```
  
-This allows you to add a controller configuration for the controller type `cartesian_impedance_controller/CartesianImpedanceControllerRos` in your `ros2_control` configuration.
+This allows you to add a controller configuration for the controller type `cartesian_impedance_controller/CartesianImpedanceController` in your `ros2_control` configuration.
  
 ### Configuration file
 When using the controller it is a good practice to describe the parameters in a `YAML` file and load it. Usually this is already done by your robot setup - e.g. for iiwa_ros that is here.
 Here is a template of what needs to be in that YAML file that can be adapted:
 ```YAML
 cartesian_impedance_controller:
-  type: cartesian_impedance_controller/CartesianImpedanceControllerRos
+  type: cartesian_impedance_controller/CartesianImpedanceController
   joints:
     - fr3_joint1
     - fr3_joint2
