@@ -31,15 +31,15 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   trajectory_msgs
   generate_parameter_library
   urdf
+  RBDyn
+  mc_rbdyn_urdf
+  Eigen3
+  pluginlib
 )
 
 find_package(ament_cmake REQUIRED)
 find_package(controller_interface REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
-find_package(RBDyn REQUIRED)
-find_package(mc_rbdyn_urdf REQUIRED)
-find_package(Eigen3 REQUIRED)
-find_package(pluginlib REQUIRED)
 foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
   find_package(${Dependency} REQUIRED)
 endforeach()
