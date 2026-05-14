@@ -106,4 +106,72 @@ install(
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})
 
+# Install simulation resources (URDF, config, launch files) so that
+# get_package_share_directory() can locate them at runtime.
+install(
+  DIRECTORY res/
+  DESTINATION share/${PROJECT_NAME}/res
+)
+
+# =============================================================================
+# Tests
+# =============================================================================
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  find_package(ament_cmake_ros REQUIRED)
+  find_package(launch_testing_ament_cmake REQUIRED)
+
+  # ---------------------------------------------------------------------------
+  # base_tests: unit tests for the base library (no running ROS system needed).
+  # Run with: colcon test --packages-select cartesian_impedance_controller
+  # ---------------------------------------------------------------------------
+  ament_add_gtest(base_tests test/base_tests.cpp)
+  target_include_directories(base_tests PRIVATE
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+  )
+  target_link_libraries(base_tests ${library_name})
+
+  # ---------------------------------------------------------------------------
+  # ros_tests: integration tests for ROS topics and parameter interface.
+  # ros_func_tests: integration tests for controller functionality.
+  # Both require a running controller manager with the
+  # CartesianImpedance_trajectory_controller active (e.g. in a simulation).
+  # They are built as test executables and launched via the Python launch test
+  # files below.
+  # ---------------------------------------------------------------------------
+  ament_add_gtest_executable(ros_tests test/ros_tests.cpp)
+  target_include_directories(ros_tests PRIVATE
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/rosidl_generator_cpp>
+  )
+  target_link_libraries(ros_tests "${cpp_typesupport_target}")
+  ament_target_dependencies(ros_tests
+    rclcpp
+    std_msgs
+    geometry_msgs
+    Eigen3
+  )
+
+  ament_add_gtest_executable(ros_func_tests test/ros_func_tests.cpp)
+  target_include_directories(ros_func_tests PRIVATE
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/rosidl_generator_cpp>
+  )
+  target_link_libraries(ros_func_tests "${cpp_typesupport_target}")
+  ament_target_dependencies(ros_func_tests
+    rclcpp
+    std_msgs
+    geometry_msgs
+    Eigen3
+  )
+
+  install(TARGETS ros_tests ros_func_tests
+    DESTINATION lib/${PROJECT_NAME}
+  )
+
+  # Register the Python launch test files with colcon / CTest.
+  add_launch_test(test/ros_tests.launch.py)
+  add_launch_test(test/ros_func_tests.launch.py)
+endif()
+
 ament_package()

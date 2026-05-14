@@ -85,6 +85,7 @@ namespace cartesian_impedance_controller
       RCLCPP_ERROR(logger, "Parameter handler not initialized.");
       return CallbackReturn::ERROR;
     }
+    RCLCPP_INFO(logger, "Reading parameters in namespace %s", node->get_namespace());
 
     rt_trajectory_ = std::make_shared<realtime_tools::RealtimeBuffer<trajectory_msgs::msg::JointTrajectory>>();
     parameter_handler_->refresh_dynamic_parameters();
