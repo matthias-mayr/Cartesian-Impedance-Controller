@@ -14,6 +14,12 @@ endif()
 # Export all symbols on Windows
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
+# Sets build type to "Release" in case no build type has not been set before. This is necessary to run this controller at 1 kHz.
+# On our RT system with an i5 11th Gen processor this reduces update evaluations from about 800 to 300 microseconds
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif(NOT CMAKE_BUILD_TYPE)
+
 set(THIS_PACKAGE_INCLUDE_DEPENDS
   rclcpp
   control_msgs
