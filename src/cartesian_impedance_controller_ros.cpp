@@ -148,8 +148,8 @@ namespace cartesian_impedance_controller
         std::bind(&CartesianImpedanceControllerRos::trajAcceptCb, this, std::placeholders::_1));
 
     auto state_pub =
-        get_node()->create_publisher<cartesian_impedance_controller::msg::ControllerState>("controller_state", 10);
-    auto torques_pub = get_node()->create_publisher<std_msgs::msg::Float64MultiArray>("commanded_torques", 10);
+        get_node()->create_publisher<cartesian_impedance_controller::msg::ControllerState>(std::string(node->get_name()) + "/controller_state", 10);
+    auto torques_pub = get_node()->create_publisher<std_msgs::msg::Float64MultiArray>(std::string(node->get_name()) + "/commanded_torques", 10);
 
     rt_pub_state_ =
         std::make_shared<realtime_tools::RealtimePublisher<cartesian_impedance_controller::msg::ControllerState>>(
@@ -157,23 +157,23 @@ namespace cartesian_impedance_controller
     rt_pub_torques_ = std::make_shared<realtime_tools::RealtimePublisher<std_msgs::msg::Float64MultiArray>>(torques_pub);
 
     sub_controller_config_ = get_node()->create_subscription<cartesian_impedance_controller::msg::ControllerConfig>(
-        "set_config", rclcpp::SystemDefaultsQoS(),
+        std::string(node->get_name()) + "/set_config", rclcpp::SystemDefaultsQoS(),
         std::bind(&CartesianImpedanceControllerRos::controllerConfigCb, this, std::placeholders::_1));
 
     sub_cart_stiffness_ = node->create_subscription<geometry_msgs::msg::WrenchStamped>(
-        "set_cartesian_stiffness", rclcpp::SystemDefaultsQoS(),
+        std::string(node->get_name()) + "/set_cartesian_stiffness", rclcpp::SystemDefaultsQoS(),
         std::bind(&CartesianImpedanceControllerRos::cartesianStiffnessCb, this, std::placeholders::_1));
 
     sub_cart_wrench_ = node->create_subscription<geometry_msgs::msg::WrenchStamped>(
-        "set_cartesian_wrench", rclcpp::SystemDefaultsQoS(),
+        std::string(node->get_name()) + "/set_cartesian_wrench", rclcpp::SystemDefaultsQoS(),
         std::bind(&CartesianImpedanceControllerRos::wrenchCommandCb, this, std::placeholders::_1));
 
     sub_damping_factors_ = node->create_subscription<geometry_msgs::msg::Wrench>(
-        "set_damping_factors", rclcpp::SystemDefaultsQoS(),
+        std::string(node->get_name()) + "/set_damping_factors", rclcpp::SystemDefaultsQoS(),
         std::bind(&CartesianImpedanceControllerRos::cartesianDampingFactorCb, this, std::placeholders::_1));
 
     sub_reference_pose_ = node->create_subscription<geometry_msgs::msg::PoseStamped>(
-        "reference_pose", rclcpp::SystemDefaultsQoS(),
+        std::string(node->get_name()) + "/reference_pose", rclcpp::SystemDefaultsQoS(),
         std::bind(&CartesianImpedanceControllerRos::referencePoseCb, this, std::placeholders::_1));
 
     setNumberOfJoints(dof_);
