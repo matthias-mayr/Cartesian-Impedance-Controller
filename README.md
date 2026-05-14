@@ -2,18 +2,12 @@
 [![CI](https://github.com/matthias-mayr/Cartesian-Impedance-Controller/actions/workflows/build_code.yml/badge.svg?branch=ros2)](https://github.com/matthias-mayr/Cartesian-Impedance-Controller/actions/workflows/build_code.yml)
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.05194/status.svg)](https://doi.org/10.21105/joss.05194)
 [![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
-
-## CAUTION: Please be aware that this project was deployed on the real robot, but is still in progress! 
  
 ## Description
-### This project is a migration of ROS 1 implementation. You can find the original repo [here.](https://github.com/matthias-mayr/Cartesian-Impedance-Controller)
-
 
 This project is an implementation of Cartesian impedance control for robotic manipulators. It is a type of control strategy that sets a dynamic relationship between contact forces and the position of a robot arm, making it suitable for collaborative robots. It is particularly useful when the interesting dimensions in the workspace are in the Cartesian space.
  
-This controller was deployed on `Franka Emika Research 3` both in reality and simulation.
-
-ROS 1 version of the controller is developed using the seven degree-of-freedom (DoF) robot arm `LBR iiwa` by `KUKA AG` and has also been tested with the `Franka Emika Robot (Panda)` both in reality and simulation.
+In ROS 2 this controller is known to be deployed on `Franka Emika Research 3` with [franka_ros](https://github.com/frankarobotics/franka_ros) and `KUKA iiwa7` robots with [lbr_fri_ros2_stack](https://github.com/lbr-stack/lbr_fri_ros2_stack) both in reality and simulation. In ROS 1 it was also used with the `Franka Emika Robot (Panda)` using [franka_ros](https://github.com/frankarobotics/franka_ros/tree/noetic-devel) and `KUKA iiwa7` with [iiwa_ros](https://github.com/epfl-lasa/iiwa_ros).
  
 The implementation consists of a
 1. base library that has few dependencies and can e.g. be directly integrated into software such as the DART simulator or any simulator which has `ros2_control` interface
