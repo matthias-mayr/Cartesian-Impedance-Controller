@@ -1,5 +1,5 @@
 # Cartesian Impedance Controller
-[![CI](https://github.com/mrceki/Cartesian-Impedance-Controller/actions/workflows/build_code.yml/badge.svg?branch=ros2)](https://github.com/mrceki/Cartesian-Impedance-Controller/actions/workflows/build_code.yml)
+[![CI](https://github.com/matthias-mayr/Cartesian-Impedance-Controller/actions/workflows/build_code.yml/badge.svg?branch=ros2)](https://github.com/matthias-mayr/Cartesian-Impedance-Controller/actions/workflows/build_code.yml)
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.05194/status.svg)](https://doi.org/10.21105/joss.05194)
 [![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
@@ -74,7 +74,7 @@ Here are the steps:
 ```bash
 mkdir -p ~/ros2_ws/src  
 cd ~/ros2_ws
-git clone https://github.com/mrceki/Cartesian-Impedance-Controller src/Cartesian-Impedance-Controller
+git clone https://github.com/matthias-mayr/Cartesian-Impedance-Controller src/Cartesian-Impedance-Controller
 bash src/Cartesian-Impedance-Controller/scripts/install_dependencies.sh
 rosdep install --from-paths src --ignore-src --rosdistro=${ROS_DISTRO} -y
 colcon build
