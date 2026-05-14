@@ -9,13 +9,13 @@
     <color rgba="1.0 0.423529411765 0.0392156862745 1.0"/>
   </material>
 
-<!-- Connect to world -->
-<link name="world" />
-<joint name="world_joint" type="fixed">
-        <parent link="world" />
-        <child link = "base_link" />
-        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
-</joint>
+  <!-- Connect to world -->
+  <link name="world" />
+  <joint name="world_joint" type="fixed">
+    <parent link="world" />
+    <child link="base_link" />
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+  </joint>
 
   <!-- Base link -->
   <link name="base_link">
@@ -51,50 +51,28 @@
         <material name="orange"/>
       </visual>
       <visual name="link">
-      <origin xyz="${x} ${y} ${z}" rpy="${r} ${p} ${yo}" />
+        <origin xyz="${x} ${y} ${z}" rpy="${r} ${p} ${yo}" />
         <geometry>
           <cylinder length="${length}" radius="0.03"/>
         </geometry>
         <material name="blue"/>
       </visual>
       <inertial>
-        <!-- Generic inertial properties, adjust for accuracy -->
         <origin xyz="${x} ${y} ${z}" rpy="${r} ${p} ${yo}" />
         <mass value="1"/>
         <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
       </inertial>
     </link>
-
-    <!-- Transmission -->
-    <transmission name="${prefix}_transmission">
-      <type>transmission_interface/SimpleTransmission</type>
-      <joint name="${prefix}">
-        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-      </joint>
-      <actuator name="${prefix}_motor">
-        <mechanicalReduction>1</mechanicalReduction>
-      </actuator>
-    </transmission>
-
-
-     <!-- Gazebo configuration for the joint -->
-    <gazebo reference="${prefix}">
-      <dynamics damping="0.01" friction="0.02"/>
-    </gazebo>
-
-    <gazebo reference="${child}">
-        <turnGravityOff>true</turnGravityOff>
-    </gazebo>
   </xacro:macro>
 
   <!-- Chain of joints and links -->
-  <xacro:rotational_joint prefix="joint1" parent="base_link" child="link1" xyz="0 0 0.35" rpy="0 0 0" length="0.333" x="0" y="0" z="-0.175" r="0" p="0" yo="0"/>
-  <xacro:rotational_joint prefix="joint2" parent="link1" child="link2" xyz="0 0 0" rpy="0 -1.5708 0" length="0.3" x="0" y="0.15" z="0" r="-1.5708" p="0" yo="0"/>
-  <xacro:rotational_joint prefix="joint3" parent="link2" child="link3" xyz="0 0.3 0" rpy="0 1.5708 0" length="0.0" x="0" y="0" z="0" r="-1.5708" p="0" yo="0"/>
-  <xacro:rotational_joint prefix="joint4" parent="link3" child="link4" xyz="0 0 0" rpy="0 1.5708 0" length="0.4" x="0" y="0" z="0.2" r="0" p="0" yo="0"/>
-  <xacro:rotational_joint prefix="joint5" parent="link4" child="link5" xyz="0 0 0.4" rpy="0 -1.5708 0" length="0" x="0" y="0" z="0" r="0" p="1.5708" yo="0"/>
-  <xacro:rotational_joint prefix="joint6" parent="link5" child="link6" xyz="0 0 0" rpy="0 1.5708 0" length="0.1" x="0.05" y="0" z="0" r="0" p="1.5708" yo="0"/>
-  <xacro:rotational_joint prefix="joint7" parent="link6" child="link7" xyz="0.1 0 0" rpy="0 1.5708 0" length="0.107" x="0" y="0" z="0.05035" r="0" p="0" yo="0"/>
+  <xacro:rotational_joint prefix="joint1" parent="base_link" child="link1" xyz="0 0 0.35" rpy="0 0 0"       length="0.333" x="0"    y="0"    z="-0.175" r="0"       p="0"      yo="0"/>
+  <xacro:rotational_joint prefix="joint2" parent="link1"     child="link2" xyz="0 0 0"    rpy="0 -1.5708 0" length="0.3"   x="0"    y="0.15" z="0"      r="-1.5708" p="0"      yo="0"/>
+  <xacro:rotational_joint prefix="joint3" parent="link2"     child="link3" xyz="0 0.3 0"  rpy="0 1.5708 0"  length="0.0"   x="0"    y="0"    z="0"      r="-1.5708" p="0"      yo="0"/>
+  <xacro:rotational_joint prefix="joint4" parent="link3"     child="link4" xyz="0 0 0"    rpy="0 1.5708 0"  length="0.4"   x="0"    y="0"    z="0.2"    r="0"       p="0"      yo="0"/>
+  <xacro:rotational_joint prefix="joint5" parent="link4"     child="link5" xyz="0 0 0.4"  rpy="0 -1.5708 0" length="0"     x="0"    y="0"    z="0"      r="0"       p="1.5708" yo="0"/>
+  <xacro:rotational_joint prefix="joint6" parent="link5"     child="link6" xyz="0 0 0"    rpy="0 1.5708 0"  length="0.1"   x="0.05" y="0"    z="0"      r="0"       p="1.5708" yo="0"/>
+  <xacro:rotational_joint prefix="joint7" parent="link6"     child="link7" xyz="0.1 0 0"  rpy="0 1.5708 0"  length="0.107" x="0"    y="0"    z="0.05035" r="0"      p="0"      yo="0"/>
 
   <!-- Joint connecting the last link and the end-effector -->
   <joint name="tool0_joint" type="fixed">
@@ -113,14 +91,93 @@
     </visual>
   </link>
 
+  <!-- ==========================================================================
+       ros2_control hardware interface using mock_components/GenericSystem.
+       All 7 joints expose an effort command interface and position/velocity/
+       effort state interfaces.  Initial joint positions are 0 rad, which places
+       tool0 at approximately (0.4, 0.3, 0.14) m in world frame.
+       ========================================================================== -->
+  <ros2_control name="robot_mock_hardware" type="system">
+    <hardware>
+      <plugin>mock_components/GenericSystem</plugin>
+    </hardware>
 
+    <joint name="joint1">
+      <command_interface name="effort"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="effort"/>
+    </joint>
 
-  <!-- Gazebo ROS Control plugin -->
-        <gazebo>
-                <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so" />
-        </gazebo>
+    <joint name="joint2">
+      <command_interface name="effort"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="effort"/>
+    </joint>
 
+    <joint name="joint3">
+      <command_interface name="effort"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="effort"/>
+    </joint>
 
+    <joint name="joint4">
+      <command_interface name="effort"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="effort"/>
+    </joint>
+
+    <joint name="joint5">
+      <command_interface name="effort"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="effort"/>
+    </joint>
+
+    <joint name="joint6">
+      <command_interface name="effort"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="effort"/>
+    </joint>
+
+    <joint name="joint7">
+      <command_interface name="effort"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="effort"/>
+    </joint>
+  </ros2_control>
 
 </robot>
-

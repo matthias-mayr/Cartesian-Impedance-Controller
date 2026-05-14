@@ -295,6 +295,34 @@ Mayr et al., (2024). A C++ Implementation of a Cartesian Impedance Controller fo
 }
 ```
 
+## Testing
+
+The `test/` directory contains three test suites. See [test/README.md](test/README.md) for more details.
+
+| Test binary | Requires simulation | Description |
+|---|---|---|
+| `base_tests` | No | Unit tests for the base C++ library (stiffness, damping, filtering, …) |
+| `ros_tests` | Yes | ROS 2 topic and parameter integration tests (replaces `ros.test`) |
+| `ros_func_tests` | Yes | Functional controller tests (force application, motion tracking) |
+
+### Quick start — base library unit tests (no simulation needed)
+
+```bash
+colcon build --packages-select cartesian_impedance_controller
+colcon test  --packages-select cartesian_impedance_controller
+colcon test-result --verbose
+```
+
+### Integration tests (simulation required)
+
+Run the mock simulation that can not move the robot, but has a running controller and execute the tests on it:
+
+```bash
+ros2 launch cartesian_impedance_controller minimal_mock_simulation.launch.py 
+./install/cartesian_impedance_controller/lib/cartesian_impedance_controller/ros_tests
+./install/cartesian_impedance_controller/lib/cartesian_impedance_controller/ros_func_tests
+```
+
 ## Troubleshooting
 ### Compilation - A required package was not found
 
