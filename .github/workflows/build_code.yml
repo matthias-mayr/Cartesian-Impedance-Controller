@@ -26,7 +26,7 @@ jobs:
       - name: Checkout repository into workspace
         uses: actions/checkout@v3
         with:
-          ref: ros2
+          ref: ${{ github.head_ref || github.ref_name }}
           path: ros2_ws/src/Cartesian-Impedance-Controller
 
       - name: Install package dependencies & Build workspace
