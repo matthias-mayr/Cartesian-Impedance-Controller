@@ -14,9 +14,9 @@ The implementation consists of a
 2. ROS 2 control integration on top of it.
  
 ### Short Pitch at ROSCon:
-[![IMAGE ALT TEXT](http://img.youtube.com/vi/Q4aPm4O_9fY/0.jpg)](http://www.youtube.com/watch?v=Q4aPm4O_9fY "Cartesian Impedance Controller ROSCon 2022 Lightning Talk")
+[![IMAGE ALT TEXT](http://img.youtube.com/vi/YtnQLyA7_og/0.jpg)](https://www.youtube.com/watch?v=YtnQLyA7_og "Cartesian Impedance Controller ROSCon 2022 Lightning Talk")
  
-http://www.youtube.com/watch?v=Q4aPm4O_9fY
+https://www.youtube.com/watch?v=YtnQLyA7_og
  
 ## Features
  
