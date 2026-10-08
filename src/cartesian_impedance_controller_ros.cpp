@@ -836,7 +836,7 @@ namespace cartesian_impedance_controller
     tf2::Vector3 torque_in((*wrench)(3), (*wrench)(4), (*wrench)(5));
     tf2::Transform tf;
     tf2::fromMsg(transform.transform, tf);
-    tf2::Vector3 force_out = tf * force_in;
+    tf2::Vector3 force_out = tf.getBasis() * force_in;
     tf2::Vector3 torque_out = tf.getBasis() * torque_in;
     (*wrench)(0) = force_out.x();
     (*wrench)(1) = force_out.y();
