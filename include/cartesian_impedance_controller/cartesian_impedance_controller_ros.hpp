@@ -38,6 +38,7 @@
 #include <cartesian_impedance_controller/cartesian_impedance_controller_parameters.hpp>
 #include <cartesian_impedance_controller/msg/controller_config.hpp>
 #include <cartesian_impedance_controller/msg/controller_state.hpp>
+#include <cartesian_impedance_controller/transform_wrench.hpp>
 
 #include <realtime_tools/realtime_buffer.hpp>
 #include <realtime_tools/realtime_publisher.hpp>
@@ -63,6 +64,41 @@ namespace cartesian_impedance_controller
     controller_interface::CallbackReturn on_cleanup(const rclcpp_lifecycle::State &previous_state) override;
     controller_interface::CallbackReturn on_error(const rclcpp_lifecycle::State &previous_state) override;
     controller_interface::return_type update(const rclcpp::Time &time, const rclcpp::Duration &period) override;
+
+    /*! \brief Transforms a 6D wrench using the provided transform.
+     * Only rotation is applied to both force and torque vectors (translation does not affect forces).
+     * \param[in,out] wrench 6D wrench vector [fx, fy, fz, tx, ty, tz]
+     * \param[in] transform Transform to apply
+     */
+    static void transformWrench(Eigen::Matrix<double, 6, 1> *wrench,
+                                const geometry_msgs::msg::Transform &transform)
+    {
+      cartesian_impedance_controller::transformWrench(wrench, transform);
+    }
+
+    /*! \brief Transforms a 6D wrench using the provided TransformStamped.
+     * Only rotation is applied to both force and torque vectors (translation does not affect forces).
+     * \param[in,out] wrench 6D wrench vector [fx, fy, fz, tx, ty, tz]
+     * \param[in] transform TransformStamped to apply
+     */
+    static void transformWrench(Eigen::Matrix<double, 6, 1> *wrench,
+                                const geometry_msgs::msg::TransformStamped &transform)
+    {
+      cartesian_impedance_controller::transformWrench(wrench, transform);
+    }
+
+    /*! \brief Transforms a WrenchStamped message using the provided TransformStamped.
+     * Only rotation is applied to both force and torque vectors (translation does not affect forces).
+     * \param[in] wrench Input WrenchStamped message
+     * \param[in] transform TransformStamped to apply
+     * \return Transformed WrenchStamped message
+     */
+    static geometry_msgs::msg::WrenchStamped transformWrench(
+        const geometry_msgs::msg::WrenchStamped &wrench,
+        const geometry_msgs::msg::TransformStamped &transform)
+    {
+      return cartesian_impedance_controller::transformWrench(wrench, transform);
+    }
 
   private:
     const Eigen::VectorXi perm_indices_ = (Eigen::Matrix<int, 6, 1>() << 3, 4, 5, 0, 1, 2).finished();

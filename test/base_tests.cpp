@@ -1,6 +1,8 @@
 #include "cartesian_impedance_controller/cartesian_impedance_controller.hpp"
+#include "cartesian_impedance_controller/transform_wrench.hpp"
 #include <Eigen/Dense>
 #include <gtest/gtest.h>
+#include <tf2/LinearMath/Quaternion.h>
 
 
 using namespace cartesian_impedance_controller;
@@ -114,6 +116,136 @@ TEST(ControllerTests, getterTests){
     EXPECT_DOUBLE_EQ(error_getter(0),error_state(0));
     EXPECT_DOUBLE_EQ(error_getter(1),error_state(1));
     EXPECT_DOUBLE_EQ(error_getter(2),error_state(2));
+}
+
+TEST(TransformWrenchTests, ZeroWrenchInTranslatedFrameRemainsZero)
+{
+  geometry_msgs::msg::WrenchStamped wrench;
+  wrench.header.frame_id = "ee_frame";
+  wrench.wrench.force.x = 0.0;
+  wrench.wrench.force.y = 0.0;
+  wrench.wrench.force.z = 0.0;
+  wrench.wrench.torque.x = 0.0;
+  wrench.wrench.torque.y = 0.0;
+  wrench.wrench.torque.z = 0.0;
+
+  geometry_msgs::msg::TransformStamped transform;
+  transform.header.frame_id = "world";
+  transform.child_frame_id = "ee_frame";
+  transform.transform.translation.x = 1.0;
+  transform.transform.translation.y = 2.0;
+  transform.transform.translation.z = 3.0;
+  transform.transform.rotation.w = 1.0;
+  transform.transform.rotation.x = 0.0;
+  transform.transform.rotation.y = 0.0;
+  transform.transform.rotation.z = 0.0;
+
+  auto out = transformWrench(wrench, transform);
+
+  EXPECT_EQ(out.header.frame_id, "world");
+  EXPECT_DOUBLE_EQ(out.wrench.force.x, 0.0);
+  EXPECT_DOUBLE_EQ(out.wrench.force.y, 0.0);
+  EXPECT_DOUBLE_EQ(out.wrench.force.z, 0.0);
+  EXPECT_DOUBLE_EQ(out.wrench.torque.x, 0.0);
+  EXPECT_DOUBLE_EQ(out.wrench.torque.y, 0.0);
+  EXPECT_DOUBLE_EQ(out.wrench.torque.z, 0.0);
+}
+
+TEST(TransformWrenchTests, NonZeroForceWithTranslationAppliesOnlyRotation)
+{
+  // Input wrench in ee_frame with non-zero force and torque
+  geometry_msgs::msg::WrenchStamped wrench;
+  wrench.header.frame_id = "ee_frame";
+  wrench.wrench.force.x = 10.0;
+  wrench.wrench.force.y = -5.0;
+  wrench.wrench.force.z = 3.0;
+  wrench.wrench.torque.x = 1.0;
+  wrench.wrench.torque.y = 2.0;
+  wrench.wrench.torque.z = -1.0;
+
+  // Transform with non-zero translation and a 90-degree rotation about the Z axis.
+  // Under +90 deg rotation around Z: (x, y, z) -> (-y, x, z).
+  // Force (10, -5, 3) rotated by +90 deg around Z becomes (5, 10, 3).
+  // Torque (1, 2, -1) rotated by +90 deg around Z becomes (-2, 1, -1).
+  // The non-zero translation (5.0, 10.0, -15.0) MUST NOT contribute to the force vector.
+  // With the old buggy implementation (tf * force_in), translation was added to force,
+  // resulting in force = (5 + 5, 10 + 10, 3 - 15) = (10, 20, -12).
+  geometry_msgs::msg::TransformStamped transform;
+  transform.header.frame_id = "world";
+  transform.child_frame_id = "ee_frame";
+  transform.transform.translation.x = 5.0;
+  transform.transform.translation.y = 10.0;
+  transform.transform.translation.z = -15.0;
+
+  tf2::Quaternion q;
+  q.setRPY(0.0, 0.0, M_PI_2);
+  transform.transform.rotation = tf2::toMsg(q);
+
+  auto out = transformWrench(wrench, transform);
+
+  EXPECT_EQ(out.header.frame_id, "world");
+  EXPECT_NEAR(out.wrench.force.x, 5.0, 1e-6);
+  EXPECT_NEAR(out.wrench.force.y, 10.0, 1e-6);
+  EXPECT_NEAR(out.wrench.force.z, 3.0, 1e-6);
+  EXPECT_NEAR(out.wrench.torque.x, -2.0, 1e-6);
+  EXPECT_NEAR(out.wrench.torque.y, 1.0, 1e-6);
+  EXPECT_NEAR(out.wrench.torque.z, -1.0, 1e-6);
+}
+
+TEST(TransformWrenchTests, PureTranslationDoesNotAlterForceVector)
+{
+  geometry_msgs::msg::WrenchStamped wrench;
+  wrench.header.frame_id = "ee_frame";
+  wrench.wrench.force.x = 7.5;
+  wrench.wrench.force.y = -3.2;
+  wrench.wrench.force.z = 4.1;
+  wrench.wrench.torque.x = 0.5;
+  wrench.wrench.torque.y = -0.8;
+  wrench.wrench.torque.z = 1.2;
+
+  geometry_msgs::msg::TransformStamped transform;
+  transform.header.frame_id = "world";
+  transform.child_frame_id = "ee_frame";
+  transform.transform.translation.x = 100.0;
+  transform.transform.translation.y = -200.0;
+  transform.transform.translation.z = 300.0;
+  transform.transform.rotation.w = 1.0;
+  transform.transform.rotation.x = 0.0;
+  transform.transform.rotation.y = 0.0;
+  transform.transform.rotation.z = 0.0;
+
+  auto out = transformWrench(wrench, transform);
+
+  EXPECT_DOUBLE_EQ(out.wrench.force.x, 7.5);
+  EXPECT_DOUBLE_EQ(out.wrench.force.y, -3.2);
+  EXPECT_DOUBLE_EQ(out.wrench.force.z, 4.1);
+  EXPECT_DOUBLE_EQ(out.wrench.torque.x, 0.5);
+  EXPECT_DOUBLE_EQ(out.wrench.torque.y, -0.8);
+  EXPECT_DOUBLE_EQ(out.wrench.torque.z, 1.2);
+}
+
+TEST(TransformWrenchTests, MatrixOverloadNonZeroForceWithTranslationAppliesOnlyRotation)
+{
+  Eigen::Matrix<double, 6, 1> wrench;
+  wrench << 10.0, -5.0, 3.0, 1.0, 2.0, -1.0;
+
+  geometry_msgs::msg::Transform transform;
+  transform.translation.x = 5.0;
+  transform.translation.y = 10.0;
+  transform.translation.z = -15.0;
+
+  tf2::Quaternion q;
+  q.setRPY(0.0, 0.0, M_PI_2);
+  transform.rotation = tf2::toMsg(q);
+
+  transformWrench(&wrench, transform);
+
+  EXPECT_NEAR(wrench(0), 5.0, 1e-6);
+  EXPECT_NEAR(wrench(1), 10.0, 1e-6);
+  EXPECT_NEAR(wrench(2), 3.0, 1e-6);
+  EXPECT_NEAR(wrench(3), -2.0, 1e-6);
+  EXPECT_NEAR(wrench(4), 1.0, 1e-6);
+  EXPECT_NEAR(wrench(5), -1.0, 1e-6);
 }
 
 

@@ -130,6 +130,12 @@ if(BUILD_TESTING)
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
   )
   target_link_libraries(base_tests ${library_name})
+  ament_target_dependencies(base_tests
+    geometry_msgs
+    tf2
+    tf2_geometry_msgs
+    Eigen3
+  )
 
   # ---------------------------------------------------------------------------
   # ros_tests: integration tests for ROS topics and parameter interface.

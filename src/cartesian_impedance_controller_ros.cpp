@@ -832,18 +832,7 @@ namespace cartesian_impedance_controller
       RCLCPP_ERROR(get_node()->get_logger(), "transformWrench() exception: %s", ex.what());
       return false;
     }
-    tf2::Vector3 force_in((*wrench)(0), (*wrench)(1), (*wrench)(2));
-    tf2::Vector3 torque_in((*wrench)(3), (*wrench)(4), (*wrench)(5));
-    tf2::Transform tf;
-    tf2::fromMsg(transform.transform, tf);
-    tf2::Vector3 force_out = tf * force_in;
-    tf2::Vector3 torque_out = tf.getBasis() * torque_in;
-    (*wrench)(0) = force_out.x();
-    (*wrench)(1) = force_out.y();
-    (*wrench)(2) = force_out.z();
-    (*wrench)(3) = torque_out.x();
-    (*wrench)(4) = torque_out.y();
-    (*wrench)(5) = torque_out.z();
+    cartesian_impedance_controller::transformWrench(wrench, transform);
     return true;
   }
 
